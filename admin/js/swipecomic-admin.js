@@ -546,11 +546,65 @@
 	};
 
 	/**
+	 * Episode Settings Conditional Fields
+	 */
+	const EpisodeSettings = {
+		/**
+		 * Initialize episode settings
+		 */
+		init() {
+			this.bindEvents();
+			this.updateConditionalFields();
+		},
+
+		/**
+		 * Bind event handlers
+		 */
+		bindEvents() {
+			// Zoom select change
+			$('#swipecomic_default_zoom').on('change', () => {
+				this.updateConditionalFields();
+			});
+
+			// Pan select change
+			$('#swipecomic_default_pan').on('change', () => {
+				this.updateConditionalFields();
+			});
+		},
+
+		/**
+		 * Update conditional field visibility
+		 */
+		updateConditionalFields() {
+			const zoomValue = $('#swipecomic_default_zoom').val();
+			const panValue = $('#swipecomic_default_pan').val();
+
+			// Show/hide zoom custom field
+			if (zoomValue === 'custom') {
+				$('.swipecomic-zoom-custom').show();
+			} else {
+				$('.swipecomic-zoom-custom').hide();
+			}
+
+			// Show/hide pan custom fields
+			if (panValue === 'custom') {
+				$('.swipecomic-pan-custom').show();
+			} else {
+				$('.swipecomic-pan-custom').hide();
+			}
+		},
+	};
+
+	/**
 	 * Initialize on document ready
 	 */
 	$(document).ready(function () {
 		if ($('#swipecomic-images-grid').length) {
 			EpisodeImagesGallery.init();
+		}
+
+		if ($('#swipecomic_default_zoom').length) {
+			EpisodeSettings.init();
 		}
 	});
 })(jQuery);

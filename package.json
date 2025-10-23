@@ -4,10 +4,11 @@
 	"description": "SwipeComic plugin assets - JavaScript build system for comic reader functionality",
 	"private": true,
 	"scripts": {
-		"build": "npm run build:js && npm run build:css && npm run verify:build",
+		"build": "npm run build:js && npm run build:css && npm run build:admin && npm run verify:build",
 		"build:js": "NODE_ENV=production node esbuild.config.js",
 		"build:css": "postcss src/styles/globals.css -o build/swipecomic.css && node scripts/hash-css.js",
-		"build:prod": "npm run build:js:prod && npm run build:css:prod && npm run verify:build",
+		"build:admin": "node scripts/hash-admin-assets.js",
+		"build:prod": "npm run build:js:prod && npm run build:css:prod && npm run build:admin && npm run verify:build",
 		"build:js:prod": "NODE_ENV=production node esbuild.config.js",
 		"build:css:prod": "NODE_ENV=production postcss src/styles/globals.css -o build/swipecomic.css && node scripts/hash-css.js",
 		"build:analyze": "NODE_ENV=production ANALYZE=true node esbuild.config.js && npm run verify:build",

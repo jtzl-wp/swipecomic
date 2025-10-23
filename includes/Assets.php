@@ -143,19 +143,23 @@ class Assets {
 		// Enqueue jQuery UI Sortable.
 		wp_enqueue_script( 'jquery-ui-sortable' );
 
+		$manifest = $this->get_manifest();
+
 		// Enqueue admin JavaScript.
+		$admin_js_file = $manifest['swipecomic-admin.js'] ?? 'swipecomic-admin.js';
 		wp_enqueue_script(
 			'swipecomic-admin',
-			JTZL_SWIPECOMIC_URL . 'admin/js/swipecomic-admin.js',
+			JTZL_SWIPECOMIC_URL . 'admin/js/' . $admin_js_file,
 			array( 'jquery', 'jquery-ui-sortable' ),
 			JTZL_SWIPECOMIC_VER,
 			true
 		);
 
 		// Enqueue admin CSS.
+		$admin_css_file = $manifest['swipecomic-admin.css'] ?? 'swipecomic-admin.css';
 		wp_enqueue_style(
 			'swipecomic-admin',
-			JTZL_SWIPECOMIC_URL . 'admin/css/swipecomic-admin.css',
+			JTZL_SWIPECOMIC_URL . 'admin/css/' . $admin_css_file,
 			array(),
 			JTZL_SWIPECOMIC_VER
 		);
