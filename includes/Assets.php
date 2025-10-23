@@ -174,6 +174,11 @@ class Assets {
 				'uploadButtonText'  => __( 'Select Images', 'swipecomic' ),
 				'uploadButtonTitle' => __( 'Select Episode Images', 'swipecomic' ),
 				'removeConfirm'     => __( 'Are you sure you want to remove this image?', 'swipecomic' ),
+				'logoUploadTitle'   => __( 'Select Logo Image', 'swipecomic' ),
+				'logoUploadButton'  => __( 'Use as Logo', 'swipecomic' ),
+				'uploadLogoText'    => __( 'Upload Logo', 'swipecomic' ),
+				'changeLogoText'    => __( 'Change Logo', 'swipecomic' ),
+				'removeLogoConfirm' => __( 'Are you sure you want to remove the logo?', 'swipecomic' ),
 			)
 		);
 	}

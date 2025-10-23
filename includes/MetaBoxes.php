@@ -24,6 +24,7 @@ class MetaBoxes {
 		add_action( 'add_meta_boxes', array( $this, 'register_meta_boxes' ) );
 		add_action( 'save_post_swipecomic', array( $this, 'save_episode_images' ), 10, 2 );
 		add_action( 'save_post_swipecomic', array( $this, 'save_episode_settings' ), 10, 2 );
+		add_action( 'save_post_swipecomic', array( $this, 'save_episode_logo' ), 10, 2 );
 	}
 
 	/**
@@ -45,6 +46,15 @@ class MetaBoxes {
 			'swipecomic_settings',
 			__( 'Episode Settings', 'swipecomic' ),
 			array( $this, 'render_episode_settings_meta_box' ),
+			'swipecomic',
+			'side',
+			'default'
+		);
+
+		add_meta_box(
+			'swipecomic_logo',
+			__( 'Episode Logo', 'swipecomic' ),
+			array( $this, 'render_episode_logo_meta_box' ),
 			'swipecomic',
 			'side',
 			'default'
@@ -373,6 +383,95 @@ class MetaBoxes {
 			} else {
 				delete_post_meta( $post_id, '_swipecomic_default_pan_x' );
 				delete_post_meta( $post_id, '_swipecomic_default_pan_y' );
+			}
+		}
+	}
+
+	/**
+	 * Render episode logo meta box.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \WP_Post $post Current post object.
+	 */
+	public function render_episode_logo_meta_box( $post ) {
+		// Add nonce for security.
+		wp_nonce_field( 'swipecomic_save_logo', 'swipecomic_logo_nonce' );
+
+		// Get existing logo.
+		$logo_id  = get_post_meta( $post->ID, '_swipecomic_logo_id', true );
+		$logo_url = '';
+		$logo_alt = '';
+
+		if ( $logo_id ) {
+			$logo_url = wp_get_attachment_image_url( $logo_id, 'thumbnail' );
+			$logo_alt = get_post_meta( $logo_id, '_wp_attachment_image_alt', true );
+		}
+		?>
+		<div class="swipecomic-logo-container">
+			<div class="swipecomic-logo-preview" id="swipecomic-logo-preview" style="<?php echo $logo_url ? '' : 'display:none;'; ?>">
+				<?php if ( $logo_url ) : ?>
+					<img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php echo esc_attr( $logo_alt ); ?>" style="max-width: 100%; height: auto; display: block; margin-bottom: 10px;" />
+				<?php endif; ?>
+			</div>
+
+			<p>
+				<button type="button" class="button button-secondary swipecomic-upload-logo" id="swipecomic-upload-logo">
+					<span class="dashicons dashicons-format-image"></span>
+					<?php echo $logo_id ? esc_html__( 'Change Logo', 'swipecomic' ) : esc_html__( 'Upload Logo', 'swipecomic' ); ?>
+				</button>
+
+				<a href="#" class="button-link-delete swipecomic-remove-logo" id="swipecomic-remove-logo" style="<?php echo $logo_id ? '' : 'display:none;'; ?>">
+					<?php esc_html_e( 'Remove Logo', 'swipecomic' ); ?>
+				</a>
+			</p>
+
+			<input type="hidden" name="swipecomic_logo_id" id="swipecomic-logo-id" value="<?php echo esc_attr( $logo_id ); ?>" />
+
+			<p class="description">
+				<?php esc_html_e( 'Upload a custom logo or title image for this episode.', 'swipecomic' ); ?>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Save episode logo data.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public function save_episode_logo( $post_id ) {
+		// Verify nonce.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification doesn't require sanitization.
+		if ( ! isset( $_POST['swipecomic_logo_nonce'] ) || ! wp_verify_nonce( $_POST['swipecomic_logo_nonce'], 'swipecomic_save_logo' ) ) {
+			return;
+		}
+
+		// Check autosave.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Check permissions.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		// Don't save for revisions.
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		// Save logo ID.
+		if ( isset( $_POST['swipecomic_logo_id'] ) ) {
+			$logo_id = absint( $_POST['swipecomic_logo_id'] );
+
+			if ( $logo_id > 0 ) {
+				update_post_meta( $post_id, '_swipecomic_logo_id', $logo_id );
+			} else {
+				delete_post_meta( $post_id, '_swipecomic_logo_id' );
 			}
 		}
 	}

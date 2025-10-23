@@ -596,6 +596,128 @@
 	};
 
 	/**
+	 * Episode Logo Manager
+	 */
+	const EpisodeLogoManager = {
+		/**
+		 * Media frame instance
+		 */
+		frame: null,
+
+		/**
+		 * Initialize the logo manager
+		 */
+		init() {
+			this.bindEvents();
+		},
+
+		/**
+		 * Bind event handlers
+		 */
+		bindEvents() {
+			// Upload logo button
+			$('#swipecomic-upload-logo').on('click', (e) => {
+				e.preventDefault();
+				this.openMediaUploader();
+			});
+
+			// Remove logo button
+			$('#swipecomic-remove-logo').on('click', (e) => {
+				e.preventDefault();
+				this.removeLogo();
+			});
+		},
+
+		/**
+		 * Open WordPress media uploader
+		 */
+		openMediaUploader() {
+			// Create media frame if it doesn't exist
+			if (!this.frame) {
+				this.frame = wp.media({
+					title: swipecomicAdmin.logoUploadTitle || 'Select Logo Image',
+					button: {
+						text: swipecomicAdmin.logoUploadButton || 'Use as Logo',
+					},
+					multiple: false,
+					library: {
+						type: 'image',
+					},
+				});
+
+				// Handle image selection
+				this.frame.on('select', () => {
+					const attachment = this.frame
+						.state()
+						.get('selection')
+						.first()
+						.toJSON();
+					this.setLogo(attachment);
+				});
+			}
+
+			// Open the media frame
+			this.frame.open();
+		},
+
+		/**
+		 * Set logo image
+		 *
+		 * @param {Object} attachment Attachment data
+		 */
+		setLogo(attachment) {
+			const thumbnailUrl = attachment.sizes?.thumbnail?.url || attachment.url;
+			const alt = attachment.alt || '';
+
+			// Update hidden input
+			$('#swipecomic-logo-id').val(attachment.id);
+
+			// Update preview
+			const $img = $('<img>', {
+				src: thumbnailUrl,
+				alt,
+				style:
+					'max-width: 100%; height: auto; display: block; margin-bottom: 10px;',
+			});
+			$('#swipecomic-logo-preview').html($img).show();
+
+			// Update button text
+			$('#swipecomic-upload-logo').html(
+				'<span class="dashicons dashicons-format-image"></span> ' +
+					(swipecomicAdmin.changeLogoText || 'Change Logo')
+			);
+
+			// Show remove button
+			$('#swipecomic-remove-logo').show();
+		},
+
+		/**
+		 * Remove logo image
+		 */
+		removeLogo() {
+			// eslint-disable-next-line no-alert
+			if (!confirm(swipecomicAdmin.removeLogoConfirm || 'Remove logo image?')) {
+				return;
+			}
+
+			// Clear hidden input
+			$('#swipecomic-logo-id').val('');
+
+			// Clear preview
+			$('#swipecomic-logo-preview').html('').hide();
+
+			// Update button text
+			$('#swipecomic-upload-logo').html(
+				'<span class="dashicons dashicons-format-image"></span> ' +
+					(swipecomicAdmin.uploadLogoText || 'Upload Logo')
+			);
+
+			// Hide remove button
+			$('#swipecomic-remove-logo').hide();
+		},
+	};
+
+	/**
 	 * Initialize on document ready
 	 */
 	$(document).ready(function () {
@@ -605,6 +727,10 @@
 
 		if ($('#swipecomic_default_zoom').length) {
 			EpisodeSettings.init();
+		}
+
+		if ($('#swipecomic-upload-logo').length) {
+			EpisodeLogoManager.init();
 		}
 	});
 })(jQuery);
