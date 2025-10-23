@@ -52,18 +52,51 @@ class JTZL_SwipeComic {
 	private $assets;
 
 	/**
+	 * PostType instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var PostType
+	 */
+	private $post_type;
+
+	/**
+	 * Taxonomy instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var Taxonomy
+	 */
+	private $taxonomy;
+
+	/**
+	 * Rewrite instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var Rewrite
+	 */
+	private $rewrite;
+
+	/**
 	 * Initialize the plugin.
 	 *
 	 * @since 1.0.0
 	 */
 	public function init() {
 		// Initialize component classes.
-		$this->settings = new JTZL\SwipeComic\Settings();
-		$this->assets   = new JTZL\SwipeComic\Assets();
+		$this->settings  = new JTZL\SwipeComic\Settings();
+		$this->assets    = new JTZL\SwipeComic\Assets();
+		$this->post_type = new JTZL\SwipeComic\PostType();
+		$this->taxonomy  = new JTZL\SwipeComic\Taxonomy();
+		$this->rewrite   = new JTZL\SwipeComic\Rewrite();
 
 		// Initialize components.
 		$this->settings->init();
 		$this->assets->init();
+		$this->post_type->init();
+		$this->taxonomy->init();
+		$this->rewrite->init();
 	}
 
 	/**
@@ -105,12 +138,15 @@ function jtzl_swipecomic_activate() {
 	add_option( 'swipecomic_default_pan', 'center' );
 	add_option( 'swipecomic_thumbnail_size', 400 );
 
+	// Set default URL structure options.
+	add_option( 'swipecomic_use_url_prefix', true );
+	add_option( 'swipecomic_url_prefix', 'comic' );
+
 	// Store plugin version for future migrations.
 	add_option( 'swipecomic_version', JTZL_SWIPECOMIC_VER );
 
-	// Register post type and taxonomy (needed for rewrite rules).
-	// Note: Actual registration classes will be loaded in future tasks.
-	// For now, we prepare the activation hook structure.
+	// Ensure post type and taxonomies are registered before flushing rewrite rules.
+	JTZL_SwipeComic::init_plugin();
 
 	// Flush rewrite rules to ensure clean URLs work.
 	flush_rewrite_rules();
