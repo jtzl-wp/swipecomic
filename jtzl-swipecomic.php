@@ -1,0 +1,135 @@
+<?php
+/**
+ * Plugin Name: SwipeComic
+ * Description: A mobile-first comic reader for WordPress with swipe navigation and responsive design.
+ * Version:     1.0.0
+ * Author:      JT G.
+ * Text Domain: swipecomic
+ * License:     GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * @package   JTZL_SwipeComic
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+// Plugin version and paths.
+define( 'JTZL_SWIPECOMIC_VER', '1.0.0' );
+define( 'JTZL_SWIPECOMIC_URL', plugin_dir_url( __FILE__ ) );
+define( 'JTZL_SWIPECOMIC_DIR', plugin_dir_path( __FILE__ ) );
+
+// Load Composer autoloader.
+$autoload = JTZL_SWIPECOMIC_DIR . 'vendor/autoload.php';
+if ( file_exists( $autoload ) ) {
+	require_once $autoload;
+}
+
+/**
+ * Main plugin class for SwipeComic.
+ *
+ * @since 1.0.0
+ */
+class JTZL_SwipeComic {
+
+	/**
+	 * Settings instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var Settings
+	 */
+	private $settings;
+
+	/**
+	 * Assets instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var Assets
+	 */
+	private $assets;
+
+	/**
+	 * Initialize the plugin.
+	 *
+	 * @since 1.0.0
+	 */
+	public function init() {
+		// Initialize component classes.
+		$this->settings = new JTZL\SwipeComic\Settings();
+		$this->assets   = new JTZL\SwipeComic\Assets();
+
+		// Initialize components.
+		$this->settings->init();
+		$this->assets->init();
+	}
+
+	/**
+	 * Initialize the plugin.
+	 *
+	 * @since 1.0.0
+	 */
+	public static function init_plugin() {
+		$swipecomic = new self();
+		$swipecomic->init();
+	}
+}
+
+// Initialize the plugin in the global namespace.
+if ( ! function_exists( 'jtzl_swipecomic_init' ) ) {
+	/**
+	 * Initialize the SwipeComic plugin.
+	 *
+	 * @since 1.0.0
+	 */
+	function jtzl_swipecomic_init() { // phpcs:ignore.
+		JTZL_SwipeComic::init_plugin();
+	}
+	add_action( 'plugins_loaded', 'jtzl_swipecomic_init' );
+}
+
+/**
+ * Plugin activation hook.
+ *
+ * Runs when the plugin is activated. Sets up default options,
+ * registers post types and taxonomies for rewrite rules, and
+ * flushes rewrite rules.
+ *
+ * @since 1.0.0
+ */
+function jtzl_swipecomic_activate() {
+	// Set default plugin options if they don't exist.
+	add_option( 'swipecomic_default_zoom', 'fit' );
+	add_option( 'swipecomic_default_pan', 'center' );
+	add_option( 'swipecomic_thumbnail_size', 400 );
+
+	// Store plugin version for future migrations.
+	add_option( 'swipecomic_version', JTZL_SWIPECOMIC_VER );
+
+	// Register post type and taxonomy (needed for rewrite rules).
+	// Note: Actual registration classes will be loaded in future tasks.
+	// For now, we prepare the activation hook structure.
+
+	// Flush rewrite rules to ensure clean URLs work.
+	flush_rewrite_rules();
+}
+register_activation_hook( __FILE__, 'jtzl_swipecomic_activate' );
+
+/**
+ * Plugin deactivation hook.
+ *
+ * Runs when the plugin is deactivated. Flushes rewrite rules
+ * but preserves all plugin data.
+ *
+ * @since 1.0.0
+ */
+function jtzl_swipecomic_deactivate() {
+	// Flush rewrite rules to clean up custom URLs.
+	flush_rewrite_rules();
+
+	// Note: We do NOT delete any data on deactivation.
+	// Data should only be removed on uninstall (via uninstall.php).
+}
+register_deactivation_hook( __FILE__, 'jtzl_swipecomic_deactivate' );
