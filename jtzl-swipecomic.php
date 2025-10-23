@@ -79,17 +79,27 @@ class JTZL_SwipeComic {
 	private $rewrite;
 
 	/**
+	 * MetaBoxes instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var MetaBoxes
+	 */
+	private $meta_boxes;
+
+	/**
 	 * Initialize the plugin.
 	 *
 	 * @since 1.0.0
 	 */
 	public function init() {
 		// Initialize component classes.
-		$this->settings  = new JTZL\SwipeComic\Settings();
-		$this->assets    = new JTZL\SwipeComic\Assets();
-		$this->post_type = new JTZL\SwipeComic\PostType();
-		$this->taxonomy  = new JTZL\SwipeComic\Taxonomy();
-		$this->rewrite   = new JTZL\SwipeComic\Rewrite();
+		$this->settings   = new JTZL\SwipeComic\Settings();
+		$this->assets     = new JTZL\SwipeComic\Assets();
+		$this->post_type  = new JTZL\SwipeComic\PostType();
+		$this->taxonomy   = new JTZL\SwipeComic\Taxonomy();
+		$this->rewrite    = new JTZL\SwipeComic\Rewrite();
+		$this->meta_boxes = new JTZL\SwipeComic\MetaBoxes();
 
 		// Initialize components.
 		$this->settings->init();
@@ -97,6 +107,7 @@ class JTZL_SwipeComic {
 		$this->post_type->init();
 		$this->taxonomy->init();
 		$this->rewrite->init();
+		$this->meta_boxes->init();
 	}
 
 	/**

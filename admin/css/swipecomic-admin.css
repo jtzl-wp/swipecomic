@@ -1,0 +1,244 @@
+/**
+ * SwipeComic Admin Styles
+ *
+ * @package JTZL_SwipeComic
+ * @since 1.0.0
+ */
+
+/* Episode Images Container */
+.swipecomic-images-container {
+	padding: 12px;
+}
+
+/* Toolbar */
+.swipecomic-images-toolbar {
+	margin-bottom: 20px;
+}
+
+.swipecomic-upload-images {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	vertical-align: middle;
+}
+
+.swipecomic-upload-images .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+	vertical-align: middle;
+	margin-top: -3px;
+}
+
+.swipecomic-images-toolbar .description {
+	margin-top: 8px;
+	margin-bottom: 0;
+}
+
+/* Images Grid */
+.swipecomic-images-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 16px;
+	min-height: 100px;
+}
+
+.swipecomic-images-grid:empty::before {
+	content: 'No images uploaded yet. Click "Upload Images" to add images to this episode.';
+	display: block;
+	padding: 40px 20px;
+	text-align: center;
+	color: #646970;
+	background: #f6f7f7;
+	border: 2px dashed #c3c4c7;
+	border-radius: 4px;
+	grid-column: 1 / -1;
+}
+
+/* Image Item */
+.swipecomic-image-item {
+	position: relative;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	overflow: hidden;
+	cursor: move;
+	transition: box-shadow 0.2s ease;
+}
+
+.swipecomic-image-item:hover {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Image Preview */
+.swipecomic-image-preview {
+	position: relative;
+	aspect-ratio: 1;
+	overflow: hidden;
+	background: #f6f7f7;
+}
+
+.swipecomic-image-preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+/* Override Badge */
+.swipecomic-override-badge {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	background: #2271b1;
+	color: #fff;
+	border-radius: 50%;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.swipecomic-override-badge .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+/* Image Actions */
+.swipecomic-image-actions {
+	display: flex;
+	gap: 4px;
+	padding: 8px;
+	background: #f6f7f7;
+	border-top: 1px solid #c3c4c7;
+}
+
+.swipecomic-image-actions .button {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px 8px;
+	min-height: 32px;
+}
+
+.swipecomic-image-actions .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.swipecomic-image-settings:hover {
+	background: #2271b1;
+	border-color: #2271b1;
+	color: #fff;
+}
+
+.swipecomic-image-remove:hover {
+	background: #d63638;
+	border-color: #d63638;
+	color: #fff;
+}
+
+/* Sortable Placeholder */
+.swipecomic-image-placeholder {
+	background: #f0f0f1;
+	border: 2px dashed #2271b1;
+	border-radius: 4px;
+	opacity: 0.5;
+}
+
+/* Sortable Helper (dragging) */
+.ui-sortable-helper {
+	opacity: 0.8;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	transform: rotate(2deg);
+}
+
+/* Image Settings Modal (placeholder for task 3.3) */
+.swipecomic-modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100000;
+}
+
+.swipecomic-modal {
+	background: #fff;
+	border-radius: 4px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	max-width: 600px;
+	width: 90%;
+	max-height: 90vh;
+	overflow: auto;
+}
+
+.swipecomic-modal-header {
+	padding: 20px;
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.swipecomic-modal-header h2 {
+	margin: 0;
+	font-size: 18px;
+}
+
+.swipecomic-modal-body {
+	padding: 20px;
+}
+
+.swipecomic-modal-footer {
+	padding: 20px;
+	border-top: 1px solid #c3c4c7;
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+/* Modal Fields */
+.swipecomic-modal-field {
+	margin-bottom: 16px;
+}
+
+.swipecomic-modal-field label {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 600;
+}
+
+.swipecomic-modal-field .description {
+	margin-top: 4px;
+	margin-bottom: 8px;
+	color: #646970;
+	font-size: 13px;
+}
+
+.swipecomic-modal-field select,
+.swipecomic-modal-field input[type='number'] {
+	width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+	.swipecomic-images-grid {
+		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+		gap: 12px;
+	}
+
+	.swipecomic-image-actions .button {
+		padding: 4px;
+	}
+
+	.swipecomic-modal {
+		width: 95%;
+	}
+}

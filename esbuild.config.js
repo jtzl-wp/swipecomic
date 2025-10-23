@@ -1,15 +1,17 @@
 /**
  * ESBuild Configuration for SwipeComic
  *
- * @package   JTZL_SwipeComic
+ * @package
  * @copyright Copyright (c) 2025, JT. G.
  * @license   GPL-3.0+
  * @since     1.0.0
  */
 
 /* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-var-requires */
 
 const { build } = require('esbuild');
+
 const { hashPlugin } = require('./scripts/esbuild-hash-plugin');
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -65,12 +67,11 @@ const developmentConfig = {
  * Development watch function.
  */
 async function startDevWatch() {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const { context } = require('esbuild');
 
 	try {
-		console.log(
-			'🔧 Starting development watch mode with hash generation...'
-		);
+		console.log('🔧 Starting development watch mode with hash generation...');
 
 		const watchConfig = {
 			...developmentConfig,
@@ -83,14 +84,9 @@ async function startDevWatch() {
 
 						buildInstance.onEnd((result) => {
 							if (result.errors.length === 0) {
-								console.log(
-									'🔄 Build completed, manifest updated'
-								);
+								console.log('🔄 Build completed, manifest updated');
 							} else {
-								console.error(
-									'❌ Build failed:',
-									result.errors
-								);
+								console.error('❌ Build failed:', result.errors);
 							}
 						});
 					},

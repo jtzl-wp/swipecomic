@@ -31,6 +31,7 @@ class Assets {
 	 */
 	public function init() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 	}
 
 	/**
@@ -116,6 +117,61 @@ class Assets {
 		$this->manifest   = json_decode( $manifest_content, true ) ?? array();
 
 		return $this->manifest;
+	}
+
+	/**
+	 * Enqueue admin assets.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $hook Current admin page hook.
+	 */
+	public function enqueue_admin_assets( $hook ) {
+		// Only load on swipecomic edit screens.
+		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
+			return;
+		}
+
+		global $post_type;
+		if ( 'swipecomic' !== $post_type ) {
+			return;
+		}
+
+		// Enqueue WordPress media uploader.
+		wp_enqueue_media();
+
+		// Enqueue jQuery UI Sortable.
+		wp_enqueue_script( 'jquery-ui-sortable' );
+
+		// Enqueue admin JavaScript.
+		wp_enqueue_script(
+			'swipecomic-admin',
+			JTZL_SWIPECOMIC_URL . 'admin/js/swipecomic-admin.js',
+			array( 'jquery', 'jquery-ui-sortable' ),
+			JTZL_SWIPECOMIC_VER,
+			true
+		);
+
+		// Enqueue admin CSS.
+		wp_enqueue_style(
+			'swipecomic-admin',
+			JTZL_SWIPECOMIC_URL . 'admin/css/swipecomic-admin.css',
+			array(),
+			JTZL_SWIPECOMIC_VER
+		);
+
+		// Localize script with data.
+		wp_localize_script(
+			'swipecomic-admin',
+			'swipecomicAdmin',
+			array(
+				'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+				'nonce'             => wp_create_nonce( 'swipecomic_admin_nonce' ),
+				'uploadButtonText'  => __( 'Select Images', 'swipecomic' ),
+				'uploadButtonTitle' => __( 'Select Episode Images', 'swipecomic' ),
+				'removeConfirm'     => __( 'Are you sure you want to remove this image?', 'swipecomic' ),
+			)
+		);
 	}
 
 	/**
