@@ -227,12 +227,12 @@ class MetaBoxes {
 		$pan_custom_x      = get_post_meta( $post->ID, '_swipecomic_default_pan_x', true );
 		$pan_custom_y      = get_post_meta( $post->ID, '_swipecomic_default_pan_y', true );
 
-		// Set defaults if empty.
+		// Set defaults from plugin settings if empty (for new posts).
 		if ( empty( $default_zoom ) ) {
-			$default_zoom = 'fit';
+			$default_zoom = Settings::get_default_zoom();
 		}
 		if ( empty( $default_pan ) ) {
-			$default_pan = 'center';
+			$default_pan = Settings::get_default_pan();
 		}
 		?>
 		<div class="swipecomic-settings-container">

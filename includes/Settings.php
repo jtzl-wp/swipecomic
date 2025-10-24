@@ -32,6 +32,30 @@ class Settings {
 	const PAGE_SLUG = 'swipecomic-settings';
 
 	/**
+	 * Default zoom level.
+	 *
+	 * @since 1.0.0
+	 * @var string
+	 */
+	const DEFAULT_ZOOM = 'fit';
+
+	/**
+	 * Default pan position.
+	 *
+	 * @since 1.0.0
+	 * @var string
+	 */
+	const DEFAULT_PAN = 'center';
+
+	/**
+	 * Default thumbnail size in pixels.
+	 *
+	 * @since 1.0.0
+	 * @var int
+	 */
+	const DEFAULT_THUMBNAIL_SIZE = 400;
+
+	/**
 	 * Initialize settings.
 	 *
 	 * @since 1.0.0
@@ -63,6 +87,79 @@ class Settings {
 	 * @since 1.0.0
 	 */
 	public function register_settings() {
+		// Default Episode Settings section.
+		add_settings_section(
+			'swipecomic_default_settings',
+			__( 'Default Episode Settings', 'swipecomic' ),
+			array( $this, 'render_default_settings_section' ),
+			self::PAGE_SLUG
+		);
+
+		// Default zoom level setting.
+		register_setting(
+			self::OPTION_GROUP,
+			'swipecomic_default_zoom',
+			array(
+				'type'              => 'string',
+				'default'           => self::DEFAULT_ZOOM,
+				'sanitize_callback' => array( $this, 'sanitize_zoom' ),
+			)
+		);
+
+		add_settings_field(
+			'swipecomic_default_zoom',
+			__( 'Default Zoom Level', 'swipecomic' ),
+			array( $this, 'render_default_zoom_field' ),
+			self::PAGE_SLUG,
+			'swipecomic_default_settings'
+		);
+
+		// Default pan position setting.
+		register_setting(
+			self::OPTION_GROUP,
+			'swipecomic_default_pan',
+			array(
+				'type'              => 'string',
+				'default'           => self::DEFAULT_PAN,
+				'sanitize_callback' => array( $this, 'sanitize_pan' ),
+			)
+		);
+
+		add_settings_field(
+			'swipecomic_default_pan',
+			__( 'Default Pan Position', 'swipecomic' ),
+			array( $this, 'render_default_pan_field' ),
+			self::PAGE_SLUG,
+			'swipecomic_default_settings'
+		);
+
+		// Image Generation section.
+		add_settings_section(
+			'swipecomic_image_settings',
+			__( 'Image Generation', 'swipecomic' ),
+			array( $this, 'render_image_settings_section' ),
+			self::PAGE_SLUG
+		);
+
+		// Thumbnail size setting.
+		register_setting(
+			self::OPTION_GROUP,
+			'swipecomic_thumbnail_size',
+			array(
+				'type'              => 'integer',
+				'default'           => self::DEFAULT_THUMBNAIL_SIZE,
+				'sanitize_callback' => array( $this, 'sanitize_thumbnail_size' ),
+			)
+		);
+
+		add_settings_field(
+			'swipecomic_thumbnail_size',
+			__( 'Thumbnail Size', 'swipecomic' ),
+			array( $this, 'render_thumbnail_size_field' ),
+			self::PAGE_SLUG,
+			'swipecomic_image_settings'
+		);
+
 		// URL Structure section.
 		add_settings_section(
 			'swipecomic_url_structure',
@@ -108,6 +205,86 @@ class Settings {
 			self::PAGE_SLUG,
 			'swipecomic_url_structure'
 		);
+	}
+
+	/**
+	 * Render default settings section description.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_default_settings_section() {
+		echo '<p>' . esc_html__( 'Configure default zoom and pan settings for new episodes.', 'swipecomic' ) . '</p>';
+	}
+
+	/**
+	 * Render default zoom field.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_default_zoom_field() {
+		$zoom = get_option( 'swipecomic_default_zoom', self::DEFAULT_ZOOM );
+		?>
+		<select name="swipecomic_default_zoom" id="swipecomic_default_zoom">
+			<option value="fit" <?php selected( $zoom, 'fit' ); ?>><?php esc_html_e( 'Fit', 'swipecomic' ); ?></option>
+			<option value="vFill" <?php selected( $zoom, 'vFill' ); ?>><?php esc_html_e( 'Vertical Fill', 'swipecomic' ); ?></option>
+		</select>
+		<p class="description">
+			<?php esc_html_e( 'Default zoom level applied to new episodes.', 'swipecomic' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render default pan field.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_default_pan_field() {
+		$pan = get_option( 'swipecomic_default_pan', self::DEFAULT_PAN );
+		?>
+		<select name="swipecomic_default_pan" id="swipecomic_default_pan">
+			<option value="left" <?php selected( $pan, 'left' ); ?>><?php esc_html_e( 'Left', 'swipecomic' ); ?></option>
+			<option value="right" <?php selected( $pan, 'right' ); ?>><?php esc_html_e( 'Right', 'swipecomic' ); ?></option>
+			<option value="center" <?php selected( $pan, 'center' ); ?>><?php esc_html_e( 'Center', 'swipecomic' ); ?></option>
+		</select>
+		<p class="description">
+			<?php esc_html_e( 'Default pan position applied to new episodes.', 'swipecomic' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render image settings section description.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_image_settings_section() {
+		echo '<p>' . esc_html__( 'Configure image generation settings for comic thumbnails.', 'swipecomic' ) . '</p>';
+	}
+
+	/**
+	 * Render thumbnail size field.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_thumbnail_size_field() {
+		$size = get_option( 'swipecomic_thumbnail_size', self::DEFAULT_THUMBNAIL_SIZE );
+		?>
+		<input 
+			type="number" 
+			name="swipecomic_thumbnail_size" 
+			id="swipecomic_thumbnail_size" 
+			value="<?php echo esc_attr( $size ); ?>" 
+			min="100"
+			max="2000"
+			step="50"
+			class="small-text"
+		/>
+		<span><?php esc_html_e( 'pixels', 'swipecomic' ); ?></span>
+		<p class="description">
+			<?php esc_html_e( 'Width of thumbnail images for archive pages and admin listings (default: 400px). Aspect ratio is preserved.', 'swipecomic' ); ?>
+		</p>
+		<?php
 	}
 
 	/**
@@ -196,6 +373,88 @@ class Settings {
 			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Sanitize zoom setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $value Input value.
+	 * @return string Sanitized value.
+	 */
+	public function sanitize_zoom( $value ) {
+		$valid_values = array( 'fit', 'vFill' );
+
+		if ( ! in_array( $value, $valid_values, true ) ) {
+			add_settings_error(
+				'swipecomic_default_zoom',
+				'invalid_zoom',
+				__( 'Invalid zoom level. Using default "fit".', 'swipecomic' ),
+				'error'
+			);
+			return self::DEFAULT_ZOOM;
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Sanitize pan setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $value Input value.
+	 * @return string Sanitized value.
+	 */
+	public function sanitize_pan( $value ) {
+		$valid_values = array( 'left', 'right', 'center' );
+
+		if ( ! in_array( $value, $valid_values, true ) ) {
+			add_settings_error(
+				'swipecomic_default_pan',
+				'invalid_pan',
+				__( 'Invalid pan position. Using default "center".', 'swipecomic' ),
+				'error'
+			);
+			return self::DEFAULT_PAN;
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Sanitize thumbnail size setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param mixed $value Input value.
+	 * @return int Sanitized value.
+	 */
+	public function sanitize_thumbnail_size( $value ) {
+		$value = (int) $value;
+
+		if ( $value < 100 ) {
+			add_settings_error(
+				'swipecomic_thumbnail_size',
+				'thumbnail_too_small',
+				__( 'Thumbnail size must be at least 100 pixels. Using minimum value.', 'swipecomic' ),
+				'error'
+			);
+			return 100;
+		}
+
+		if ( $value > 2000 ) {
+			add_settings_error(
+				'swipecomic_thumbnail_size',
+				'thumbnail_too_large',
+				__( 'Thumbnail size must be at most 2000 pixels. Using maximum value.', 'swipecomic' ),
+				'error'
+			);
+			return 2000;
+		}
+
+		return $value;
 	}
 
 	/**
@@ -311,7 +570,7 @@ class Settings {
 			add_settings_error(
 				'swipecomic_messages',
 				'swipecomic_message',
-				__( 'Settings saved. Rewrite rules have been flushed.', 'swipecomic' ),
+				__( 'Settings saved.', 'swipecomic' ),
 				'success'
 			);
 		}
@@ -397,6 +656,39 @@ class Settings {
 		})();
 		</script>
 		<?php
+	}
+
+	/**
+	 * Get default zoom setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string Default zoom level.
+	 */
+	public static function get_default_zoom() {
+		return get_option( 'swipecomic_default_zoom', self::DEFAULT_ZOOM );
+	}
+
+	/**
+	 * Get default pan setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string Default pan position.
+	 */
+	public static function get_default_pan() {
+		return get_option( 'swipecomic_default_pan', self::DEFAULT_PAN );
+	}
+
+	/**
+	 * Get thumbnail size setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return int Thumbnail size in pixels.
+	 */
+	public static function get_thumbnail_size() {
+		return (int) get_option( 'swipecomic_thumbnail_size', self::DEFAULT_THUMBNAIL_SIZE );
 	}
 
 	/**
