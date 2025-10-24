@@ -265,6 +265,96 @@
 	text-decoration: underline;
 }
 
+
+
+/* Episode Order Section */
+.swipecomic-episode-order-section {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 20px;
+}
+
+.swipecomic-episode-order-section h2 {
+	margin-top: 0;
+	margin-bottom: 8px;
+	font-size: 18px;
+}
+
+.swipecomic-episode-order-section .description {
+	margin-bottom: 16px;
+	color: #646970;
+}
+
+/* Episode Order List */
+.swipecomic-episode-order-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.swipecomic-episode-order-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	margin-bottom: 8px;
+	background: #f6f7f7;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	cursor: move;
+	transition: all 0.2s ease;
+}
+
+.swipecomic-episode-order-item:hover {
+	background: #fff;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.swipecomic-episode-order-item .dashicons-menu {
+	color: #646970;
+	flex-shrink: 0;
+}
+
+.swipecomic-episode-order-item .episode-title {
+	flex: 1;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.swipecomic-episode-order-item .episode-number {
+	color: #646970;
+	font-size: 13px;
+	flex-shrink: 0;
+}
+
+/* Sortable Placeholder for Episode Order */
+.swipecomic-episode-order-placeholder {
+	background: #f0f0f1;
+	border: 2px dashed #2271b1;
+	border-radius: 4px;
+	opacity: 0.5;
+	height: 48px;
+	margin-bottom: 8px;
+}
+
+/* Sortable Helper for Episode Order */
+.swipecomic-episode-order-list .ui-sortable-helper {
+	opacity: 0.8;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	transform: rotate(1deg);
+}
+
+/* Episode Order Message */
+#swipecomic-episode-order-message {
+	margin-top: 12px;
+}
+
+#swipecomic-episode-order-message.notice {
+	padding: 8px 12px;
+	margin: 0;
+}
+
 /* Responsive */
 @media (max-width: 782px) {
 	.swipecomic-images-grid {
@@ -278,5 +368,14 @@
 
 	.swipecomic-modal {
 		width: 95%;
+	}
+
+	.swipecomic-episode-order-item {
+		flex-wrap: wrap;
+	}
+
+	.swipecomic-episode-order-item .episode-number {
+		width: 100%;
+		margin-left: 32px;
 	}
 }

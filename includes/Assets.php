@@ -127,13 +127,13 @@ class Assets {
 	 * @param string $hook Current admin page hook.
 	 */
 	public function enqueue_admin_assets( $hook ) {
-		// Only load on swipecomic edit screens.
-		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
-			return;
-		}
+		$is_swipecomic_post = ( 'post.php' === $hook || 'post-new.php' === $hook ) && isset( $GLOBALS['post_type'] ) && 'swipecomic' === $GLOBALS['post_type'];
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Taxonomy parameter is sanitized and only used for comparison.
+		$taxonomy           = isset( $_GET['taxonomy'] ) ? sanitize_key( $_GET['taxonomy'] ) : '';
+		$is_series_taxonomy = ( 'term.php' === $hook || 'edit-tags.php' === $hook ) && 'swipecomic_series' === $taxonomy;
 
-		global $post_type;
-		if ( 'swipecomic' !== $post_type ) {
+		// Only load on swipecomic edit screens or series taxonomy screens.
+		if ( ! $is_swipecomic_post && ! $is_series_taxonomy ) {
 			return;
 		}
 
@@ -169,16 +169,19 @@ class Assets {
 			'swipecomic-admin',
 			'swipecomicAdmin',
 			array(
-				'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
-				'nonce'             => wp_create_nonce( 'swipecomic_admin_nonce' ),
-				'uploadButtonText'  => __( 'Select Images', 'swipecomic' ),
-				'uploadButtonTitle' => __( 'Select Episode Images', 'swipecomic' ),
-				'removeConfirm'     => __( 'Are you sure you want to remove this image?', 'swipecomic' ),
-				'logoUploadTitle'   => __( 'Select Logo Image', 'swipecomic' ),
-				'logoUploadButton'  => __( 'Use as Logo', 'swipecomic' ),
-				'uploadLogoText'    => __( 'Upload Logo', 'swipecomic' ),
-				'changeLogoText'    => __( 'Change Logo', 'swipecomic' ),
-				'removeLogoConfirm' => __( 'Are you sure you want to remove the logo?', 'swipecomic' ),
+				'ajaxUrl'            => admin_url( 'admin-ajax.php' ),
+				'nonce'              => wp_create_nonce( 'swipecomic_admin_nonce' ),
+				'uploadButtonText'   => __( 'Select Images', 'swipecomic' ),
+				'uploadButtonTitle'  => __( 'Select Episode Images', 'swipecomic' ),
+				'removeConfirm'      => __( 'Are you sure you want to remove this image?', 'swipecomic' ),
+				'logoUploadTitle'    => __( 'Select Logo Image', 'swipecomic' ),
+				'logoUploadButton'   => __( 'Use as Logo', 'swipecomic' ),
+				'uploadLogoText'     => __( 'Upload Logo', 'swipecomic' ),
+				'changeLogoText'     => __( 'Change Logo', 'swipecomic' ),
+				'removeLogoConfirm'  => __( 'Are you sure you want to remove the logo?', 'swipecomic' ),
+				'savingOrder'        => __( 'Saving order...', 'swipecomic' ),
+				'orderError'         => __( 'Error updating episode order.', 'swipecomic' ),
+				'episodeNumberLabel' => __( 'Episode #', 'swipecomic' ),
 			)
 		);
 	}

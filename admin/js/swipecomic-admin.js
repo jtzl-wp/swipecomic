@@ -5,7 +5,7 @@
  * @param {Object} $ jQuery object
  */
 
-/* global jQuery, swipecomicAdmin */
+/* global jQuery, swipecomicAdmin, ajaxurl */
 
 (function ($) {
 	'use strict';
@@ -718,6 +718,250 @@
 	};
 
 	/**
+	 * Series Cover Image Manager
+	 */
+	const SeriesCoverManager = {
+		/**
+		 * Media frame instance
+		 */
+		frame: null,
+
+		/**
+		 * Initialize the cover manager
+		 */
+		init() {
+			this.bindEvents();
+		},
+
+		/**
+		 * Bind event handlers
+		 */
+		bindEvents() {
+			// Upload cover button
+			$('#swipecomic-upload-series-cover').on('click', (e) => {
+				e.preventDefault();
+				this.openMediaUploader();
+			});
+
+			// Remove cover button
+			$('#swipecomic-remove-series-cover').on('click', (e) => {
+				e.preventDefault();
+				this.removeCover();
+			});
+		},
+
+		/**
+		 * Open WordPress media uploader
+		 */
+		openMediaUploader() {
+			// Create media frame if it doesn't exist
+			if (!this.frame) {
+				this.frame = wp.media({
+					title: 'Select Series Cover Image',
+					button: {
+						text: 'Use as Cover',
+					},
+					multiple: false,
+					library: {
+						type: 'image',
+					},
+				});
+
+				// Handle image selection
+				this.frame.on('select', () => {
+					const attachment = this.frame
+						.state()
+						.get('selection')
+						.first()
+						.toJSON();
+					this.setCover(attachment);
+				});
+			}
+
+			// Open the media frame
+			this.frame.open();
+		},
+
+		/**
+		 * Set cover image
+		 *
+		 * @param {Object} attachment Attachment data
+		 */
+		setCover(attachment) {
+			const imageUrl = attachment.sizes?.medium?.url || attachment.url;
+			const alt = attachment.alt || '';
+
+			// Update hidden input
+			$('#series_cover_image_id').val(attachment.id);
+
+			// Update preview
+			const $img = $('<img>', {
+				src: imageUrl,
+				alt,
+				style: 'max-width: 200px; height: auto; display: block;',
+			});
+			$('#swipecomic-series-cover-preview').html($img).show();
+
+			// Update button text
+			$('#swipecomic-upload-series-cover').html(
+				'<span class="dashicons dashicons-format-image"></span> Change Cover Image'
+			);
+
+			// Show remove button
+			$('#swipecomic-remove-series-cover').show();
+		},
+
+		/**
+		 * Remove cover image
+		 */
+		removeCover() {
+			// eslint-disable-next-line no-alert
+			if (!confirm('Remove cover image?')) {
+				return;
+			}
+
+			// Clear hidden input
+			$('#series_cover_image_id').val('');
+
+			// Clear preview
+			$('#swipecomic-series-cover-preview').html('').hide();
+
+			// Update button text
+			$('#swipecomic-upload-series-cover').html(
+				'<span class="dashicons dashicons-format-image"></span> Upload Cover Image'
+			);
+
+			// Hide remove button
+			$('#swipecomic-remove-series-cover').hide();
+		},
+	};
+
+	/**
+	 * Episode Order Manager for Series
+	 */
+	const EpisodeOrderManager = {
+		/**
+		 * Initialize the order manager
+		 */
+		init() {
+			this.initSortable();
+		},
+
+		/**
+		 * Initialize jQuery UI Sortable for episode list
+		 */
+		initSortable() {
+			const list = $('#swipecomic-episode-order-list');
+
+			if (!list.length) {
+				return;
+			}
+
+			list.sortable({
+				items: '.swipecomic-episode-order-item',
+				cursor: 'move',
+				opacity: 0.7,
+				placeholder: 'swipecomic-episode-order-placeholder',
+				update: () => {
+					this.saveOrder();
+				},
+			});
+		},
+
+		/**
+		 * Update episode numbers in the UI
+		 */
+		updateEpisodeNumbers() {
+			const list = $('#swipecomic-episode-order-list');
+			list.find('.swipecomic-episode-order-item').each(function (index) {
+				const $item = $(this);
+				const newEpisodeNumber = index + 1;
+				const $episodeNumber = $item.find('.episode-number');
+
+				// Update the episode number text
+				if ($episodeNumber.length) {
+					$episodeNumber.text(
+						(swipecomicAdmin.episodeNumberLabel || 'Episode #') +
+							newEpisodeNumber
+					);
+				}
+			});
+		},
+
+		/**
+		 * Save episode order via AJAX
+		 */
+		saveOrder() {
+			const list = $('#swipecomic-episode-order-list');
+			const termId = list.data('term-id');
+			const order = [];
+
+			list.find('.swipecomic-episode-order-item').each(function () {
+				order.push($(this).data('post-id'));
+			});
+
+			// Update episode numbers immediately for better UX
+			this.updateEpisodeNumbers();
+
+			// Show loading message
+			const messageDiv = $('#swipecomic-episode-order-message');
+			messageDiv
+				.removeClass('notice-success notice-error')
+				.addClass('notice notice-info')
+				.html(
+					'<p>' + (swipecomicAdmin.savingOrder || 'Saving order...') + '</p>'
+				)
+				.show();
+
+			// Send AJAX request
+			$.ajax({
+				url: ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'swipecomic_update_episode_order',
+					nonce: $('#swipecomic_episode_order_nonce').val(),
+					term_id: termId,
+					order,
+				},
+				success: (response) => {
+					if (response.success) {
+						messageDiv
+							.removeClass('notice-info notice-error')
+							.addClass('notice-success')
+							.html('<p>' + response.data.message + '</p>');
+					} else {
+						messageDiv
+							.removeClass('notice-info notice-success')
+							.addClass('notice-error')
+							.html('<p>' + response.data.message + '</p>');
+					}
+
+					// Hide message after 3 seconds
+					setTimeout(() => {
+						messageDiv.fadeOut();
+					}, 3000);
+				},
+				error: () => {
+					messageDiv
+						.removeClass('notice-info notice-success')
+						.addClass('notice-error')
+						.html(
+							'<p>' +
+								(swipecomicAdmin.orderError ||
+									'Error updating episode order.') +
+								'</p>'
+						);
+
+					// Hide message after 3 seconds
+					setTimeout(() => {
+						messageDiv.fadeOut();
+					}, 3000);
+				},
+			});
+		},
+	};
+
+	/**
 	 * Initialize on document ready
 	 */
 	$(document).ready(function () {
@@ -731,6 +975,14 @@
 
 		if ($('#swipecomic-upload-logo').length) {
 			EpisodeLogoManager.init();
+		}
+
+		if ($('#swipecomic-upload-series-cover').length) {
+			SeriesCoverManager.init();
+		}
+
+		if ($('#swipecomic-episode-order-list').length) {
+			EpisodeOrderManager.init();
 		}
 	});
 })(jQuery);
