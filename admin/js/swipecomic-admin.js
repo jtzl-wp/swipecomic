@@ -110,6 +110,7 @@
 					multiple: true,
 					library: {
 						type: 'image',
+						uploadedTo: wp.media.view.settings.post.id, // Pass post ID
 					},
 				});
 
@@ -120,6 +121,14 @@
 						this.addImage(attachment.toJSON());
 					});
 				});
+			}
+
+			// Pass SwipeComic context to upload requests
+			if (wp.media.view.settings.post && wp.media.view.settings.post.id) {
+				this.frame.uploader.options.uploader.params =
+					this.frame.uploader.options.uploader.params || {};
+				this.frame.uploader.options.uploader.params.swipecomic_context_post_id =
+					wp.media.view.settings.post.id;
 			}
 
 			// Open the media frame

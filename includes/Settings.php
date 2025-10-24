@@ -160,6 +160,25 @@ class Settings {
 			'swipecomic_image_settings'
 		);
 
+		// Media optimization setting.
+		register_setting(
+			self::OPTION_GROUP,
+			'swipecomic_media_optimization',
+			array(
+				'type'              => 'string',
+				'default'           => 'keep_all',
+				'sanitize_callback' => array( $this, 'sanitize_media_optimization' ),
+			)
+		);
+
+		add_settings_field(
+			'swipecomic_media_optimization',
+			__( 'Media Size Optimization', 'swipecomic' ),
+			array( $this, 'render_media_optimization_field' ),
+			self::PAGE_SLUG,
+			'swipecomic_image_settings'
+		);
+
 		// URL Structure section.
 		add_settings_section(
 			'swipecomic_url_structure',
@@ -259,7 +278,7 @@ class Settings {
 	 * @since 1.0.0
 	 */
 	public function render_image_settings_section() {
-		echo '<p>' . esc_html__( 'Configure image generation settings for comic thumbnails.', 'swipecomic' ) . '</p>';
+		echo '<p>' . esc_html__( 'Configure image generation and optimization settings.', 'swipecomic' ) . '</p>';
 	}
 
 	/**
@@ -283,6 +302,35 @@ class Settings {
 		<span><?php esc_html_e( 'pixels', 'swipecomic' ); ?></span>
 		<p class="description">
 			<?php esc_html_e( 'Width of thumbnail images for archive pages and admin listings (default: 400px). Aspect ratio is preserved.', 'swipecomic' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render media optimization field.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_media_optimization_field() {
+		$optimization = get_option( 'swipecomic_media_optimization', 'keep_all' );
+		?>
+		<select name="swipecomic_media_optimization" id="swipecomic_media_optimization">
+			<option value="keep_all" <?php selected( $optimization, 'keep_all' ); ?>>
+				<?php esc_html_e( 'Keep all WordPress default sizes', 'swipecomic' ); ?>
+			</option>
+			<option value="disable_all" <?php selected( $optimization, 'disable_all' ); ?>>
+				<?php esc_html_e( 'Disable all WordPress default sizes (site-wide)', 'swipecomic' ); ?>
+			</option>
+			<option value="cleanup_swipecomic" <?php selected( $optimization, 'cleanup_swipecomic' ); ?>>
+				<?php esc_html_e( 'Remove default sizes for SwipeComic images only', 'swipecomic' ); ?>
+			</option>
+		</select>
+		<p class="description">
+			<?php
+			echo wp_kses_post(
+				__( '<strong>Keep all:</strong> WordPress generates all default sizes for all images (thumbnail, medium, large, etc.).<br><strong>Disable all:</strong> Disables default sizes site-wide for faster uploads and less disk space. Only SwipeComic thumbnail is generated.<br><strong>Remove for SwipeComic only:</strong> Default sizes are generated then immediately deleted for SwipeComic images. Slower uploads but preserves normal WordPress behavior for other images.', 'swipecomic' )
+			);
+			?>
 		</p>
 		<?php
 	}
@@ -452,6 +500,30 @@ class Settings {
 				'error'
 			);
 			return 2000;
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Sanitize media optimization setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $value Input value.
+	 * @return string Sanitized value.
+	 */
+	public function sanitize_media_optimization( $value ) {
+		$valid_values = array( 'keep_all', 'disable_all', 'cleanup_swipecomic' );
+
+		if ( ! in_array( $value, $valid_values, true ) ) {
+			add_settings_error(
+				'swipecomic_media_optimization',
+				'invalid_optimization',
+				__( 'Invalid media optimization setting. Using default.', 'swipecomic' ),
+				'error'
+			);
+			return 'keep_all';
 		}
 
 		return $value;
@@ -689,6 +761,17 @@ class Settings {
 	 */
 	public static function get_thumbnail_size() {
 		return (int) get_option( 'swipecomic_thumbnail_size', self::DEFAULT_THUMBNAIL_SIZE );
+	}
+
+	/**
+	 * Get media optimization setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string Media optimization mode.
+	 */
+	public static function get_media_optimization() {
+		return get_option( 'swipecomic_media_optimization', 'keep_all' );
 	}
 
 	/**

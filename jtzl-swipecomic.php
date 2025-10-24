@@ -88,18 +88,38 @@ class JTZL_SwipeComic {
 	private $meta_boxes;
 
 	/**
+	 * ImageHandler instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var ImageHandler
+	 */
+	private $image_handler;
+
+	/**
+	 * TemplateFunctions instance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var TemplateFunctions
+	 */
+	private $template_functions;
+
+	/**
 	 * Initialize the plugin.
 	 *
 	 * @since 1.0.0
 	 */
 	public function init() {
 		// Initialize component classes.
-		$this->settings   = new JTZL\SwipeComic\Settings();
-		$this->assets     = new JTZL\SwipeComic\Assets();
-		$this->post_type  = new JTZL\SwipeComic\PostType();
-		$this->taxonomy   = new JTZL\SwipeComic\Taxonomy();
-		$this->rewrite    = new JTZL\SwipeComic\Rewrite();
-		$this->meta_boxes = new JTZL\SwipeComic\MetaBoxes();
+		$this->settings           = new JTZL\SwipeComic\Settings();
+		$this->assets             = new JTZL\SwipeComic\Assets();
+		$this->post_type          = new JTZL\SwipeComic\PostType();
+		$this->taxonomy           = new JTZL\SwipeComic\Taxonomy();
+		$this->rewrite            = new JTZL\SwipeComic\Rewrite();
+		$this->meta_boxes         = new JTZL\SwipeComic\MetaBoxes();
+		$this->image_handler      = new JTZL\SwipeComic\ImageHandler();
+		$this->template_functions = new JTZL\SwipeComic\TemplateFunctions();
 
 		// Initialize components.
 		$this->settings->init();
@@ -108,6 +128,8 @@ class JTZL_SwipeComic {
 		$this->taxonomy->init();
 		$this->rewrite->init();
 		$this->meta_boxes->init();
+		$this->image_handler->init();
+		$this->template_functions->init();
 	}
 
 	/**
@@ -148,6 +170,7 @@ function jtzl_swipecomic_activate() {
 	add_option( 'swipecomic_default_zoom', 'fit' );
 	add_option( 'swipecomic_default_pan', 'center' );
 	add_option( 'swipecomic_thumbnail_size', 400 );
+	add_option( 'swipecomic_media_optimization', 'keep_all' );
 
 	// Set default URL structure options.
 	add_option( 'swipecomic_use_url_prefix', true );
