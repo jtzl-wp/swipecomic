@@ -55,6 +55,33 @@
 		},
 
 		/**
+		 * Auto-save images to post meta via AJAX
+		 */
+		autoSaveImages() {
+			const postId = $('#post_ID').val();
+
+			if (!postId || postId === '0') {
+				// New post without ID yet, will be saved on first publish/save
+				return;
+			}
+
+			$.ajax({
+				url: swipecomicAdmin.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'swipecomic_save_images',
+					nonce: swipecomicAdmin.nonce,
+					post_id: postId,
+					images_data: JSON.stringify(this.imagesData),
+				},
+				error: () => {
+					// eslint-disable-next-line no-alert
+					alert('Auto-save failed. Please save your changes manually.');
+				},
+			});
+		},
+
+		/**
 		 * Bind event handlers
 		 */
 		bindEvents() {
@@ -155,6 +182,9 @@
 			this.imagesData.push(imageData);
 			this.renderImage(attachment, this.imagesData.length - 1);
 			this.saveImagesData();
+
+			// Auto-save to post meta immediately
+			this.autoSaveImages();
 		},
 
 		/**
@@ -215,15 +245,40 @@
 			}
 
 			const index = parseInt($item.data('index'), 10);
+			const imageId = parseInt($item.data('image-id'), 10);
 
-			// Remove from data array
-			this.imagesData.splice(index, 1);
+			// Delete the image via AJAX
+			$.ajax({
+				url: swipecomicAdmin.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'swipecomic_delete_image',
+					nonce: swipecomicAdmin.nonce,
+					attachment_id: imageId,
+				},
+				success: (response) => {
+					if (response.success) {
+						// Remove from data array
+						this.imagesData.splice(index, 1);
 
-			// Remove from DOM
-			$item.remove();
+						// Remove from DOM
+						$item.remove();
 
-			// Update indices
-			this.updateImageOrder();
+						// Update indices
+						this.updateImageOrder();
+					} else {
+						// eslint-disable-next-line no-alert
+						alert(
+							response.data.message ||
+								'Failed to delete image. Please try again.'
+						);
+					}
+				},
+				error: () => {
+					// eslint-disable-next-line no-alert
+					alert('Error deleting image. Please try again.');
+				},
+			});
 		},
 
 		/**
@@ -251,6 +306,9 @@
 
 			this.imagesData = newOrder;
 			this.saveImagesData();
+
+			// Auto-save the new order
+			this.autoSaveImages();
 		},
 
 		/**
@@ -514,6 +572,9 @@
 			// Save data
 			EpisodeImagesGallery.saveImagesData();
 
+			// Auto-save to post meta
+			EpisodeImagesGallery.autoSaveImages();
+
 			// Close modal
 			this.close();
 		},
@@ -698,6 +759,38 @@
 
 			// Show remove button
 			$('#swipecomic-remove-logo').show();
+
+			// Auto-save logo to post meta
+			this.autoSaveLogo(attachment.id);
+		},
+
+		/**
+		 * Auto-save logo to post meta via AJAX
+		 *
+		 * @param {number} logoId Logo attachment ID
+		 */
+		autoSaveLogo(logoId) {
+			const postId = $('#post_ID').val();
+
+			if (!postId || postId === '0') {
+				// New post without ID yet, will be saved on first publish/save
+				return;
+			}
+
+			$.ajax({
+				url: swipecomicAdmin.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'swipecomic_save_logo',
+					nonce: swipecomicAdmin.nonce,
+					post_id: postId,
+					logo_id: logoId,
+				},
+				error: () => {
+					// eslint-disable-next-line no-alert
+					alert('Auto-save failed. Please save your changes manually.');
+				},
+			});
 		},
 
 		/**
@@ -709,20 +802,57 @@
 				return;
 			}
 
-			// Clear hidden input
-			$('#swipecomic-logo-id').val('');
+			const logoId = $('#swipecomic-logo-id').val();
 
-			// Clear preview
-			$('#swipecomic-logo-preview').html('').hide();
+			// If there's a logo ID, delete it via AJAX
+			if (logoId) {
+				$.ajax({
+					url: swipecomicAdmin.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'swipecomic_delete_logo',
+						nonce: swipecomicAdmin.nonce,
+						attachment_id: logoId,
+					},
+					success: (response) => {
+						if (response.success) {
+							// Clear hidden input
+							$('#swipecomic-logo-id').val('');
 
-			// Update button text
-			$('#swipecomic-upload-logo').html(
-				'<span class="dashicons dashicons-format-image"></span> ' +
-					(swipecomicAdmin.uploadLogoText || 'Upload Logo')
-			);
+							// Clear preview
+							$('#swipecomic-logo-preview').html('').hide();
 
-			// Hide remove button
-			$('#swipecomic-remove-logo').hide();
+							// Update button text
+							$('#swipecomic-upload-logo').html(
+								'<span class="dashicons dashicons-format-image"></span> ' +
+									(swipecomicAdmin.uploadLogoText || 'Upload Logo')
+							);
+
+							// Hide remove button
+							$('#swipecomic-remove-logo').hide();
+						} else {
+							// eslint-disable-next-line no-alert
+							alert(
+								response.data.message ||
+									'Failed to delete logo. Please try again.'
+							);
+						}
+					},
+					error: () => {
+						// eslint-disable-next-line no-alert
+						alert('Error deleting logo. Please try again.');
+					},
+				});
+			} else {
+				// No logo ID, just clear the UI
+				$('#swipecomic-logo-id').val('');
+				$('#swipecomic-logo-preview').html('').hide();
+				$('#swipecomic-upload-logo').html(
+					'<span class="dashicons dashicons-format-image"></span> ' +
+						(swipecomicAdmin.uploadLogoText || 'Upload Logo')
+				);
+				$('#swipecomic-remove-logo').hide();
+			}
 		},
 	};
 

@@ -25,6 +25,12 @@ class MetaBoxes {
 		add_action( 'save_post_swipecomic', array( $this, 'save_episode_images' ), 10, 2 );
 		add_action( 'save_post_swipecomic', array( $this, 'save_episode_settings' ), 10, 2 );
 		add_action( 'save_post_swipecomic', array( $this, 'save_episode_logo' ), 10, 2 );
+
+		// AJAX handlers for immediate operations.
+		add_action( 'wp_ajax_swipecomic_delete_image', array( $this, 'ajax_delete_image' ) );
+		add_action( 'wp_ajax_swipecomic_delete_logo', array( $this, 'ajax_delete_logo' ) );
+		add_action( 'wp_ajax_swipecomic_save_images', array( $this, 'ajax_save_images' ) );
+		add_action( 'wp_ajax_swipecomic_save_logo', array( $this, 'ajax_save_logo' ) );
 	}
 
 	/**
@@ -186,8 +192,10 @@ class MetaBoxes {
 				continue;
 			}
 
+			$image_id = absint( $image['id'] );
+
 			$sanitized_image = array(
-				'id'    => absint( $image['id'] ),
+				'id'    => $image_id,
 				'order' => absint( $index ),
 			);
 
@@ -205,6 +213,7 @@ class MetaBoxes {
 		}
 
 		// Save to post meta.
+		// Note: Images are deleted immediately via AJAX when removed, not during post save.
 		update_post_meta( $post_id, '_swipecomic_images', $sanitized_images );
 	}
 
@@ -474,5 +483,182 @@ class MetaBoxes {
 				delete_post_meta( $post_id, '_swipecomic_logo_id' );
 			}
 		}
+		// Note: Logo is deleted immediately via AJAX when removed, not during post save.
+	}
+
+	/**
+	 * AJAX handler to delete an episode image immediately.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_delete_image() {
+		// Verify nonce.
+		check_ajax_referer( 'swipecomic_admin_nonce', 'nonce' );
+
+		// Get attachment ID.
+		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+
+		if ( ! $attachment_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid attachment ID.', 'swipecomic' ) ) );
+		}
+
+		// Check if user has permission to delete this specific attachment.
+		if ( ! current_user_can( 'delete_post', $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'swipecomic' ) ) );
+		}
+
+		// Move the attachment to trash instead of permanent deletion.
+		$deleted = wp_delete_attachment( $attachment_id, false );
+
+		if ( false === $deleted ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete image.', 'swipecomic' ) ) );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Image deleted successfully.', 'swipecomic' ) ) );
+	}
+
+	/**
+	 * AJAX handler to delete an episode logo immediately.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_delete_logo() {
+		// Verify nonce.
+		check_ajax_referer( 'swipecomic_admin_nonce', 'nonce' );
+
+		// Get attachment ID.
+		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+
+		if ( ! $attachment_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid attachment ID.', 'swipecomic' ) ) );
+		}
+
+		// Check if user has permission to delete this specific attachment.
+		if ( ! current_user_can( 'delete_post', $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'swipecomic' ) ) );
+		}
+
+		// Move the attachment to trash instead of permanent deletion.
+		$deleted = wp_delete_attachment( $attachment_id, false );
+
+		if ( false === $deleted ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete logo.', 'swipecomic' ) ) );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Logo deleted successfully.', 'swipecomic' ) ) );
+	}
+
+	/**
+	 * AJAX handler to save episode images immediately.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_save_images() {
+		// Verify nonce.
+		check_ajax_referer( 'swipecomic_admin_nonce', 'nonce' );
+
+		// Get post ID.
+		$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+
+		if ( ! $post_id ) {
+			wp_send_json_error( array( 'message' => __( 'No post ID provided.', 'swipecomic' ) ) );
+		}
+
+		// Check if user has permission for this specific post.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'swipecomic' ) ) );
+		}
+
+		if ( 'swipecomic' !== get_post_type( $post_id ) ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %s: post type */
+						__( 'Invalid post type: %s', 'swipecomic' ),
+						get_post_type( $post_id )
+					),
+				)
+			);
+		}
+
+		// Get and sanitize images data.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON data is sanitized after decoding.
+		$images_json = isset( $_POST['images_data'] ) ? wp_unslash( $_POST['images_data'] ) : '';
+		$images_data = json_decode( $images_json, true );
+
+		if ( ! is_array( $images_data ) ) {
+			$images_data = array();
+		}
+
+		// Sanitize each image entry.
+		$sanitized_images = array();
+		foreach ( $images_data as $index => $image ) {
+			if ( ! isset( $image['id'] ) ) {
+				continue;
+			}
+
+			$image_id = absint( $image['id'] );
+
+			$sanitized_image = array(
+				'id'    => $image_id,
+				'order' => absint( $index ),
+			);
+
+			// Sanitize zoom override.
+			if ( isset( $image['zoom_override'] ) && ! empty( $image['zoom_override'] ) ) {
+				$sanitized_image['zoom_override'] = sanitize_text_field( $image['zoom_override'] );
+			}
+
+			// Sanitize pan override.
+			if ( isset( $image['pan_override'] ) && ! empty( $image['pan_override'] ) ) {
+				$sanitized_image['pan_override'] = sanitize_text_field( $image['pan_override'] );
+			}
+
+			$sanitized_images[] = $sanitized_image;
+		}
+
+		// Save to post meta.
+		update_post_meta( $post_id, '_swipecomic_images', $sanitized_images );
+
+		wp_send_json_success(
+			array(
+				'message'      => __( 'Images saved successfully.', 'swipecomic' ),
+				'images_count' => count( $sanitized_images ),
+				'post_id'      => $post_id,
+			)
+		);
+	}
+
+	/**
+	 * AJAX handler to save episode logo immediately.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_save_logo() {
+		// Verify nonce.
+		check_ajax_referer( 'swipecomic_admin_nonce', 'nonce' );
+
+		// Get post ID.
+		$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+
+		if ( ! $post_id || 'swipecomic' !== get_post_type( $post_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'swipecomic' ) ) );
+		}
+
+		// Check if user has permission for this specific post.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'swipecomic' ) ) );
+		}
+
+		// Get logo ID.
+		$logo_id = isset( $_POST['logo_id'] ) ? absint( $_POST['logo_id'] ) : 0;
+
+		if ( $logo_id > 0 ) {
+			update_post_meta( $post_id, '_swipecomic_logo_id', $logo_id );
+		} else {
+			delete_post_meta( $post_id, '_swipecomic_logo_id' );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Logo saved successfully.', 'swipecomic' ) ) );
 	}
 }
