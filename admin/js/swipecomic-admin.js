@@ -223,7 +223,7 @@
 						<button type="button" class="button swipecomic-image-settings" title="Image Settings">
 							<span class="dashicons dashicons-admin-generic"></span>
 						</button>
-						<button type="button" class="button swipecomic-image-remove" title="Remove Image">
+						<button type="button" class="button swipecomic-image-remove" title="${swipecomicAdmin.removeButtonText}">
 							<span class="dashicons dashicons-no-alt"></span>
 						</button>
 					</div>
@@ -247,38 +247,46 @@
 			const index = parseInt($item.data('index'), 10);
 			const imageId = parseInt($item.data('image-id'), 10);
 
-			// Delete the image via AJAX
-			$.ajax({
-				url: swipecomicAdmin.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'swipecomic_delete_image',
-					nonce: swipecomicAdmin.nonce,
-					attachment_id: imageId,
-				},
-				success: (response) => {
-					if (response.success) {
-						// Remove from data array
-						this.imagesData.splice(index, 1);
+			// Check if we should delete or just detach
+			if (swipecomicAdmin.deleteOnRemove) {
+				// Delete the image via AJAX
+				$.ajax({
+					url: swipecomicAdmin.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'swipecomic_delete_image',
+						nonce: swipecomicAdmin.nonce,
+						attachment_id: imageId,
+					},
+					success: (response) => {
+						if (response.success) {
+							// Remove from data array
+							this.imagesData.splice(index, 1);
 
-						// Remove from DOM
-						$item.remove();
+							// Remove from DOM
+							$item.remove();
 
-						// Update indices
-						this.updateImageOrder();
-					} else {
+							// Update indices
+							this.updateImageOrder();
+						} else {
+							// eslint-disable-next-line no-alert
+							alert(
+								response.data.message ||
+									'Failed to delete image. Please try again.'
+							);
+						}
+					},
+					error: () => {
 						// eslint-disable-next-line no-alert
-						alert(
-							response.data.message ||
-								'Failed to delete image. Please try again.'
-						);
-					}
-				},
-				error: () => {
-					// eslint-disable-next-line no-alert
-					alert('Error deleting image. Please try again.');
-				},
-			});
+						alert('Error deleting image. Please try again.');
+					},
+				});
+			} else {
+				// Just detach - remove from episode but keep in Media Library
+				this.imagesData.splice(index, 1);
+				$item.remove();
+				this.updateImageOrder();
+			}
 		},
 
 		/**
@@ -804,8 +812,23 @@
 
 			const logoId = $('#swipecomic-logo-id').val();
 
-			// If there's a logo ID, delete it via AJAX
-			if (logoId) {
+			const clearLogoUI = () => {
+				$('#swipecomic-logo-id').val('');
+				$('#swipecomic-logo-preview').html('').hide();
+				$('#swipecomic-upload-logo').html(
+					'<span class="dashicons dashicons-format-image"></span> ' +
+						swipecomicAdmin.uploadLogoText
+				);
+				$('#swipecomic-remove-logo').hide();
+			};
+
+			if (!logoId) {
+				return; // Nothing to remove
+			}
+
+			// Check if we should delete or just detach
+			if (swipecomicAdmin.deleteOnRemove) {
+				// Delete the logo via AJAX
 				$.ajax({
 					url: swipecomicAdmin.ajaxUrl,
 					type: 'POST',
@@ -816,20 +839,7 @@
 					},
 					success: (response) => {
 						if (response.success) {
-							// Clear hidden input
-							$('#swipecomic-logo-id').val('');
-
-							// Clear preview
-							$('#swipecomic-logo-preview').html('').hide();
-
-							// Update button text
-							$('#swipecomic-upload-logo').html(
-								'<span class="dashicons dashicons-format-image"></span> ' +
-									(swipecomicAdmin.uploadLogoText || 'Upload Logo')
-							);
-
-							// Hide remove button
-							$('#swipecomic-remove-logo').hide();
+							clearLogoUI();
 						} else {
 							// eslint-disable-next-line no-alert
 							alert(
@@ -844,14 +854,8 @@
 					},
 				});
 			} else {
-				// No logo ID, just clear the UI
-				$('#swipecomic-logo-id').val('');
-				$('#swipecomic-logo-preview').html('').hide();
-				$('#swipecomic-upload-logo').html(
-					'<span class="dashicons dashicons-format-image"></span> ' +
-						(swipecomicAdmin.uploadLogoText || 'Upload Logo')
-				);
-				$('#swipecomic-remove-logo').hide();
+				// Just detach - remove from episode but keep in Media Library
+				clearLogoUI();
 			}
 		},
 	};

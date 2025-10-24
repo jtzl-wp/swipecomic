@@ -139,7 +139,7 @@ class MetaBoxes {
 				<button type="button" class="button swipecomic-image-settings" title="<?php esc_attr_e( 'Image Settings', 'swipecomic' ); ?>">
 					<span class="dashicons dashicons-admin-generic"></span>
 				</button>
-				<button type="button" class="button swipecomic-image-remove" title="<?php esc_attr_e( 'Remove Image', 'swipecomic' ); ?>">
+				<button type="button" class="button swipecomic-image-remove" title="<?php echo esc_attr( Settings::delete_on_remove() ? __( 'Delete Image', 'swipecomic' ) : __( 'Remove Image', 'swipecomic' ) ); ?>">
 					<span class="dashicons dashicons-no-alt"></span>
 				</button>
 			</div>
@@ -431,7 +431,7 @@ class MetaBoxes {
 				</button>
 
 				<a href="#" class="button-link-delete swipecomic-remove-logo" id="swipecomic-remove-logo" style="<?php echo $logo_id ? '' : 'display:none;'; ?>">
-					<?php esc_html_e( 'Remove Logo', 'swipecomic' ); ?>
+					<?php echo esc_html( Settings::delete_on_remove() ? __( 'Delete Logo', 'swipecomic' ) : __( 'Remove Logo', 'swipecomic' ) ); ?>
 				</a>
 			</p>
 

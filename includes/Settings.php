@@ -179,6 +179,25 @@ class Settings {
 			'swipecomic_image_settings'
 		);
 
+		// Delete images on remove setting.
+		register_setting(
+			self::OPTION_GROUP,
+			'swipecomic_delete_on_remove',
+			array(
+				'type'              => 'boolean',
+				'default'           => false,
+				'sanitize_callback' => array( $this, 'sanitize_delete_on_remove' ),
+			)
+		);
+
+		add_settings_field(
+			'swipecomic_delete_on_remove',
+			__( 'Image Removal Behavior', 'swipecomic' ),
+			array( $this, 'render_delete_on_remove_field' ),
+			self::PAGE_SLUG,
+			'swipecomic_image_settings'
+		);
+
 		// URL Structure section.
 		add_settings_section(
 			'swipecomic_url_structure',
@@ -329,6 +348,28 @@ class Settings {
 			<?php
 			echo wp_kses_post(
 				__( '<strong>Keep all:</strong> WordPress generates all default sizes for all images (thumbnail, medium, large, etc.).<br><strong>Disable all:</strong> Disables default sizes site-wide for faster uploads and less disk space. Only SwipeComic thumbnail is generated.<br><strong>Remove for SwipeComic only:</strong> Default sizes are generated then immediately deleted for SwipeComic images. Slower uploads but preserves normal WordPress behavior for other images.', 'swipecomic' )
+			);
+			?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render delete on remove field.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_delete_on_remove_field() {
+		$delete_on_remove = get_option( 'swipecomic_delete_on_remove', false );
+		?>
+		<label>
+			<input type="checkbox" name="swipecomic_delete_on_remove" id="swipecomic_delete_on_remove" value="1" <?php checked( $delete_on_remove ); ?> />
+			<?php esc_html_e( 'Delete images from Media Library when removed from episodes', 'swipecomic' ); ?>
+		</label>
+		<p class="description">
+			<?php
+			echo wp_kses_post(
+				__( '<strong>Unchecked (recommended):</strong> Removing an image only detaches it from the episode. The image remains in your Media Library and can be re-added without re-uploading.<br><strong>Checked:</strong> Removing an image permanently deletes it from WordPress. Use this if you want automatic cleanup, but be careful as this cannot be undone.', 'swipecomic' )
 			);
 			?>
 		</p>
@@ -527,6 +568,18 @@ class Settings {
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Sanitize delete on remove setting.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param mixed $value Input value.
+	 * @return bool Sanitized value.
+	 */
+	public function sanitize_delete_on_remove( $value ) {
+		return (bool) $value;
 	}
 
 	/**
@@ -794,5 +847,16 @@ class Settings {
 	 */
 	public static function use_url_prefix() {
 		return (bool) get_option( 'swipecomic_use_url_prefix', true );
+	}
+
+	/**
+	 * Check if images should be deleted on remove.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return bool True if images should be deleted.
+	 */
+	public static function delete_on_remove() {
+		return (bool) get_option( 'swipecomic_delete_on_remove', false );
 	}
 }
