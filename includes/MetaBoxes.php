@@ -185,32 +185,8 @@ class MetaBoxes {
 			$images_data = array();
 		}
 
-		// Sanitize each image entry.
-		$sanitized_images = array();
-		foreach ( $images_data as $index => $image ) {
-			if ( ! isset( $image['id'] ) ) {
-				continue;
-			}
-
-			$image_id = absint( $image['id'] );
-
-			$sanitized_image = array(
-				'id'    => $image_id,
-				'order' => absint( $index ),
-			);
-
-			// Sanitize zoom override.
-			if ( isset( $image['zoom_override'] ) && ! empty( $image['zoom_override'] ) ) {
-				$sanitized_image['zoom_override'] = sanitize_text_field( $image['zoom_override'] );
-			}
-
-			// Sanitize pan override.
-			if ( isset( $image['pan_override'] ) && ! empty( $image['pan_override'] ) ) {
-				$sanitized_image['pan_override'] = sanitize_text_field( $image['pan_override'] );
-			}
-
-			$sanitized_images[] = $sanitized_image;
-		}
+		// Sanitize and validate images using shared helper method.
+		$sanitized_images = $this->sanitize_and_validate_images( $images_data );
 
 		// Save to post meta.
 		// Note: Images are deleted immediately via AJAX when removed, not during post save.
@@ -478,7 +454,10 @@ class MetaBoxes {
 			$logo_id = absint( $_POST['swipecomic_logo_id'] );
 
 			if ( $logo_id > 0 ) {
-				update_post_meta( $post_id, '_swipecomic_logo_id', $logo_id );
+				// Verify the attachment exists and is an image.
+				if ( wp_attachment_is_image( $logo_id ) ) {
+					update_post_meta( $post_id, '_swipecomic_logo_id', $logo_id );
+				}
 			} else {
 				delete_post_meta( $post_id, '_swipecomic_logo_id' );
 			}
@@ -500,6 +479,11 @@ class MetaBoxes {
 
 		if ( ! $attachment_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid attachment ID.', 'swipecomic' ) ) );
+		}
+
+		// Verify it's an image attachment.
+		if ( ! wp_attachment_is_image( $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Attachment is not a valid image.', 'swipecomic' ) ) );
 		}
 
 		// Check if user has permission to delete this specific attachment.
@@ -531,6 +515,11 @@ class MetaBoxes {
 
 		if ( ! $attachment_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid attachment ID.', 'swipecomic' ) ) );
+		}
+
+		// Verify it's an image attachment.
+		if ( ! wp_attachment_is_image( $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Attachment is not a valid image.', 'swipecomic' ) ) );
 		}
 
 		// Check if user has permission to delete this specific attachment.
@@ -590,32 +579,8 @@ class MetaBoxes {
 			$images_data = array();
 		}
 
-		// Sanitize each image entry.
-		$sanitized_images = array();
-		foreach ( $images_data as $index => $image ) {
-			if ( ! isset( $image['id'] ) ) {
-				continue;
-			}
-
-			$image_id = absint( $image['id'] );
-
-			$sanitized_image = array(
-				'id'    => $image_id,
-				'order' => absint( $index ),
-			);
-
-			// Sanitize zoom override.
-			if ( isset( $image['zoom_override'] ) && ! empty( $image['zoom_override'] ) ) {
-				$sanitized_image['zoom_override'] = sanitize_text_field( $image['zoom_override'] );
-			}
-
-			// Sanitize pan override.
-			if ( isset( $image['pan_override'] ) && ! empty( $image['pan_override'] ) ) {
-				$sanitized_image['pan_override'] = sanitize_text_field( $image['pan_override'] );
-			}
-
-			$sanitized_images[] = $sanitized_image;
-		}
+		// Sanitize and validate images using shared helper method.
+		$sanitized_images = $this->sanitize_and_validate_images( $images_data );
 
 		// Save to post meta.
 		update_post_meta( $post_id, '_swipecomic_images', $sanitized_images );
@@ -654,11 +619,109 @@ class MetaBoxes {
 		$logo_id = isset( $_POST['logo_id'] ) ? absint( $_POST['logo_id'] ) : 0;
 
 		if ( $logo_id > 0 ) {
+			// Verify the attachment exists and is an image.
+			if ( ! wp_attachment_is_image( $logo_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid logo image.', 'swipecomic' ) ) );
+			}
 			update_post_meta( $post_id, '_swipecomic_logo_id', $logo_id );
 		} else {
 			delete_post_meta( $post_id, '_swipecomic_logo_id' );
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Logo saved successfully.', 'swipecomic' ) ) );
+	}
+
+	/**
+	 * Sanitize and validate images data.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $images_data Raw images data array.
+	 * @return array Sanitized and validated images array.
+	 */
+	private function sanitize_and_validate_images( $images_data ) {
+		$sanitized_images = array();
+
+		foreach ( $images_data as $index => $image ) {
+			if ( ! isset( $image['id'] ) ) {
+				continue;
+			}
+
+			$image_id = absint( $image['id'] );
+
+			// Verify the attachment exists and is an image.
+			if ( ! wp_attachment_is_image( $image_id ) ) {
+				continue; // Skip invalid attachments.
+			}
+
+			$sanitized_image = array(
+				'id'    => $image_id,
+				'order' => absint( $index ),
+			);
+
+			// Sanitize and validate zoom override.
+			if ( isset( $image['zoom_override'] ) && ! empty( $image['zoom_override'] ) ) {
+				$zoom_override = sanitize_text_field( $image['zoom_override'] );
+				if ( $this->is_valid_zoom_value( $zoom_override ) ) {
+					$sanitized_image['zoom_override'] = $zoom_override;
+				}
+			}
+
+			// Sanitize and validate pan override.
+			if ( isset( $image['pan_override'] ) && ! empty( $image['pan_override'] ) ) {
+				$pan_override = sanitize_text_field( $image['pan_override'] );
+				if ( $this->is_valid_pan_value( $pan_override ) ) {
+					$sanitized_image['pan_override'] = $pan_override;
+				}
+			}
+
+			$sanitized_images[] = $sanitized_image;
+		}
+
+		return $sanitized_images;
+	}
+
+	/**
+	 * Validate zoom value.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $value Zoom value to validate.
+	 * @return bool True if valid.
+	 */
+	private function is_valid_zoom_value( $value ) {
+		// Valid zoom values: 'fit', 'vFill', or a positive number.
+		if ( in_array( $value, array( 'fit', 'vFill' ), true ) ) {
+			return true;
+		}
+
+		// Check if it's a numeric value.
+		if ( is_numeric( $value ) && floatval( $value ) > 0 ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Validate pan value.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $value Pan value to validate.
+	 * @return bool True if valid.
+	 */
+	private function is_valid_pan_value( $value ) {
+		// Valid pan values: 'left', 'right', 'center', or 'x,y' coordinates.
+		if ( in_array( $value, array( 'left', 'right', 'center' ), true ) ) {
+			return true;
+		}
+
+		// Check if it's custom coordinates in format 'x,y' using regex for stricter validation.
+		if ( preg_match( '/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/', $value ) ) {
+			return true;
+		}
+
+		return false;
 	}
 }

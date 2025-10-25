@@ -35,6 +35,9 @@ class ImageHandler {
 		// If 'keep_all', do nothing - WordPress generates all sizes normally.
 
 		add_filter( 'big_image_size_threshold', array( $this, 'disable_scaled_image' ), 10, 4 );
+
+		// Validate image MIME types on upload.
+		add_filter( 'wp_handle_upload_prefilter', array( $this, 'validate_image_mime_type' ) );
 	}
 
 	/**
@@ -152,6 +155,58 @@ class ImageHandler {
 		}
 
 		return $threshold;
+	}
+
+	/**
+	 * Validate image MIME type on upload.
+	 *
+	 * Ensures only valid image types are uploaded for SwipeComic images.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $file File upload data.
+	 * @return array Modified file data or error.
+	 */
+	public function validate_image_mime_type( $file ) {
+		// Only validate if this is a SwipeComic context with a valid nonce.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification.
+		if ( ! isset( $_REQUEST['swipecomic_context_post_id'], $_REQUEST['swipecomic_upload_nonce'] ) ) {
+			return $file;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification.
+		if ( ! wp_verify_nonce( $_REQUEST['swipecomic_upload_nonce'], 'swipecomic_admin_nonce' ) ) {
+			return $file;
+		}
+
+		// Verify the context post ID is valid.
+		$post_id = absint( $_REQUEST['swipecomic_context_post_id'] );
+		if ( ! $post_id || 'swipecomic' !== get_post_type( $post_id ) ) {
+			return $file;
+		}
+
+		// Define allowed MIME types for SwipeComic images.
+		$allowed_mime_types = array(
+			'image/jpeg',
+			'image/jpg',   // Non-standard but sometimes reported by older systems.
+			'image/pjpeg', // Progressive JPEG (older IE).
+			'image/png',
+			'image/gif',
+			'image/webp',
+			'image/avif',
+			'image/avif-sequence', // Animated AVIF sequences.
+		);
+
+		// Check if the uploaded file's MIME type is allowed.
+		if ( ! in_array( $file['type'], $allowed_mime_types, true ) ) {
+			$file['error'] = sprintf(
+				/* translators: %s: comma-separated list of allowed file types */
+				__( 'Invalid file type. Only images are allowed: %s', 'swipecomic' ),
+				implode( ', ', array( 'JPEG', 'PNG', 'GIF', 'WebP', 'AVIF' ) )
+			);
+		}
+
+		return $file;
 	}
 
 	/**

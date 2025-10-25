@@ -186,7 +186,10 @@ class Taxonomy {
 		if ( isset( $_POST['series_cover_image_id'] ) ) {
 			$cover_image_id = absint( $_POST['series_cover_image_id'] );
 			if ( $cover_image_id > 0 ) {
-				update_term_meta( $term_id, 'series_cover_image_id', $cover_image_id );
+				// Verify the attachment exists and is an image.
+				if ( wp_attachment_is_image( $cover_image_id ) ) {
+					update_term_meta( $term_id, 'series_cover_image_id', $cover_image_id );
+				}
 			} else {
 				delete_term_meta( $term_id, 'series_cover_image_id' );
 			}

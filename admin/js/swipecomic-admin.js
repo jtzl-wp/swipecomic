@@ -156,6 +156,8 @@
 					this.frame.uploader.options.uploader.params || {};
 				this.frame.uploader.options.uploader.params.swipecomic_context_post_id =
 					wp.media.view.settings.post.id;
+				this.frame.uploader.options.uploader.params.swipecomic_upload_nonce =
+					swipecomicAdmin.nonce;
 			}
 
 			// Open the media frame
