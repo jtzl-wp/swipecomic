@@ -40,6 +40,16 @@ class Assets {
 	 * @since 1.0.0
 	 */
 	public function enqueue_assets() {
+		// Enqueue frontend CSS for swipecomic posts.
+		if ( is_singular( 'swipecomic' ) ) {
+			wp_enqueue_style(
+				'swipecomic-frontend',
+				JTZL_SWIPECOMIC_URL . 'assets/css/swipecomic-frontend.css',
+				array(),
+				JTZL_SWIPECOMIC_VER
+			);
+		}
+
 		// Only enqueue if shortcode is present.
 		if ( ! $this->should_enqueue() ) {
 			return;

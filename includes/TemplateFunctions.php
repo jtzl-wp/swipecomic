@@ -21,8 +21,35 @@ class TemplateFunctions {
 	 * @since 1.0.0
 	 */
 	public function init() {
-		// Template functions are loaded but not hooked to actions.
-		// They are called directly from templates.
+		// Hook template loading.
+		add_filter( 'single_template', array( $this, 'load_single_template' ) );
+	}
+
+	/**
+	 * Load custom single template for swipecomic posts.
+	 *
+	 * Checks for theme override first, then falls back to plugin template.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $template Path to the template file.
+	 * @return string Modified template path.
+	 */
+	public function load_single_template( $template ) {
+		if ( is_singular( 'swipecomic' ) ) {
+			// Check for an override in the theme/child-theme directory.
+			$theme_template = locate_template( 'single-swipecomic.php' );
+			if ( ! empty( $theme_template ) ) {
+				return $theme_template;
+			}
+
+			// Fallback to the plugin's template.
+			$plugin_template = JTZL_SWIPECOMIC_DIR . 'templates/single-swipecomic.php';
+			if ( file_exists( $plugin_template ) ) {
+				return $plugin_template;
+			}
+		}
+		return $template;
 	}
 
 	/**
