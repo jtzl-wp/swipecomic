@@ -53,8 +53,8 @@ class MetaBoxes {
 			__( 'Episode Settings', 'swipecomic' ),
 			array( $this, 'render_episode_settings_meta_box' ),
 			'swipecomic',
-			'side',
-			'default'
+			'normal',
+			'high'
 		);
 	}
 

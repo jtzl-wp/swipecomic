@@ -41,6 +41,8 @@ class Taxonomy {
 		add_action( 'wp_ajax_swipecomic_update_episode_order', array( $this, 'ajax_update_episode_order' ) );
 		add_action( 'wp_ajax_swipecomic_save_series_cover', array( $this, 'ajax_save_series_cover' ) );
 		add_action( 'wp_ajax_swipecomic_save_series_logo', array( $this, 'ajax_save_series_logo' ) );
+		add_action( 'add_meta_boxes', array( $this, 'replace_series_meta_box' ) );
+		add_action( 'save_post_swipecomic', array( $this, 'save_series_selection' ), 10, 2 );
 	}
 
 	/**
@@ -598,6 +600,131 @@ class Taxonomy {
 			delete_term_meta( $term_id, 'series_logo_id' );
 			delete_term_meta( $term_id, 'series_logo_position' );
 			wp_send_json_success( array( 'message' => __( 'Logo removed successfully.', 'swipecomic' ) ) );
+		}
+	}
+
+	/**
+	 * Replace default series meta box with radio button version.
+	 *
+	 * @since 1.0.0
+	 */
+	public function replace_series_meta_box() {
+		// Remove default meta box from all contexts to prevent duplicates.
+		remove_meta_box( 'swipecomic_seriesdiv', 'swipecomic', 'side' );
+		remove_meta_box( 'swipecomic_seriesdiv', 'swipecomic', 'normal' );
+		remove_meta_box( 'swipecomic_seriesdiv', 'swipecomic', 'advanced' );
+
+		// Add custom radio button meta box.
+		add_meta_box(
+			'swipecomic_series_radio',
+			__( 'Series', 'swipecomic' ),
+			array( $this, 'render_series_radio_meta_box' ),
+			'swipecomic',
+			'side',
+			'default',
+			array( 'taxonomy' => self::TAXONOMY )
+		);
+	}
+
+	/**
+	 * Render series selection meta box with radio buttons.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \WP_Post $post Current post object.
+	 */
+	public function render_series_radio_meta_box( $post ) {
+		// Add nonce for security.
+		wp_nonce_field( 'swipecomic_save_series', 'swipecomic_series_nonce' );
+
+		// Get current series.
+		$current_series = wp_get_post_terms( $post->ID, self::TAXONOMY );
+		$current_id     = ! empty( $current_series ) && ! is_wp_error( $current_series ) ? $current_series[0]->term_id : 0;
+
+		// Get all series terms.
+		$terms = get_terms(
+			array(
+				'taxonomy'   => self::TAXONOMY,
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			)
+		);
+
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+			echo '<p>' . esc_html__( 'No series available. Please create a series first.', 'swipecomic' ) . '</p>';
+			return;
+		}
+		?>
+		<div id="taxonomy-<?php echo esc_attr( self::TAXONOMY ); ?>" class="categorydiv">
+			<div id="<?php echo esc_attr( self::TAXONOMY ); ?>-all" class="tabs-panel">
+				<ul id="<?php echo esc_attr( self::TAXONOMY ); ?>checklist" class="categorychecklist form-no-clear">
+					<li>
+						<label class="selectit">
+							<input type="radio" name="swipecomic_series_selection" value="0" <?php checked( $current_id, 0 ); ?> />
+							<?php esc_html_e( 'None', 'swipecomic' ); ?>
+						</label>
+					</li>
+					<?php foreach ( $terms as $term ) : ?>
+						<li>
+							<label class="selectit">
+								<input type="radio" name="swipecomic_series_selection" value="<?php echo esc_attr( $term->term_id ); ?>" <?php checked( $current_id, $term->term_id ); ?> />
+								<?php echo esc_html( $term->name ); ?>
+							</label>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Save series selection from radio button.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 */
+	public function save_series_selection( $post_id, $post ) {
+		// Verify nonce.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification doesn't require sanitization.
+		if ( ! isset( $_POST['swipecomic_series_nonce'] ) || ! wp_verify_nonce( $_POST['swipecomic_series_nonce'], 'swipecomic_save_series' ) ) {
+			return;
+		}
+
+		// Check autosave.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Check permissions.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		// Don't save for revisions.
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		// Get the selected series from the custom input field.
+		$selected_series = 0;
+		if ( isset( $_POST['swipecomic_series_selection'] ) ) {
+			$selected_series = absint( $_POST['swipecomic_series_selection'] );
+		}
+
+		// Set the series term (convert single ID to array for wp_set_object_terms).
+		if ( $selected_series > 0 ) {
+			// Validate that the term exists and belongs to the correct taxonomy.
+			$term_obj = get_term( $selected_series, self::TAXONOMY );
+			if ( $term_obj && ! is_wp_error( $term_obj ) ) {
+				wp_set_object_terms( $post_id, array( $selected_series ), self::TAXONOMY, false );
+			}
+		} else {
+			// Remove all series if "None" is selected.
+			wp_set_object_terms( $post_id, array(), self::TAXONOMY, false );
 		}
 	}
 }

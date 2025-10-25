@@ -104,7 +104,6 @@ class PostType {
 			$new_columns[ $key ] = $value;
 			if ( 'title' === $key ) {
 				$new_columns['episode_number'] = __( 'Episode #', 'swipecomic' );
-				$new_columns['series']         = __( 'Series', 'swipecomic' );
 				$new_columns['image_count']    = __( 'Images', 'swipecomic' );
 			}
 		}
@@ -124,23 +123,6 @@ class PostType {
 			case 'episode_number':
 				$episode_number = get_post_meta( $post_id, '_swipecomic_episode_number', true );
 				echo $episode_number ? esc_html( $episode_number ) : '—';
-				break;
-
-			case 'series':
-				$terms = get_the_terms( $post_id, 'swipecomic_series' );
-				if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
-					$series_links = array();
-					foreach ( $terms as $term ) {
-						$series_links[] = sprintf(
-							'<a href="%s">%s</a>',
-							esc_url( admin_url( 'edit.php?post_type=' . self::POST_TYPE . '&swipecomic_series=' . $term->slug ) ),
-							esc_html( $term->name )
-						);
-					}
-					echo implode( ', ', $series_links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				} else {
-					echo '—';
-				}
 				break;
 
 			case 'image_count':
