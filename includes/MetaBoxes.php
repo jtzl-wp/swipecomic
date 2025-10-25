@@ -31,6 +31,9 @@ class MetaBoxes {
 		add_action( 'wp_ajax_swipecomic_delete_logo', array( $this, 'ajax_delete_logo' ) );
 		add_action( 'wp_ajax_swipecomic_save_images', array( $this, 'ajax_save_images' ) );
 		add_action( 'wp_ajax_swipecomic_save_logo', array( $this, 'ajax_save_logo' ) );
+
+		// Display validation errors.
+		add_action( 'admin_notices', array( $this, 'display_validation_errors' ) );
 	}
 
 	/**
@@ -304,11 +307,23 @@ class MetaBoxes {
 			return;
 		}
 
+		$has_errors = false;
+
 		// Save episode number.
 		if ( isset( $_POST['swipecomic_episode_number'] ) ) {
-			$episode_number = absint( $_POST['swipecomic_episode_number'] );
-			if ( $episode_number > 0 ) {
-				update_post_meta( $post_id, '_swipecomic_episode_number', $episode_number );
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via trim below.
+			$episode_number_raw = trim( wp_unslash( $_POST['swipecomic_episode_number'] ) );
+
+			if ( '' !== $episode_number_raw ) {
+				$episode_number = absint( $episode_number_raw );
+
+				if ( $episode_number > 0 ) {
+					update_post_meta( $post_id, '_swipecomic_episode_number', $episode_number );
+				} else {
+					$has_errors = true;
+					$this->add_validation_error( __( 'Episode number must be a positive integer.', 'swipecomic' ) );
+					delete_post_meta( $post_id, '_swipecomic_episode_number' );
+				}
 			} else {
 				delete_post_meta( $post_id, '_swipecomic_episode_number' );
 			}
@@ -320,6 +335,8 @@ class MetaBoxes {
 
 			// Validate zoom type.
 			if ( ! in_array( $zoom_type, array( 'fit', 'vFill', 'custom' ), true ) ) {
+				$has_errors = true;
+				$this->add_validation_error( __( 'Invalid zoom level. Using default "fit".', 'swipecomic' ) );
 				$zoom_type = 'fit'; // Default fallback for invalid values.
 			}
 
@@ -327,10 +344,22 @@ class MetaBoxes {
 
 			// Save custom zoom value if type is custom.
 			if ( 'custom' === $zoom_type && isset( $_POST['swipecomic_zoom_custom_value'] ) ) {
-				$custom_value = absint( $_POST['swipecomic_zoom_custom_value'] );
-				if ( $custom_value > 0 ) {
-					update_post_meta( $post_id, '_swipecomic_default_zoom_value', $custom_value );
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via trim below.
+				$custom_value_raw = trim( wp_unslash( $_POST['swipecomic_zoom_custom_value'] ) );
+
+				if ( '' !== $custom_value_raw ) {
+					$custom_value = absint( $custom_value_raw );
+
+					if ( $custom_value > 0 ) {
+						update_post_meta( $post_id, '_swipecomic_default_zoom_value', $custom_value );
+					} else {
+						$has_errors = true;
+						$this->add_validation_error( __( 'Custom zoom value must be a positive number.', 'swipecomic' ) );
+						delete_post_meta( $post_id, '_swipecomic_default_zoom_value' );
+					}
 				} else {
+					$has_errors = true;
+					$this->add_validation_error( __( 'Custom zoom value is required when zoom type is set to custom.', 'swipecomic' ) );
 					delete_post_meta( $post_id, '_swipecomic_default_zoom_value' );
 				}
 			} else {
@@ -344,6 +373,8 @@ class MetaBoxes {
 
 			// Validate pan type.
 			if ( ! in_array( $pan_type, array( 'left', 'right', 'center', 'custom' ), true ) ) {
+				$has_errors = true;
+				$this->add_validation_error( __( 'Invalid pan position. Using default "center".', 'swipecomic' ) );
 				$pan_type = 'center'; // Default fallback for invalid values.
 			}
 
@@ -356,14 +387,21 @@ class MetaBoxes {
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via trim and intval below.
 				$custom_y_val = trim( wp_unslash( $_POST['swipecomic_pan_custom_y'] ) );
 
-				if ( '' !== $custom_x_val && '' !== $custom_y_val ) {
+				if ( '' === $custom_x_val || '' === $custom_y_val ) {
+					$has_errors = true;
+					$this->add_validation_error( __( 'Both X and Y coordinates are required for custom pan position.', 'swipecomic' ) );
+					delete_post_meta( $post_id, '_swipecomic_default_pan_x' );
+					delete_post_meta( $post_id, '_swipecomic_default_pan_y' );
+				} elseif ( ! is_numeric( $custom_x_val ) || ! is_numeric( $custom_y_val ) ) {
+					$has_errors = true;
+					$this->add_validation_error( __( 'Custom pan coordinates must be numeric values.', 'swipecomic' ) );
+					delete_post_meta( $post_id, '_swipecomic_default_pan_x' );
+					delete_post_meta( $post_id, '_swipecomic_default_pan_y' );
+				} else {
 					$custom_x = intval( $custom_x_val );
 					$custom_y = intval( $custom_y_val );
 					update_post_meta( $post_id, '_swipecomic_default_pan_x', $custom_x );
 					update_post_meta( $post_id, '_swipecomic_default_pan_y', $custom_y );
-				} else {
-					delete_post_meta( $post_id, '_swipecomic_default_pan_x' );
-					delete_post_meta( $post_id, '_swipecomic_default_pan_y' );
 				}
 			} else {
 				delete_post_meta( $post_id, '_swipecomic_default_pan_x' );
@@ -723,5 +761,59 @@ class MetaBoxes {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Add a validation error to be displayed as an admin notice.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $message Error message.
+	 */
+	private function add_validation_error( $message ) {
+		$user_id       = get_current_user_id();
+		$transient_key = 'swipecomic_validation_errors_' . $user_id;
+
+		$errors = get_transient( $transient_key );
+		if ( ! is_array( $errors ) ) {
+			$errors = array();
+		}
+		$errors[] = $message;
+		set_transient( $transient_key, $errors, 45 );
+	}
+
+	/**
+	 * Display validation errors as admin notices.
+	 *
+	 * @since 1.0.0
+	 */
+	public function display_validation_errors() {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return;
+		}
+		$transient_key = 'swipecomic_validation_errors_' . $user_id;
+
+		$errors = get_transient( $transient_key );
+		if ( ! is_array( $errors ) || empty( $errors ) ) {
+			return;
+		}
+
+		// Only show on swipecomic edit screens.
+		$screen = get_current_screen();
+		if ( ! $screen || 'swipecomic' !== $screen->post_type ) {
+			return;
+		}
+
+		foreach ( $errors as $error ) {
+			?>
+			<div class="notice notice-error is-dismissible">
+				<p><strong><?php esc_html_e( 'SwipeComic Validation Error:', 'swipecomic' ); ?></strong> <?php echo esc_html( $error ); ?></p>
+			</div>
+			<?php
+		}
+
+		// Clear the errors after displaying.
+		delete_transient( $transient_key );
 	}
 }
