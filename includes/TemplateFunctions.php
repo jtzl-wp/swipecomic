@@ -235,4 +235,93 @@ class TemplateFunctions {
 
 		return false;
 	}
+
+	/**
+	 * Check if series has a logo.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|null $term_id Series term ID. Defaults to current post's first series.
+	 * @return bool True if series has a logo.
+	 */
+	public static function has_series_logo( $term_id = null ) {
+		if ( null === $term_id ) {
+			$terms = get_the_terms( get_the_ID(), 'swipecomic_series' );
+			if ( ! $terms || is_wp_error( $terms ) ) {
+				return false;
+			}
+			$term_id = $terms[0]->term_id;
+		}
+
+		$logo_id = get_term_meta( $term_id, 'series_logo_id', true );
+		return ! empty( $logo_id ) && wp_attachment_is_image( $logo_id );
+	}
+
+	/**
+	 * Get series logo URL.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|null    $term_id Series term ID. Defaults to current post's first series.
+	 * @param string|null $size    Image size. Defaults to 'medium'.
+	 * @return string|false Logo URL or false if not found.
+	 */
+	public static function get_series_logo( $term_id = null, $size = 'medium' ) {
+		if ( null === $term_id ) {
+			$terms = get_the_terms( get_the_ID(), 'swipecomic_series' );
+			if ( ! $terms || is_wp_error( $terms ) ) {
+				return false;
+			}
+			$term_id = $terms[0]->term_id;
+		}
+
+		$logo_id = get_term_meta( $term_id, 'series_logo_id', true );
+		if ( ! $logo_id || ! wp_attachment_is_image( $logo_id ) ) {
+			return false;
+		}
+
+		return wp_get_attachment_image_url( $logo_id, $size );
+	}
+
+	/**
+	 * Display series logo.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|null    $term_id Series term ID. Defaults to current post's first series.
+	 * @param string|null $size    Image size. Defaults to 'medium'.
+	 */
+	public static function the_series_logo( $term_id = null, $size = 'medium' ) {
+		$logo_url = self::get_series_logo( $term_id, $size );
+		if ( $logo_url ) {
+			echo '<img src="' . esc_url( $logo_url ) . '" alt="' . esc_attr__( 'Series Logo', 'swipecomic' ) . '" class="swipecomic-series-logo" />';
+		}
+	}
+
+	/**
+	 * Get series logo position.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|null $term_id Series term ID. Defaults to current post's first series.
+	 * @return string Logo position ('upper-left', 'upper-right', 'lower-left', 'lower-right').
+	 */
+	public static function get_series_logo_position( $term_id = null ) {
+		if ( null === $term_id ) {
+			$terms = get_the_terms( get_the_ID(), 'swipecomic_series' );
+			if ( ! $terms || is_wp_error( $terms ) ) {
+				return 'upper-left';
+			}
+			$term_id = $terms[0]->term_id;
+		}
+
+		$position        = get_term_meta( $term_id, 'series_logo_position', true );
+		$valid_positions = array( 'upper-left', 'upper-right', 'lower-left', 'lower-right' );
+
+		if ( ! in_array( $position, $valid_positions, true ) ) {
+			return 'upper-left';
+		}
+
+		return $position;
+	}
 }

@@ -227,27 +227,6 @@
 	width: 100%;
 }
 
-/* Episode Logo Container */
-.swipecomic-logo-container {
-	padding: 0;
-}
-
-.swipecomic-logo-preview {
-	margin-bottom: 12px;
-	padding: 12px;
-	background: #f6f7f7;
-	border: 1px solid #c3c4c7;
-	border-radius: 4px;
-	text-align: center;
-}
-
-.swipecomic-logo-preview img {
-	max-width: 100%;
-	height: auto;
-	display: block;
-	margin: 0 auto;
-}
-
 .swipecomic-upload-logo .dashicons {
 	position: relative;
 	top: 3px;

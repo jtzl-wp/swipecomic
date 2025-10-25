@@ -181,14 +181,20 @@ class Assets {
 					? __( 'Are you sure you want to delete this image? This will permanently remove it from your Media Library and cannot be undone.', 'swipecomic' )
 					: __( 'Remove this image from the episode? It will remain in your Media Library.', 'swipecomic' ),
 				'removeButtonText'   => $delete_on_remove ? __( 'Delete Image', 'swipecomic' ) : __( 'Remove Image', 'swipecomic' ),
+				'coverUploadTitle'   => __( 'Select Series Cover Image', 'swipecomic' ),
+				'coverUploadButton'  => __( 'Use as Cover', 'swipecomic' ),
+				'uploadCoverText'    => __( 'Upload Cover Image', 'swipecomic' ),
+				'changeCoverText'    => __( 'Change Cover Image', 'swipecomic' ),
+				'removeCoverConfirm' => $delete_on_remove
+					? __( 'Are you sure you want to delete the cover image? This will permanently remove it from your Media Library and cannot be undone.', 'swipecomic' )
+					: __( 'Remove the cover image from this series? It will remain in your Media Library.', 'swipecomic' ),
 				'logoUploadTitle'    => __( 'Select Logo Image', 'swipecomic' ),
 				'logoUploadButton'   => __( 'Use as Logo', 'swipecomic' ),
 				'uploadLogoText'     => __( 'Upload Logo', 'swipecomic' ),
 				'changeLogoText'     => __( 'Change Logo', 'swipecomic' ),
 				'removeLogoConfirm'  => $delete_on_remove
 					? __( 'Are you sure you want to delete the logo? This will permanently remove it from your Media Library and cannot be undone.', 'swipecomic' )
-					: __( 'Remove the logo from this episode? It will remain in your Media Library.', 'swipecomic' ),
-				'removeLogoText'     => $delete_on_remove ? __( 'Delete Logo', 'swipecomic' ) : __( 'Remove Logo', 'swipecomic' ),
+					: __( 'Remove the logo from this series? It will remain in your Media Library.', 'swipecomic' ),
 				'savingOrder'        => __( 'Saving order...', 'swipecomic' ),
 				'orderError'         => __( 'Error updating episode order.', 'swipecomic' ),
 				'episodeNumberLabel' => __( 'Episode #', 'swipecomic' ),

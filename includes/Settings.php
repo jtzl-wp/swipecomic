@@ -364,12 +364,12 @@ class Settings {
 		?>
 		<label>
 			<input type="checkbox" name="swipecomic_delete_on_remove" id="swipecomic_delete_on_remove" value="1" <?php checked( $delete_on_remove ); ?> />
-			<?php esc_html_e( 'Delete images from Media Library when removed from episodes', 'swipecomic' ); ?>
+			<?php esc_html_e( 'Delete images from Media Library when removed', 'swipecomic' ); ?>
 		</label>
 		<p class="description">
 			<?php
 			echo wp_kses_post(
-				__( '<strong>Unchecked (recommended):</strong> Removing an image only detaches it from the episode. The image remains in your Media Library and can be re-added without re-uploading.<br><strong>Checked:</strong> Removing an image permanently deletes it from WordPress. Use this if you want automatic cleanup, but be careful as this cannot be undone.', 'swipecomic' )
+				__( 'Applies to episode images, series cover images, and series logos.<br><strong>Unchecked (recommended):</strong> Removing an image only detaches it. The image remains in your Media Library and can be re-added without re-uploading.<br><strong>Checked:</strong> Removing an image permanently deletes it from WordPress. Use this if you want automatic cleanup, but be careful as this cannot be undone.', 'swipecomic' )
 			);
 			?>
 		</p>

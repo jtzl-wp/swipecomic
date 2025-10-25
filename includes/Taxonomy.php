@@ -39,6 +39,8 @@ class Taxonomy {
 		add_action( 'set_object_terms', array( $this, 'assign_episode_order' ), 10, 6 );
 		add_action( self::TAXONOMY . '_edit_form', array( $this, 'render_episode_order_section' ), 10, 2 );
 		add_action( 'wp_ajax_swipecomic_update_episode_order', array( $this, 'ajax_update_episode_order' ) );
+		add_action( 'wp_ajax_swipecomic_save_series_cover', array( $this, 'ajax_save_series_cover' ) );
+		add_action( 'wp_ajax_swipecomic_save_series_logo', array( $this, 'ajax_save_series_logo' ) );
 	}
 
 	/**
@@ -100,6 +102,30 @@ class Taxonomy {
 				'show_in_rest'      => false,
 			)
 		);
+
+		register_term_meta(
+			self::TAXONOMY,
+			'series_logo_id',
+			array(
+				'type'              => 'integer',
+				'description'       => __( 'Series logo image attachment ID', 'swipecomic' ),
+				'single'            => true,
+				'sanitize_callback' => 'absint',
+				'show_in_rest'      => false,
+			)
+		);
+
+		register_term_meta(
+			self::TAXONOMY,
+			'series_logo_position',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Series logo position', 'swipecomic' ),
+				'single'            => true,
+				'sanitize_callback' => 'sanitize_text_field',
+				'show_in_rest'      => false,
+			)
+		);
 	}
 
 	/**
@@ -125,6 +151,32 @@ class Taxonomy {
 			<input type="hidden" name="series_cover_image_id" id="series_cover_image_id" value="" />
 			<p class="description"><?php esc_html_e( 'Upload a cover image for this series.', 'swipecomic' ); ?></p>
 		</div>
+
+		<div class="form-field term-logo-wrap">
+			<label for="series_logo_id"><?php esc_html_e( 'Series Logo', 'swipecomic' ); ?></label>
+			<div class="swipecomic-series-logo-preview" id="swipecomic-series-logo-preview" style="display:none; margin-bottom: 10px;">
+				<img src="" alt="" style="max-width: 200px; height: auto; display: block;" />
+			</div>
+			<button type="button" class="button button-secondary swipecomic-upload-series-logo" id="swipecomic-upload-series-logo">
+				<span class="dashicons dashicons-format-image" style="vertical-align: middle; margin-right: 4px;"></span><?php esc_html_e( 'Upload Logo', 'swipecomic' ); ?>
+			</button>
+			<button type="button" class="button swipecomic-remove-series-logo" id="swipecomic-remove-series-logo" style="display:none;">
+				<?php esc_html_e( 'Remove Logo', 'swipecomic' ); ?>
+			</button>
+			<input type="hidden" name="series_logo_id" id="series_logo_id" value="" />
+			<p class="description"><?php esc_html_e( 'Upload a logo image for this series.', 'swipecomic' ); ?></p>
+		</div>
+
+		<div class="form-field term-logo-position-wrap">
+			<label for="series_logo_position"><?php esc_html_e( 'Logo Position', 'swipecomic' ); ?></label>
+			<select name="series_logo_position" id="series_logo_position" class="postform">
+				<option value="upper-left"><?php esc_html_e( 'Upper Left', 'swipecomic' ); ?></option>
+				<option value="upper-right"><?php esc_html_e( 'Upper Right', 'swipecomic' ); ?></option>
+				<option value="lower-left"><?php esc_html_e( 'Lower Left', 'swipecomic' ); ?></option>
+				<option value="lower-right"><?php esc_html_e( 'Lower Right', 'swipecomic' ); ?></option>
+			</select>
+			<p class="description"><?php esc_html_e( 'Choose where the logo should appear on episode pages.', 'swipecomic' ); ?></p>
+		</div>
 		<?php
 	}
 
@@ -142,7 +194,20 @@ class Taxonomy {
 		if ( $cover_image_id ) {
 			$cover_image_url = wp_get_attachment_image_url( $cover_image_id, 'medium' );
 		}
+
+		$logo_id       = get_term_meta( $term->term_id, 'series_logo_id', true );
+		$logo_url      = '';
+		$logo_position = get_term_meta( $term->term_id, 'series_logo_position', true );
+
+		if ( $logo_id ) {
+			$logo_url = wp_get_attachment_image_url( $logo_id, 'medium' );
+		}
+
+		if ( ! $logo_position ) {
+			$logo_position = 'upper-left';
+		}
 		?>
+		<input type="hidden" id="swipecomic_series_term_id" value="<?php echo esc_attr( $term->term_id ); ?>" />
 		<tr class="form-field term-cover-image-wrap">
 			<th scope="row">
 				<label for="series_cover_image_id"><?php esc_html_e( 'Cover Image', 'swipecomic' ); ?></label>
@@ -161,6 +226,42 @@ class Taxonomy {
 				</button>
 				<input type="hidden" name="series_cover_image_id" id="series_cover_image_id" value="<?php echo esc_attr( $cover_image_id ); ?>" />
 				<p class="description"><?php esc_html_e( 'Upload a cover image for this series.', 'swipecomic' ); ?></p>
+			</td>
+		</tr>
+
+		<tr class="form-field term-logo-wrap">
+			<th scope="row">
+				<label for="series_logo_id"><?php esc_html_e( 'Series Logo', 'swipecomic' ); ?></label>
+			</th>
+			<td>
+				<div class="swipecomic-series-logo-preview" id="swipecomic-series-logo-preview" style="<?php echo $logo_url ? '' : 'display:none;'; ?> margin-bottom: 10px;">
+					<?php if ( $logo_url ) : ?>
+						<img src="<?php echo esc_url( $logo_url ); ?>" alt="" style="max-width: 200px; height: auto; display: block;" />
+					<?php endif; ?>
+				</div>
+				<button type="button" class="button button-secondary swipecomic-upload-series-logo" id="swipecomic-upload-series-logo">
+					<span class="dashicons dashicons-format-image" style="vertical-align: middle; margin-right: 4px;"></span><?php echo $logo_id ? esc_html__( 'Change Logo', 'swipecomic' ) : esc_html__( 'Upload Logo', 'swipecomic' ); ?>
+				</button>
+				<button type="button" class="button swipecomic-remove-series-logo" id="swipecomic-remove-series-logo" style="<?php echo $logo_id ? '' : 'display:none;'; ?>">
+					<?php esc_html_e( 'Remove Logo', 'swipecomic' ); ?>
+				</button>
+				<input type="hidden" name="series_logo_id" id="series_logo_id" value="<?php echo esc_attr( $logo_id ); ?>" />
+				<p class="description"><?php esc_html_e( 'Upload a logo image for this series.', 'swipecomic' ); ?></p>
+			</td>
+		</tr>
+
+		<tr class="form-field term-logo-position-wrap">
+			<th scope="row">
+				<label for="series_logo_position"><?php esc_html_e( 'Logo Position', 'swipecomic' ); ?></label>
+			</th>
+			<td>
+				<select name="series_logo_position" id="series_logo_position" class="postform">
+					<option value="upper-left" <?php selected( $logo_position, 'upper-left' ); ?>><?php esc_html_e( 'Upper Left', 'swipecomic' ); ?></option>
+					<option value="upper-right" <?php selected( $logo_position, 'upper-right' ); ?>><?php esc_html_e( 'Upper Right', 'swipecomic' ); ?></option>
+					<option value="lower-left" <?php selected( $logo_position, 'lower-left' ); ?>><?php esc_html_e( 'Lower Left', 'swipecomic' ); ?></option>
+					<option value="lower-right" <?php selected( $logo_position, 'lower-right' ); ?>><?php esc_html_e( 'Lower Right', 'swipecomic' ); ?></option>
+				</select>
+				<p class="description"><?php esc_html_e( 'Choose where the logo should appear on episode pages.', 'swipecomic' ); ?></p>
 			</td>
 		</tr>
 		<?php
@@ -192,6 +293,27 @@ class Taxonomy {
 				}
 			} else {
 				delete_term_meta( $term_id, 'series_cover_image_id' );
+			}
+		}
+
+		// Save logo image ID and position.
+		if ( isset( $_POST['series_logo_id'] ) ) {
+			$logo_id = absint( $_POST['series_logo_id'] );
+			if ( $logo_id > 0 && wp_attachment_is_image( $logo_id ) ) {
+				update_term_meta( $term_id, 'series_logo_id', $logo_id );
+
+				// Save logo position only if a logo is set.
+				if ( isset( $_POST['series_logo_position'] ) ) {
+					$logo_position   = sanitize_text_field( wp_unslash( $_POST['series_logo_position'] ) );
+					$valid_positions = array( 'upper-left', 'upper-right', 'lower-left', 'lower-right' );
+					if ( in_array( $logo_position, $valid_positions, true ) ) {
+						update_term_meta( $term_id, 'series_logo_position', $logo_position );
+					}
+				}
+			} else {
+				// If no valid logo, delete both logo ID and position meta.
+				delete_term_meta( $term_id, 'series_logo_id' );
+				delete_term_meta( $term_id, 'series_logo_position' );
 			}
 		}
 
@@ -392,5 +514,90 @@ class Taxonomy {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Episode order updated successfully.', 'swipecomic' ) ) );
+	}
+
+	/**
+	 * AJAX handler to save series cover image.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_save_series_cover() {
+		// Verify nonce.
+		check_ajax_referer( 'swipecomic_admin_nonce', 'nonce' );
+
+		// Check capabilities.
+		if ( ! current_user_can( 'manage_categories' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'swipecomic' ) ) );
+		}
+
+		// Get data.
+		$term_id        = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
+		$cover_image_id = isset( $_POST['cover_image_id'] ) ? absint( $_POST['cover_image_id'] ) : 0;
+
+		if ( ! $term_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid series term.', 'swipecomic' ) ) );
+		}
+
+		// Validate the term exists.
+		$term = get_term( $term_id, self::TAXONOMY );
+		if ( ! $term || is_wp_error( $term ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid series term.', 'swipecomic' ) ) );
+		}
+
+		// Save or delete cover image.
+		if ( $cover_image_id > 0 ) {
+			// Verify the attachment exists and is an image.
+			if ( wp_attachment_is_image( $cover_image_id ) ) {
+				update_term_meta( $term_id, 'series_cover_image_id', $cover_image_id );
+				wp_send_json_success( array( 'message' => __( 'Cover image saved successfully.', 'swipecomic' ) ) );
+			} else {
+				wp_send_json_error( array( 'message' => __( 'Invalid image attachment.', 'swipecomic' ) ) );
+			}
+		} else {
+			delete_term_meta( $term_id, 'series_cover_image_id' );
+			wp_send_json_success( array( 'message' => __( 'Cover image removed successfully.', 'swipecomic' ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to save series logo image.
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_save_series_logo() {
+		// Verify nonce.
+		check_ajax_referer( 'swipecomic_admin_nonce', 'nonce' );
+
+		// Get data early to validate capability against specific term.
+		$term_id = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
+
+		// Check capabilities against the specific term and general capability.
+		if ( ! $term_id || ! current_user_can( 'manage_categories' ) || ! current_user_can( 'edit_term', $term_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'swipecomic' ) ) );
+		}
+
+		$logo_id = isset( $_POST['logo_id'] ) ? absint( $_POST['logo_id'] ) : 0;
+
+		// Validate the term exists.
+		$term = get_term( $term_id, self::TAXONOMY );
+		if ( ! $term || is_wp_error( $term ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid series term.', 'swipecomic' ) ) );
+		}
+
+		// Save or delete logo image.
+		if ( $logo_id > 0 ) {
+			// Verify the attachment exists and is an image.
+			if ( wp_attachment_is_image( $logo_id ) ) {
+				update_term_meta( $term_id, 'series_logo_id', $logo_id );
+				wp_send_json_success( array( 'message' => __( 'Logo saved successfully.', 'swipecomic' ) ) );
+			} else {
+				wp_send_json_error( array( 'message' => __( 'Invalid image attachment.', 'swipecomic' ) ) );
+			}
+		} else {
+			// Delete both logo ID and position when logo is removed.
+			delete_term_meta( $term_id, 'series_logo_id' );
+			delete_term_meta( $term_id, 'series_logo_position' );
+			wp_send_json_success( array( 'message' => __( 'Logo removed successfully.', 'swipecomic' ) ) );
+		}
 	}
 }

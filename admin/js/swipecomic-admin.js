@@ -676,310 +676,284 @@
 	};
 
 	/**
-	 * Episode Logo Manager
+	 * Create a media manager for handling image uploads
+	 *
+	 * @param {Object} config Configuration object
+	 * @return {Object} Media manager instance
 	 */
-	const EpisodeLogoManager = {
-		/**
-		 * Media frame instance
-		 */
-		frame: null,
+	function createMediaManager(config) {
+		return {
+			/**
+			 * Media frame instance
+			 */
+			frame: null,
 
-		/**
-		 * Initialize the logo manager
-		 */
-		init() {
-			this.bindEvents();
-		},
+			/**
+			 * Initialize the manager
+			 */
+			init() {
+				this.bindEvents();
+			},
 
-		/**
-		 * Bind event handlers
-		 */
-		bindEvents() {
-			// Upload logo button
-			$('#swipecomic-upload-logo').on('click', (e) => {
-				e.preventDefault();
-				this.openMediaUploader();
-			});
+			/**
+			 * Bind event handlers
+			 */
+			bindEvents() {
+				// Upload button
+				$(config.uploadButton)
+					.off('click.swipecomicMedia')
+					.on('click.swipecomicMedia', (e) => {
+						e.preventDefault();
+						this.openMediaUploader();
+					});
 
-			// Remove logo button
-			$('#swipecomic-remove-logo').on('click', (e) => {
-				e.preventDefault();
-				this.removeLogo();
-			});
-		},
+				// Remove button
+				$(config.removeButton)
+					.off('click.swipecomicMedia')
+					.on('click.swipecomicMedia', (e) => {
+						e.preventDefault();
+						this.removeMedia();
+					});
+			},
 
-		/**
-		 * Open WordPress media uploader
-		 */
-		openMediaUploader() {
-			// Create media frame if it doesn't exist
-			if (!this.frame) {
-				this.frame = wp.media({
-					title: swipecomicAdmin.logoUploadTitle || 'Select Logo Image',
-					button: {
-						text: swipecomicAdmin.logoUploadButton || 'Use as Logo',
-					},
-					multiple: false,
-					library: {
-						type: 'image',
-					},
-				});
+			/**
+			 * Open WordPress media uploader
+			 */
+			openMediaUploader() {
+				// Create media frame if it doesn't exist
+				if (!this.frame) {
+					this.frame = wp.media({
+						title: config.mediaTitle,
+						button: {
+							text: config.mediaButtonText,
+						},
+						multiple: false,
+						library: {
+							type: 'image',
+						},
+					});
 
-				// Handle image selection
-				this.frame.on('select', () => {
-					const attachment = this.frame
-						.state()
-						.get('selection')
-						.first()
-						.toJSON();
-					this.setLogo(attachment);
-				});
-			}
+					// Handle image selection
+					this.frame.on('select', () => {
+						const attachment = this.frame
+							.state()
+							.get('selection')
+							.first()
+							.toJSON();
+						this.setMedia(attachment);
+					});
+				}
 
-			// Open the media frame
-			this.frame.open();
-		},
+				// Open the media frame
+				this.frame.open();
+			},
 
-		/**
-		 * Set logo image
-		 *
-		 * @param {Object} attachment Attachment data
-		 */
-		setLogo(attachment) {
-			const thumbnailUrl = attachment.sizes?.thumbnail?.url || attachment.url;
-			const alt = attachment.alt || '';
-
-			// Update hidden input
-			$('#swipecomic-logo-id').val(attachment.id);
-
-			// Update preview
-			const $img = $('<img>', {
-				src: thumbnailUrl,
-				alt,
-				style:
-					'max-width: 100%; height: auto; display: block; margin-bottom: 10px;',
-			});
-			$('#swipecomic-logo-preview').html($img).show();
-
-			// Update button text
-			$('#swipecomic-upload-logo').html(
-				'<span class="dashicons dashicons-format-image"></span> ' +
-					(swipecomicAdmin.changeLogoText || 'Change Logo')
-			);
-
-			// Show remove button
-			$('#swipecomic-remove-logo').show();
-
-			// Auto-save logo to post meta
-			this.autoSaveLogo(attachment.id);
-		},
-
-		/**
-		 * Auto-save logo to post meta via AJAX
-		 *
-		 * @param {number} logoId Logo attachment ID
-		 */
-		autoSaveLogo(logoId) {
-			const postId = $('#post_ID').val();
-
-			if (!postId || postId === '0') {
-				// New post without ID yet, will be saved on first publish/save
-				return;
-			}
-
-			$.ajax({
-				url: swipecomicAdmin.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'swipecomic_save_logo',
-					nonce: swipecomicAdmin.nonce,
-					post_id: postId,
-					logo_id: logoId,
-				},
-				error: () => {
+			/**
+			 * Set media image
+			 *
+			 * @param {Object} attachment Attachment data
+			 */
+			setMedia(attachment) {
+				// Validate attachment
+				if (
+					!attachment ||
+					(!attachment.url && !attachment.sizes) ||
+					(attachment.type && attachment.type.indexOf('image') !== 0)
+				) {
 					// eslint-disable-next-line no-alert
-					alert('Auto-save failed. Please save your changes manually.');
-				},
-			});
-		},
+					alert(
+						swipecomicAdmin.invalidImageSelected ||
+							'Please select a valid image file.'
+					);
+					return;
+				}
 
-		/**
-		 * Remove logo image
-		 */
-		removeLogo() {
-			// eslint-disable-next-line no-alert
-			if (!confirm(swipecomicAdmin.removeLogoConfirm || 'Remove logo image?')) {
-				return;
-			}
+				const imageUrl =
+					(attachment.sizes &&
+						attachment.sizes.medium &&
+						attachment.sizes.medium.url) ||
+					attachment.url;
+				if (!imageUrl || !attachment.id) {
+					// eslint-disable-next-line no-alert
+					alert(
+						swipecomicAdmin.invalidImageSelected ||
+							'Please select a valid image file.'
+					);
+					return;
+				}
 
-			const logoId = $('#swipecomic-logo-id').val();
+				const alt = attachment.alt || '';
 
-			const clearLogoUI = () => {
-				$('#swipecomic-logo-id').val('');
-				$('#swipecomic-logo-preview').html('').hide();
-				$('#swipecomic-upload-logo').html(
-					'<span class="dashicons dashicons-format-image"></span> ' +
-						swipecomicAdmin.uploadLogoText
+				// Update hidden input
+				$(config.hiddenInput).val(attachment.id);
+
+				// Update preview
+				const $img = $('<img>', {
+					src: imageUrl,
+					alt,
+					style: 'max-width: 200px; height: auto; display: block;',
+				});
+				$(config.previewArea).html($img).show();
+
+				// Update button text
+				$(config.uploadButton).html(
+					'<span class="dashicons dashicons-format-image" style="vertical-align: middle; margin-right: 4px;"></span>' +
+						config.changeButtonText
 				);
-				$('#swipecomic-remove-logo').hide();
-			};
 
-			if (!logoId) {
-				return; // Nothing to remove
-			}
+				// Show remove button
+				$(config.removeButton).show();
 
-			// Check if we should delete or just detach
-			if (swipecomicAdmin.deleteOnRemove) {
-				// Delete the logo via AJAX
+				// Auto-save if configured
+				if (config.autoSave) {
+					this.autoSave(attachment.id);
+				}
+			},
+
+			/**
+			 * Remove media image
+			 */
+			removeMedia() {
+				// eslint-disable-next-line no-alert
+				if (!confirm(config.removeConfirmText)) {
+					return;
+				}
+
+				const imageId = parseInt($(config.hiddenInput).val(), 10);
+
+				// Check if we should delete or just detach
+				if (config.deleteOnRemove && imageId) {
+					// Delete the image via AJAX
+					$.ajax({
+						url: swipecomicAdmin.ajaxUrl,
+						type: 'POST',
+						data: {
+							action: 'swipecomic_delete_image',
+							nonce: swipecomicAdmin.nonce,
+							attachment_id: imageId,
+						},
+						success: (response) => {
+							if (response.success) {
+								this.clearMedia();
+							} else {
+								// eslint-disable-next-line no-alert
+								alert(
+									response.data.message ||
+										'Failed to delete image. Please try again.'
+								);
+							}
+						},
+						error: () => {
+							// eslint-disable-next-line no-alert
+							alert('Error deleting image. Please try again.');
+						},
+					});
+				} else {
+					// Just detach - clear the field
+					this.clearMedia();
+				}
+			},
+
+			/**
+			 * Clear media from UI
+			 */
+			clearMedia() {
+				// Clear hidden input
+				$(config.hiddenInput).val('');
+
+				// Clear preview
+				$(config.previewArea).html('').hide();
+
+				// Update button text
+				$(config.uploadButton).html(
+					'<span class="dashicons dashicons-format-image" style="vertical-align: middle; margin-right: 4px;"></span>' +
+						config.uploadButtonText
+				);
+
+				// Hide remove button
+				$(config.removeButton).hide();
+
+				// Auto-save removal if configured
+				if (config.autoSave) {
+					this.autoSave(0);
+				}
+			},
+
+			/**
+			 * Auto-save media to database
+			 *
+			 * @param {number} mediaId Media attachment ID (0 to remove)
+			 */
+			autoSave(mediaId) {
+				if (!config.autoSaveAction) {
+					return;
+				}
+
+				const termId = $('#swipecomic_series_term_id').val();
+
+				if (!termId) {
+					// New term without ID yet, will be saved on form submit
+					return;
+				}
+
 				$.ajax({
 					url: swipecomicAdmin.ajaxUrl,
 					type: 'POST',
 					data: {
-						action: 'swipecomic_delete_logo',
+						action: config.autoSaveAction,
 						nonce: swipecomicAdmin.nonce,
-						attachment_id: logoId,
-					},
-					success: (response) => {
-						if (response.success) {
-							clearLogoUI();
-						} else {
-							// eslint-disable-next-line no-alert
-							alert(
-								response.data.message ||
-									'Failed to delete logo. Please try again.'
-							);
-						}
+						term_id: termId,
+						[config.autoSaveParam]: mediaId,
 					},
 					error: () => {
-						// eslint-disable-next-line no-alert
-						alert('Error deleting logo. Please try again.');
+						// Silent failure - data will be saved on form submit
 					},
 				});
-			} else {
-				// Just detach - remove from episode but keep in Media Library
-				clearLogoUI();
-			}
-		},
-	};
+			},
+		};
+	}
 
 	/**
 	 * Series Cover Image Manager
 	 */
-	const SeriesCoverManager = {
-		/**
-		 * Media frame instance
-		 */
-		frame: null,
+	const SeriesCoverManager = createMediaManager({
+		uploadButton: '#swipecomic-upload-series-cover',
+		removeButton: '#swipecomic-remove-series-cover',
+		hiddenInput: '#series_cover_image_id',
+		previewArea: '#swipecomic-series-cover-preview',
+		mediaTitle: swipecomicAdmin.coverUploadTitle || 'Select Series Cover Image',
+		mediaButtonText: swipecomicAdmin.coverUploadButton || 'Use as Cover',
+		uploadButtonText: swipecomicAdmin.uploadCoverText || 'Upload Cover Image',
+		changeButtonText: swipecomicAdmin.changeCoverText || 'Change Cover Image',
+		removeConfirmText:
+			swipecomicAdmin.removeCoverConfirm ||
+			'Remove cover image from this series? It will remain in your Media Library.',
+		deleteOnRemove: swipecomicAdmin.deleteOnRemove || false,
+		autoSave: true,
+		autoSaveAction: 'swipecomic_save_series_cover',
+		autoSaveParam: 'cover_image_id',
+	});
 
-		/**
-		 * Initialize the cover manager
-		 */
-		init() {
-			this.bindEvents();
-		},
-
-		/**
-		 * Bind event handlers
-		 */
-		bindEvents() {
-			// Upload cover button
-			$('#swipecomic-upload-series-cover').on('click', (e) => {
-				e.preventDefault();
-				this.openMediaUploader();
-			});
-
-			// Remove cover button
-			$('#swipecomic-remove-series-cover').on('click', (e) => {
-				e.preventDefault();
-				this.removeCover();
-			});
-		},
-
-		/**
-		 * Open WordPress media uploader
-		 */
-		openMediaUploader() {
-			// Create media frame if it doesn't exist
-			if (!this.frame) {
-				this.frame = wp.media({
-					title: 'Select Series Cover Image',
-					button: {
-						text: 'Use as Cover',
-					},
-					multiple: false,
-					library: {
-						type: 'image',
-					},
-				});
-
-				// Handle image selection
-				this.frame.on('select', () => {
-					const attachment = this.frame
-						.state()
-						.get('selection')
-						.first()
-						.toJSON();
-					this.setCover(attachment);
-				});
-			}
-
-			// Open the media frame
-			this.frame.open();
-		},
-
-		/**
-		 * Set cover image
-		 *
-		 * @param {Object} attachment Attachment data
-		 */
-		setCover(attachment) {
-			const imageUrl = attachment.sizes?.medium?.url || attachment.url;
-			const alt = attachment.alt || '';
-
-			// Update hidden input
-			$('#series_cover_image_id').val(attachment.id);
-
-			// Update preview
-			const $img = $('<img>', {
-				src: imageUrl,
-				alt,
-				style: 'max-width: 200px; height: auto; display: block;',
-			});
-			$('#swipecomic-series-cover-preview').html($img).show();
-
-			// Update button text
-			$('#swipecomic-upload-series-cover').html(
-				'<span class="dashicons dashicons-format-image"></span> Change Cover Image'
-			);
-
-			// Show remove button
-			$('#swipecomic-remove-series-cover').show();
-		},
-
-		/**
-		 * Remove cover image
-		 */
-		removeCover() {
-			// eslint-disable-next-line no-alert
-			if (!confirm('Remove cover image?')) {
-				return;
-			}
-
-			// Clear hidden input
-			$('#series_cover_image_id').val('');
-
-			// Clear preview
-			$('#swipecomic-series-cover-preview').html('').hide();
-
-			// Update button text
-			$('#swipecomic-upload-series-cover').html(
-				'<span class="dashicons dashicons-format-image"></span> Upload Cover Image'
-			);
-
-			// Hide remove button
-			$('#swipecomic-remove-series-cover').hide();
-		},
-	};
+	/**
+	 * Series Logo Manager
+	 */
+	const SeriesLogoManager = createMediaManager({
+		uploadButton: '#swipecomic-upload-series-logo',
+		removeButton: '#swipecomic-remove-series-logo',
+		hiddenInput: '#series_logo_id',
+		previewArea: '#swipecomic-series-logo-preview',
+		mediaTitle: swipecomicAdmin.logoUploadTitle || 'Select Series Logo',
+		mediaButtonText: swipecomicAdmin.logoUploadButton || 'Use as Logo',
+		uploadButtonText: swipecomicAdmin.uploadLogoText || 'Upload Logo',
+		changeButtonText: swipecomicAdmin.changeLogoText || 'Change Logo',
+		removeConfirmText:
+			swipecomicAdmin.removeLogoConfirm ||
+			'Remove logo from this series? It will remain in your Media Library.',
+		deleteOnRemove: swipecomicAdmin.deleteOnRemove || false,
+		autoSave: true,
+		autoSaveAction: 'swipecomic_save_series_logo',
+		autoSaveParam: 'logo_id',
+	});
 
 	/**
 	 * Episode Order Manager for Series
@@ -1118,12 +1092,12 @@
 			EpisodeSettings.init();
 		}
 
-		if ($('#swipecomic-upload-logo').length) {
-			EpisodeLogoManager.init();
-		}
-
 		if ($('#swipecomic-upload-series-cover').length) {
 			SeriesCoverManager.init();
+		}
+
+		if ($('#swipecomic-upload-series-logo').length) {
+			SeriesLogoManager.init();
 		}
 
 		if ($('#swipecomic-episode-order-list').length) {
