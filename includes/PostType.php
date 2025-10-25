@@ -34,6 +34,8 @@ class PostType {
 		add_filter( 'manage_' . self::POST_TYPE . '_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-' . self::POST_TYPE . '_sortable_columns', array( $this, 'add_sortable_columns' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'add_series_filter_dropdown' ) );
+		add_filter( 'parse_query', array( $this, 'filter_by_series' ) );
 	}
 
 	/**
@@ -144,5 +146,108 @@ class PostType {
 	public function add_sortable_columns( $columns ) {
 		$columns['episode_number'] = 'episode_number';
 		return $columns;
+	}
+
+	/**
+	 * Add series filter dropdown to admin list.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $post_type Current post type.
+	 */
+	public function add_series_filter_dropdown( $post_type ) {
+		// Only add filter for swipecomic post type.
+		if ( self::POST_TYPE !== $post_type ) {
+			return;
+		}
+
+		// Get all series terms.
+		$terms = get_terms(
+			array(
+				'taxonomy'   => Taxonomy::TAXONOMY,
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			)
+		);
+
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+			return;
+		}
+
+		// Get current filter value.
+		$current_series = '';
+		if ( isset( $_GET['swipecomic_series_filter'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading GET parameter for filter, no action taken.
+			$filter_value = sanitize_text_field( wp_unslash( $_GET['swipecomic_series_filter'] ) );
+			if ( 'none' === $filter_value ) {
+				$current_series = 'none';
+			} else {
+				$current_series = absint( $filter_value );
+			}
+		}
+
+		?>
+		<select name="swipecomic_series_filter" id="swipecomic_series_filter">
+			<option value=""><?php esc_html_e( 'All Series', 'swipecomic' ); ?></option>
+			<option value="none" <?php selected( $current_series, 'none' ); ?>>
+				<?php esc_html_e( 'No Series', 'swipecomic' ); ?>
+			</option>
+			<?php foreach ( $terms as $term ) : ?>
+				<option value="<?php echo esc_attr( $term->term_id ); ?>" <?php selected( $current_series, $term->term_id ); ?>>
+					<?php echo esc_html( $term->name ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+		<?php
+	}
+
+	/**
+	 * Filter episodes by selected series.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \WP_Query $query Current query object.
+	 */
+	public function filter_by_series( $query ) {
+		global $pagenow;
+
+		// Only filter on admin edit.php page for swipecomic post type.
+		if ( ! is_admin() || ! $query->is_main_query() || 'edit.php' !== $pagenow || ! isset( $query->query_vars['post_type'] ) || self::POST_TYPE !== $query->query_vars['post_type'] ) {
+			return;
+		}
+
+		// Check if series filter is set.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading GET parameter for filter, no action taken.
+		if ( ! isset( $_GET['swipecomic_series_filter'] ) || empty( $_GET['swipecomic_series_filter'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading GET parameter for filter, no action taken.
+		$filter_value = sanitize_text_field( wp_unslash( $_GET['swipecomic_series_filter'] ) );
+
+		// Filter for episodes with no series.
+		if ( 'none' === $filter_value ) {
+			$tax_query = array(
+				array(
+					'taxonomy' => Taxonomy::TAXONOMY,
+					'operator' => 'NOT EXISTS',
+				),
+			);
+			$query->set( 'tax_query', $tax_query );
+		} else {
+			// Filter by specific series.
+			$term_id = absint( $filter_value );
+			if ( $term_id > 0 ) {
+				$tax_query = array(
+					array(
+						'taxonomy' => Taxonomy::TAXONOMY,
+						'field'    => 'term_id',
+						'terms'    => $term_id,
+					),
+				);
+				$query->set( 'tax_query', $tax_query );
+			}
+		}
 	}
 }
