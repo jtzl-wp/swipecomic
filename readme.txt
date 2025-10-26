@@ -107,6 +107,10 @@ SwipeComic generates only a single thumbnail size (400px by default, configurabl
 
 Go to Settings > SwipeComic and configure the URL prefix. You can also disable the prefix entirely to use root-level URLs.
 
+= I'm getting 404 errors on comic pages after updating "Use URL Prefix" - what should I do? =
+
+If your site uses object caching (like Redis, Memcached, or similar), WordPress may cache the old permalink structure. After changing the "Use URL Prefix" setting, go to Settings > Permalinks in your WordPress admin and click "Save Changes" to manually flush the permalink cache. This will regenerate the rewrite rules and resolve the 404 errors.
+
 = Is this plugin mobile-friendly? =
 
 Yes! SwipeComic is built with a mobile-first approach. The current alpha release provides basic responsive display. Advanced mobile features like swipe navigation will be added in future releases.
