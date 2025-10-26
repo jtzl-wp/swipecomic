@@ -63,6 +63,38 @@ class Settings {
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_init', array( $this, 'check_flush_rewrite_rules' ) );
+
+		// Hook into option updates to flush rewrite rules when URL structure changes.
+		add_action( 'update_option_swipecomic_use_url_prefix', array( $this, 'schedule_rewrite_flush' ), 10, 2 );
+		add_action( 'update_option_swipecomic_url_prefix', array( $this, 'schedule_rewrite_flush' ), 10, 2 );
+	}
+
+	/**
+	 * Schedule a rewrite rules flush when URL structure settings change.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param mixed $old_value The old option value.
+	 * @param mixed $new_value The new option value.
+	 */
+	public function schedule_rewrite_flush( $old_value, $new_value ) {
+		// Only schedule flush if the value actually changed.
+		if ( $old_value !== $new_value ) {
+			set_transient( 'swipecomic_flush_rewrite_rules', 1, 60 );
+		}
+	}
+
+	/**
+	 * Check if rewrite rules need to be flushed.
+	 *
+	 * @since 1.0.0
+	 */
+	public function check_flush_rewrite_rules() {
+		if ( get_transient( 'swipecomic_flush_rewrite_rules' ) ) {
+			flush_rewrite_rules();
+			delete_transient( 'swipecomic_flush_rewrite_rules' );
+		}
 	}
 
 	/**
@@ -591,15 +623,7 @@ class Settings {
 	 * @return bool Sanitized value.
 	 */
 	public function sanitize_use_prefix( $value ) {
-		$old_value = (bool) get_option( 'swipecomic_use_url_prefix', true );
-		$new_value = (bool) $value;
-
-		// Flush rewrite rules if setting changed.
-		if ( $old_value !== $new_value ) {
-			add_action( 'shutdown', 'flush_rewrite_rules' );
-		}
-
-		return $new_value;
+		return (bool) $value;
 	}
 
 	/**
@@ -641,11 +665,6 @@ class Settings {
 				'error'
 			);
 			return $old_value;
-		}
-
-		// Flush rewrite rules if setting changed.
-		if ( $old_value !== $value ) {
-			add_action( 'shutdown', 'flush_rewrite_rules' );
 		}
 
 		return $value;

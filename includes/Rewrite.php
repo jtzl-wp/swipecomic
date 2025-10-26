@@ -37,6 +37,20 @@ class Rewrite {
 		$use_prefix = Settings::use_url_prefix();
 		$prefix     = Settings::get_url_prefix();
 
+		$this->add_rewrite_rules_with_params( $use_prefix, $prefix );
+	}
+
+	/**
+	 * Add custom rewrite rules with explicit parameters.
+	 *
+	 * This method allows passing values directly to avoid cache issues during activation.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param bool   $use_prefix Whether to use URL prefix.
+	 * @param string $prefix     URL prefix to use.
+	 */
+	public function add_rewrite_rules_with_params( $use_prefix, $prefix ) {
 		if ( $use_prefix ) {
 			// With prefix mode: /comic/series/episode/.
 			$this->add_prefixed_rules( $prefix );

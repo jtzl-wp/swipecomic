@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SwipeComic
  * Description: A mobile-first comic reader for WordPress with swipe navigation and responsive design.
- * Version:     1.0.0-alpha.2
+ * Version:     1.0.0-alpha.3
  * Author:      JT G.
  * Text Domain: swipecomic
  * License:     GPLv2 or later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin version and paths.
-define( 'JTZL_SWIPECOMIC_VER', '1.0.0-alpha.2' );
+define( 'JTZL_SWIPECOMIC_VER', '1.0.0-alpha.3' );
 define( 'JTZL_SWIPECOMIC_URL', plugin_dir_url( __FILE__ ) );
 define( 'JTZL_SWIPECOMIC_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -172,15 +172,30 @@ function jtzl_swipecomic_activate() {
 	add_option( 'swipecomic_thumbnail_size', 400 );
 	add_option( 'swipecomic_media_optimization', 'keep_all' );
 
-	// Set default URL structure options.
+	// Set default URL structure options if they don't exist.
+	// For reactivation, these will already exist and won't be overwritten.
 	add_option( 'swipecomic_use_url_prefix', true );
 	add_option( 'swipecomic_url_prefix', 'comic' );
 
 	// Store plugin version for future migrations.
 	add_option( 'swipecomic_version', JTZL_SWIPECOMIC_VER );
 
-	// Ensure post type and taxonomies are registered before flushing rewrite rules.
-	JTZL_SwipeComic::init_plugin();
+	// Read the actual values to use for rewrite rules.
+	// This handles both new installs (uses defaults just set) and reactivations (uses existing values).
+	$use_prefix = (bool) get_option( 'swipecomic_use_url_prefix' );
+	$prefix     = get_option( 'swipecomic_url_prefix' );
+
+	// Manually register post type and taxonomy before flushing rewrite rules.
+	// This is necessary because the init hook has already fired during activation.
+	$post_type = new JTZL\SwipeComic\PostType();
+	$post_type->register_post_type();
+
+	$taxonomy = new JTZL\SwipeComic\Taxonomy();
+	$taxonomy->register_taxonomy();
+
+	// Pass values directly to ensure correct rewrite rules are generated.
+	$rewrite = new JTZL\SwipeComic\Rewrite();
+	$rewrite->add_rewrite_rules_with_params( $use_prefix, $prefix );
 
 	// Flush rewrite rules to ensure clean URLs work.
 	flush_rewrite_rules();
