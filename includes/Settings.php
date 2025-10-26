@@ -591,7 +591,7 @@ class Settings {
 	 * @return bool Sanitized value.
 	 */
 	public function sanitize_use_prefix( $value ) {
-		$old_value = get_option( 'swipecomic_use_url_prefix', true );
+		$old_value = (bool) get_option( 'swipecomic_use_url_prefix', true );
 		$new_value = (bool) $value;
 
 		// Flush rewrite rules if setting changed.

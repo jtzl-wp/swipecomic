@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SwipeComic
  * Description: A mobile-first comic reader for WordPress with swipe navigation and responsive design.
- * Version:     1.0.0-alpha.1
+ * Version:     1.0.0-alpha.2
  * Author:      JT G.
  * Text Domain: swipecomic
  * License:     GPLv2 or later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin version and paths.
-define( 'JTZL_SWIPECOMIC_VER', '1.0.0-alpha.1' );
+define( 'JTZL_SWIPECOMIC_VER', '1.0.0-alpha.2' );
 define( 'JTZL_SWIPECOMIC_URL', plugin_dir_url( __FILE__ ) );
 define( 'JTZL_SWIPECOMIC_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -203,3 +203,24 @@ function jtzl_swipecomic_deactivate() {
 	// Data should only be removed on uninstall (via uninstall.php).
 }
 register_deactivation_hook( __FILE__, 'jtzl_swipecomic_deactivate' );
+
+/**
+ * Add settings link to plugin list page.
+ *
+ * @since 1.0.0
+ *
+ * @param array $links Existing plugin action links.
+ * @return array Modified plugin action links.
+ */
+function jtzl_swipecomic_plugin_action_links( $links ) {
+	$settings_link = sprintf(
+		'<a href="%s">%s</a>',
+		esc_url( admin_url( 'edit.php?post_type=swipecomic&page=swipecomic-settings' ) ),
+		esc_html__( 'Settings', 'swipecomic' )
+	);
+
+	array_unshift( $links, $settings_link );
+
+	return $links;
+}
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'jtzl_swipecomic_plugin_action_links' );
