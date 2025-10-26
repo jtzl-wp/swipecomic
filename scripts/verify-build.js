@@ -179,6 +179,7 @@ function validateRequiredAssets(manifest) {
 async function verifyReferencedFiles(manifest) {
 	let allExist = true;
 	const buildDir = path.dirname(MANIFEST_PATH);
+	const projectRoot = path.dirname(buildDir);
 
 	console.log('\n📁 Verifying referenced files exist...');
 
@@ -188,7 +189,15 @@ async function verifyReferencedFiles(manifest) {
 			continue;
 		}
 
-		const filePath = path.join(buildDir, hashedName);
+		// Determine the correct directory based on file type
+		let filePath;
+		if (hashedName.includes('admin') && hashedName.endsWith('.js')) {
+			filePath = path.join(projectRoot, 'admin', 'js', hashedName);
+		} else if (hashedName.includes('admin') && hashedName.endsWith('.css')) {
+			filePath = path.join(projectRoot, 'admin', 'css', hashedName);
+		} else {
+			filePath = path.join(buildDir, hashedName);
+		}
 
 		if (!fs.existsSync(filePath)) {
 			console.error(`❌ Referenced file does not exist: ${hashedName}`);
