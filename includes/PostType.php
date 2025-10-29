@@ -100,31 +100,28 @@ class PostType {
 	 * @return array Modified columns.
 	 */
 	public function add_custom_columns( $columns ) {
-		// Move series column to second position (after checkbox) and insert other custom columns after title.
+		// Keep title as second column for proper mobile display, add Series as 3rd, then custom columns.
 		$new_columns = array();
 
-		// Add checkbox column first if it exists.
-		if ( isset( $columns['cb'] ) ) {
-			$new_columns['cb'] = $columns['cb'];
-		}
-
-		// Add series column second if it exists.
-		if ( isset( $columns['taxonomy-swipecomic_series'] ) ) {
-			$new_columns['taxonomy-swipecomic_series'] = $columns['taxonomy-swipecomic_series'];
-		}
-
 		foreach ( $columns as $key => $value ) {
-			// Skip columns we already added.
-			if ( 'cb' === $key || 'taxonomy-swipecomic_series' === $key ) {
+			// Skip series taxonomy for now, we'll add it after title.
+			if ( 'taxonomy-swipecomic_series' === $key ) {
 				continue;
 			}
 
 			$new_columns[ $key ] = $value;
+
+			// Add Series and custom columns after title.
 			if ( 'title' === $key ) {
+				// Add Series as 3rd column if it exists.
+				if ( isset( $columns['taxonomy-swipecomic_series'] ) ) {
+					$new_columns['taxonomy-swipecomic_series'] = $columns['taxonomy-swipecomic_series'];
+				}
 				$new_columns['episode_number'] = __( 'Episode #', 'swipecomic' );
 				$new_columns['image_count']    = __( 'Images', 'swipecomic' );
 			}
 		}
+
 		return $new_columns;
 	}
 

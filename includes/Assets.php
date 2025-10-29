@@ -138,12 +138,13 @@ class Assets {
 	 */
 	public function enqueue_admin_assets( $hook ) {
 		$is_swipecomic_post = ( 'post.php' === $hook || 'post-new.php' === $hook ) && isset( $GLOBALS['post_type'] ) && 'swipecomic' === $GLOBALS['post_type'];
+		$is_swipecomic_list = ( 'edit.php' === $hook ) && isset( $GLOBALS['post_type'] ) && 'swipecomic' === $GLOBALS['post_type'];
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Taxonomy parameter is sanitized and only used for comparison.
 		$taxonomy           = isset( $_GET['taxonomy'] ) ? sanitize_key( $_GET['taxonomy'] ) : '';
 		$is_series_taxonomy = ( 'term.php' === $hook || 'edit-tags.php' === $hook ) && 'swipecomic_series' === $taxonomy;
 
-		// Only load on swipecomic edit screens or series taxonomy screens.
-		if ( ! $is_swipecomic_post && ! $is_series_taxonomy ) {
+		// Only load on swipecomic screens or series taxonomy screens.
+		if ( ! $is_swipecomic_post && ! $is_swipecomic_list && ! $is_series_taxonomy ) {
 			return;
 		}
 
