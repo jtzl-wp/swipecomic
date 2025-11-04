@@ -26,6 +26,10 @@ const baseConfig = {
 	target: 'es2019',
 	jsx: 'automatic',
 	resolveExtensions: ['.tsx', '.ts', '.jsx', '.js'],
+	loader: {
+		'.ts': 'ts',
+		'.tsx': 'tsx',
+	},
 	define: {
 		'process.env.NODE_ENV': JSON.stringify(
 			process.env.NODE_ENV || 'production'

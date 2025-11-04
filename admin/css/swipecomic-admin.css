@@ -7,9 +7,14 @@
 
 /* Mobile: Hide table header columns except checkbox and title */
 @media screen and (max-width: 782px) {
-
-	body.post-type-swipecomic .wp-list-table thead th:not(.check-column):not(.column-title),
-	body.post-type-swipecomic .wp-list-table tfoot th:not(.check-column):not(.column-title) {
+	body.post-type-swipecomic
+		.wp-list-table
+		thead
+		th:not(.check-column):not(.column-title),
+	body.post-type-swipecomic
+		.wp-list-table
+		tfoot
+		th:not(.check-column):not(.column-title) {
 		display: none !important;
 	}
 
@@ -241,7 +246,7 @@
 }
 
 .swipecomic-modal-field select,
-.swipecomic-modal-field input[type='number'] {
+.swipecomic-modal-field input[type="number"] {
 	width: 100%;
 }
 
@@ -261,8 +266,6 @@
 	color: #d63638;
 	text-decoration: underline;
 }
-
-
 
 /* Episode Order Section */
 .swipecomic-episode-order-section {
@@ -367,7 +370,7 @@
 	font-weight: 600;
 }
 
-.swipecomic-settings-container input[type='number'],
+.swipecomic-settings-container input[type="number"],
 .swipecomic-settings-container select {
 	width: 100%;
 }
@@ -496,7 +499,7 @@
 }
 
 .swipecomic-loading::after {
-	content: '';
+	content: "";
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -537,7 +540,7 @@
 }
 
 /* Modal Accessibility */
-.swipecomic-modal-overlay[aria-hidden='true'] {
+.swipecomic-modal-overlay[aria-hidden="true"] {
 	display: none;
 }
 
@@ -600,7 +603,7 @@
 }
 
 .swipecomic-tooltip::after {
-	content: '';
+	content: "";
 	position: absolute;
 	bottom: 100%;
 	left: 50%;
@@ -667,7 +670,7 @@
 		margin-left: 15px;
 	}
 
-	.swipecomic-settings-container input[type='number'],
+	.swipecomic-settings-container input[type="number"],
 	.swipecomic-settings-container select {
 		max-width: 100%;
 	}
@@ -751,7 +754,6 @@
 
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
-
 	.swipecomic-image-item,
 	.swipecomic-modal-overlay,
 	.swipecomic-loading::after,
@@ -768,7 +770,6 @@
 
 /* Print Styles */
 @media print {
-
 	.swipecomic-upload-images,
 	.swipecomic-image-actions,
 	.swipecomic-modal-overlay,
