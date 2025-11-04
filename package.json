@@ -70,36 +70,5 @@
 		"*.php": [
 			"vendor/bin/phpcbf --standard=phpcs.xml.dist --report=summary --"
 		]
-	},
-	"jest": {
-		"preset": "ts-jest",
-		"testEnvironment": "jsdom",
-		"roots": [
-			"<rootDir>/tests/js"
-		],
-		"testMatch": [
-			"**/__tests__/**/*.ts?(x)",
-			"**/?(*.)+(spec|test).ts?(x)"
-		],
-		"moduleFileExtensions": [
-			"ts",
-			"tsx",
-			"js",
-			"jsx",
-			"json"
-		],
-		"setupFilesAfterEnv": [
-			"<rootDir>/tests/js/setup.ts"
-		],
-		"collectCoverageFrom": [
-			"src/**/*.{ts,tsx}",
-			"!src/**/*.d.ts"
-		],
-		"coverageDirectory": "coverage",
-		"coverageReporters": [
-			"text",
-			"lcov",
-			"html"
-		]
 	}
 }
