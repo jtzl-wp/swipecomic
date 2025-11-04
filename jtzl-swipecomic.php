@@ -106,6 +106,15 @@ class JTZL_SwipeComic {
 	private $template_functions;
 
 	/**
+	 * AjaxHandlers instance.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var AjaxHandlers
+	 */
+	private $ajax_handlers;
+
+	/**
 	 * Initialize the plugin.
 	 *
 	 * @since 1.0.0
@@ -120,6 +129,7 @@ class JTZL_SwipeComic {
 		$this->meta_boxes         = new JTZL\SwipeComic\MetaBoxes();
 		$this->image_handler      = new JTZL\SwipeComic\ImageHandler();
 		$this->template_functions = new JTZL\SwipeComic\TemplateFunctions();
+		$this->ajax_handlers      = new JTZL\SwipeComic\AjaxHandlers();
 
 		// Initialize components.
 		$this->settings->init();
@@ -130,6 +140,7 @@ class JTZL_SwipeComic {
 		$this->meta_boxes->init();
 		$this->image_handler->init();
 		$this->template_functions->init();
+		$this->ajax_handlers->init();
 	}
 
 	/**

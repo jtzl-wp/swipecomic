@@ -53,6 +53,124 @@ class TemplateFunctions {
 	}
 
 	/**
+	 * Get episode navigation data.
+	 *
+	 * Returns previous and next episode IDs based on episode order.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int|null $post_id Post ID. Defaults to current post.
+	 * @return array Array with 'prev' and 'next' episode IDs (or null if not found).
+	 */
+	public static function get_episode_navigation( $post_id = null ) {
+		if ( null === $post_id ) {
+			$post_id = get_the_ID();
+		}
+
+		$prev_post = self::find_adjacent_episode( $post_id, 'prev' );
+		$next_post = self::find_adjacent_episode( $post_id, 'next' );
+
+		return array(
+			'prev' => $prev_post ? $prev_post->ID : null,
+			'next' => $next_post ? $next_post->ID : null,
+		);
+	}
+
+	/**
+	 * Find adjacent episode in series.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int    $episode_id Current episode ID.
+	 * @param string $direction  Direction to search ('next' or 'prev').
+	 * @return \WP_Post|null Adjacent episode post object or null if not found.
+	 */
+	public static function find_adjacent_episode( $episode_id, $direction ) {
+		// Get current episode's series.
+		$series_terms = wp_get_post_terms( $episode_id, 'swipecomic_series' );
+		if ( empty( $series_terms ) || is_wp_error( $series_terms ) ) {
+			return null;
+		}
+
+		$series_id = $series_terms[0]->term_id;
+
+		// Get current episode order.
+		$current_order = get_post_meta( $episode_id, '_swipecomic_episode_order', true );
+
+		// Query for adjacent episode.
+		$args = array(
+			'post_type'      => 'swipecomic',
+			'posts_per_page' => 1,
+			'post_status'    => 'publish',
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'swipecomic_series',
+					'field'    => 'term_id',
+					'terms'    => $series_id,
+				),
+			),
+			'meta_query'     => array(
+				array(
+					'key'     => '_swipecomic_episode_order',
+					'value'   => $current_order,
+					'compare' => 'next' === $direction ? '>' : '<',
+					'type'    => 'NUMERIC',
+				),
+			),
+			'meta_key'       => '_swipecomic_episode_order',
+			'orderby'        => 'meta_value_num',
+			'order'          => 'next' === $direction ? 'ASC' : 'DESC',
+		);
+
+		$query = new \WP_Query( $args );
+
+		return $query->have_posts() ? $query->posts[0] : null;
+	}
+
+	/**
+	 * Get series data.
+	 *
+	 * Returns series metadata including title, description, and cover image.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int|null $term_id Series term ID. Defaults to current post's first series.
+	 * @return array|false Series data array or false if not found.
+	 */
+	public static function get_series_data( $term_id = null ) {
+		if ( null === $term_id ) {
+			$terms = get_the_terms( get_the_ID(), 'swipecomic_series' );
+			if ( ! $terms || is_wp_error( $terms ) ) {
+				return false;
+			}
+			$term_id = $terms[0]->term_id;
+		}
+
+		$term = get_term( $term_id, 'swipecomic_series' );
+		if ( ! $term || is_wp_error( $term ) ) {
+			return false;
+		}
+
+		$cover_image_id  = get_term_meta( $term_id, 'series_cover_image_id', true );
+		$cover_image_url = $cover_image_id ? wp_get_attachment_image_url( $cover_image_id, 'large' ) : false;
+
+		return array(
+			'term_id'     => $term_id,
+			'name'        => $term->name,
+			'description' => $term->description,
+			'cover_image' => array(
+				'id'  => $cover_image_id,
+				'url' => $cover_image_url,
+			),
+			'logo'        => array(
+				'id'       => get_term_meta( $term_id, 'series_logo_id', true ),
+				'url'      => self::get_series_logo( $term_id ),
+				'position' => self::get_series_logo_position( $term_id ),
+			),
+		);
+	}
+
+	/**
 	 * Get episode images with full-size URLs.
 	 *
 	 * Returns an array of image data including full-size URLs to preserve
@@ -91,6 +209,15 @@ class TemplateFunctions {
 				continue; // Skip images that no longer exist.
 			}
 
+			// Get image dimensions.
+			$image_meta = wp_get_attachment_metadata( $attachment_id );
+			$width      = 0;
+			$height     = 0;
+			if ( is_array( $image_meta ) ) {
+				$width  = isset( $image_meta['width'] ) ? absint( $image_meta['width'] ) : 0;
+				$height = isset( $image_meta['height'] ) ? absint( $image_meta['height'] ) : 0;
+			}
+
 			// Validate and sanitize zoom override.
 			$zoom_override = isset( $image_data['zoom_override'] ) ? $image_data['zoom_override'] : null;
 			if ( null !== $zoom_override && ! self::is_valid_zoom_value( $zoom_override ) ) {
@@ -106,6 +233,8 @@ class TemplateFunctions {
 			$images[] = array(
 				'id'            => $attachment_id,
 				'url'           => $image_url, // Full-size original image.
+				'width'         => $width,
+				'height'        => $height,
 				'alt'           => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
 				'zoom'          => null !== $zoom_override ? $zoom_override : $default_zoom,
 				'pan'           => null !== $pan_override ? $pan_override : $default_pan,
@@ -350,5 +479,66 @@ class TemplateFunctions {
 		}
 
 		return $position;
+	}
+
+	/**
+	 * Get episode number.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int|null $post_id Post ID. Defaults to current post.
+	 * @return string|false Episode number or false if not set.
+	 */
+	public static function get_episode_number( $post_id = null ) {
+		if ( null === $post_id ) {
+			$post_id = get_the_ID();
+		}
+
+		$episode_number = get_post_meta( $post_id, '_swipecomic_episode_number', true );
+		return ! empty( $episode_number ) ? $episode_number : false;
+	}
+
+	/**
+	 * Get chapter number.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int|null $post_id Post ID. Defaults to current post.
+	 * @return string|false Chapter number or false if not set.
+	 */
+	public static function get_chapter_number( $post_id = null ) {
+		if ( null === $post_id ) {
+			$post_id = get_the_ID();
+		}
+
+		$chapter_number = get_post_meta( $post_id, '_swipecomic_chapter_number', true );
+		return ! empty( $chapter_number ) ? $chapter_number : false;
+	}
+
+	/**
+	 * Format episode and chapter numbers for display.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int|null $post_id Post ID. Defaults to current post.
+	 * @return string Formatted episode/chapter string or empty string if neither is set.
+	 */
+	public static function format_episode_chapter( $post_id = null ) {
+		if ( null === $post_id ) {
+			$post_id = get_the_ID();
+		}
+
+		$episode_number = self::get_episode_number( $post_id );
+		$chapter_number = self::get_chapter_number( $post_id );
+
+		if ( $chapter_number && $episode_number ) {
+			return sprintf( 'Chapter %s, Episode %s', $chapter_number, $episode_number );
+		} elseif ( $episode_number ) {
+			return sprintf( 'Episode %s', $episode_number );
+		} elseif ( $chapter_number ) {
+			return sprintf( 'Chapter %s', $chapter_number );
+		}
+
+		return '';
 	}
 }

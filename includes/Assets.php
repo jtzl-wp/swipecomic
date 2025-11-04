@@ -40,13 +40,63 @@ class Assets {
 	 * @since 1.0.0
 	 */
 	public function enqueue_assets() {
-		// Enqueue frontend CSS for swipecomic posts.
+		// Only enqueue PhotoSwipe assets on swipecomic posts.
 		if ( is_singular( 'swipecomic' ) ) {
+			// Enqueue PhotoSwipe CSS.
+			wp_enqueue_style(
+				'photoswipe',
+				JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe.css',
+				array(),
+				'5.4.3'
+			);
+
+			// Enqueue frontend CSS.
 			wp_enqueue_style(
 				'swipecomic-frontend',
 				JTZL_SWIPECOMIC_URL . 'assets/css/swipecomic-frontend.css',
-				array(),
+				array( 'photoswipe' ),
 				JTZL_SWIPECOMIC_VER
+			);
+
+			// Enqueue PhotoSwipe Lightbox (ES module).
+			wp_enqueue_script(
+				'photoswipe-lightbox',
+				JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe-lightbox.esm.js',
+				array(),
+				'5.4.3',
+				true
+			);
+
+			// Register PhotoSwipe Core (ES module, loaded dynamically).
+			wp_register_script(
+				'photoswipe',
+				JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe.esm.js',
+				array(),
+				'5.4.3',
+				true
+			);
+
+			// Enqueue SwipeComic viewer.
+			$manifest = $this->get_manifest();
+			$js_file  = $manifest['swipecomic-viewer.js'] ?? 'swipecomic-viewer.js';
+
+			wp_enqueue_script(
+				'swipecomic-viewer',
+				JTZL_SWIPECOMIC_URL . 'build/' . $js_file,
+				array( 'photoswipe-lightbox' ),
+				JTZL_SWIPECOMIC_VER,
+				true
+			);
+
+			// Pass data to JavaScript.
+			wp_localize_script(
+				'swipecomic-viewer',
+				'swipecomicViewerData',
+				array(
+					'ajaxUrl'             => admin_url( 'admin-ajax.php' ),
+					'nonce'               => wp_create_nonce( 'swipecomic_viewer_nonce' ),
+					'photoswipeModuleUrl' => JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe.esm.js',
+				)
 			);
 		}
 
