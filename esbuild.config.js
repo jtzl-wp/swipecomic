@@ -20,7 +20,6 @@ const isProduction = process.env.NODE_ENV === 'production';
  * Base configuration for all builds.
  */
 const baseConfig = {
-	entryPoints: ['src/index.tsx'],
 	bundle: true,
 	platform: 'browser',
 	target: 'es2019',
@@ -42,8 +41,12 @@ const baseConfig = {
  */
 const productionConfig = {
 	...baseConfig,
-	outfile: 'build/swipecomic.js',
-	format: 'iife',
+	entryPoints: {
+		swipecomic: 'src/index.tsx',
+		'swipecomic-viewer': 'src/photoswipe-viewer.ts',
+	},
+	outdir: 'build',
+	format: 'esm',
 	minify: true,
 	treeShaking: true,
 	drop: ['console', 'debugger'],
@@ -60,8 +63,12 @@ const productionConfig = {
  */
 const developmentConfig = {
 	...baseConfig,
-	outfile: 'build/swipecomic.js',
-	format: 'iife',
+	entryPoints: {
+		swipecomic: 'src/index.tsx',
+		'swipecomic-viewer': 'src/photoswipe-viewer.ts',
+	},
+	outdir: 'build',
+	format: 'esm',
 	sourcemap: true,
 	minify: false,
 	plugins: [hashPlugin()],

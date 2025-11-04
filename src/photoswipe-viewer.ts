@@ -44,36 +44,40 @@ export class PhotoSwipeViewer {
 
 	/**
 	 * Initialize the PhotoSwipe Lightbox
+	 * @param autoOpen - Whether to automatically open the viewer on initialization
 	 */
-	init(): void {
+	init(autoOpen = false): void {
 		this.lightbox = new PhotoSwipeLightbox({
 			gallery: this.config.gallerySelector,
 			children: 'a',
 			pswpModule: PhotoSwipe,
 
-			// Spacing and padding
-			spacing: 0.1,
-			padding: { top: 20, bottom: 20, left: 20, right: 20 },
+			// Reading experience (from PoC)
+			wheelToZoom: false,
+			allowPanToNext: false, // Horizontal drag pans image instead of swiping
+			closeOnVerticalDrag: false,
+			showHideAnimationType: 'none',
+			showAnimationDuration: 0,
+			hideAnimationDuration: 0,
+			padding: { top: 20, bottom: 20, left: 0, right: 0 },
+			bgOpacity: 0.9,
+
+			// Disable accidental zooms (from PoC)
+			imageClickAction: 'none',
+			doubleTapAction: 'none',
+			tapAction: this.config.isMobile ? 'none' : 'toggle-controls',
 
 			// Zoom settings
 			initialZoomLevel: this.getInitialZoomLevel.bind(this),
 			secondaryZoomLevel: 2,
-			maxZoomLevel: 3,
-
-			// UI settings
-			bgOpacity: 0.9,
-			showHideAnimationType: 'fade',
-			closeOnVerticalDrag: false,
-
-			// Mobile-specific settings
-			pinchToClose: this.config.isMobile,
+			maxZoomLevel: 4,
 
 			// Keyboard navigation
 			arrowKeys: true,
 			escKey: true,
 
-			// Preloading
-			preload: [1, 2], // Preload next 1-2 images
+			// Preloading (from PoC)
+			preload: [0, 1], // Only next slide preloads
 
 			// Trap focus for accessibility
 			trapFocus: true,
@@ -83,14 +87,31 @@ export class PhotoSwipeViewer {
 				'<div class="pswp__error-msg">The image could not be loaded.</div>',
 		});
 
-		// Apply pan-to-edge logic
-		this.lightbox.on('uiRegister', () => {
-			this.registerCustomUI();
+		// Apply pan-to-edge logic on slide activation
+		this.lightbox.on('contentActivate', ({ content }) => {
+			if (!this.lightbox?.pswp) return;
+
+			const pswp = this.lightbox.pswp;
+
+			const applyPan = () => {
+				// Ensure the slide is still the current one before panning
+				if (pswp.currSlide === content.slide) {
+					this.applyPanToEdge(pswp);
+				}
+			};
+
+			// If content is still loading, wait for it to complete.
+			// Otherwise, apply pan immediately.
+			if (content.isLoading()) {
+				content.once('loadComplete', applyPan);
+			} else {
+				applyPan();
+			}
 		});
 
-		// Handle initial zoom and pan
-		this.lightbox.on('contentLoad', (e) => {
-			this.handleContentLoad(e);
+		// Register custom UI
+		this.lightbox.on('uiRegister', () => {
+			this.registerCustomUI();
 		});
 
 		// Mobile detection and controls visibility
@@ -99,6 +120,12 @@ export class PhotoSwipeViewer {
 		}
 
 		this.lightbox.init();
+
+		// Auto-open the viewer if requested
+		if (autoOpen && this.config.images.length > 0) {
+			// Open at the first image
+			this.lightbox.loadAndOpen(0);
+		}
 	}
 
 	/**
@@ -106,33 +133,40 @@ export class PhotoSwipeViewer {
 	 * @param zoomLevelObject - PhotoSwipe zoom level object
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private getInitialZoomLevel(zoomLevelObject: any): number {
-		const { pswp } = zoomLevelObject;
+	private getInitialZoomLevel(zoomLevelObject: any): number | string {
+		// Get the item data from PhotoSwipe
+		const item = zoomLevelObject.itemData;
 
-		if (!pswp || !pswp.currSlide) {
-			return 1; // Default to 1x zoom
+		if (!item || !item.element) {
+			return 'fit'; // Default to fit
 		}
 
-		const slideData = pswp.currSlide.data;
-		const imageData = this.findImageData(slideData);
+		// Read zoom setting from data attribute
+		const zoomAttr = item.element.getAttribute('data-initial-zoom');
 
-		if (!imageData) {
-			return 1;
+		if (!zoomAttr) {
+			return 'fit';
 		}
 
-		// Resolve zoom value using settings resolver
-		const zoomValue = this.settingsResolver.resolveZoom(imageData);
-		const parsedZoom = this.settingsResolver.parseZoomValue(zoomValue);
-
-		// Convert to PhotoSwipe format
-		// PhotoSwipe expects numeric values, 'fit' and 'fill' are handled differently
-		if (parsedZoom === 'fit' || parsedZoom === 'vFill') {
-			// Return 1 for fit/fill, PhotoSwipe will handle it
-			return 1;
+		// Handle vFill - use PhotoSwipe's calculated vFill value
+		if (zoomAttr === 'vFill') {
+			return zoomLevelObject.vFill;
 		}
 
-		// Numeric zoom level
-		return parsedZoom;
+		// Handle fit
+		if (zoomAttr === 'fit') {
+			return 'fit';
+		}
+
+		// Handle custom numeric zoom (e.g., "150" means 1.5x)
+		const customZoom = parseFloat(zoomAttr);
+		if (!isNaN(customZoom) && customZoom > 0) {
+			// Convert percentage to decimal (150 -> 1.5)
+			return customZoom / 100;
+		}
+
+		// Fallback to fit
+		return 'fit';
 	}
 
 	/**
@@ -141,50 +175,34 @@ export class PhotoSwipeViewer {
 	 */
 	private applyPanToEdge(pswp: PhotoSwipe): void {
 		const slide = pswp.currSlide;
-		if (!slide) return;
+		if (!slide || !slide.data || !slide.data.element) return;
 
-		const imageData = this.findImageData(slide.data);
-		if (!imageData) return;
+		// Read pan direction from data attribute
+		const panAttr = slide.data.element.getAttribute('data-pan-direction');
 
-		// Resolve pan value using settings resolver
-		const panValue = this.settingsResolver.resolvePan(imageData);
-		const parsedPan = this.settingsResolver.parsePanValue(panValue);
+		if (!panAttr) return;
 
-		// Apply pan position
-		if (parsedPan === 'left') {
-			slide.pan.x = slide.bounds.min.x;
-		} else if (parsedPan === 'right') {
-			slide.pan.x = slide.bounds.max.x;
-		} else if (parsedPan === 'center') {
-			slide.pan.x = (slide.bounds.min.x + slide.bounds.max.x) / 2;
-		} else if (typeof parsedPan === 'object') {
-			// Custom x,y coordinates
-			slide.pan.x = parsedPan.x;
-			slide.pan.y = parsedPan.y;
+		const bounds = slide.bounds;
+		if (!bounds || !bounds.min) return;
+
+		// Apply pan position based on direction
+		if (panAttr === 'left') {
+			slide.pan.x = bounds.min.x;
+		} else if (panAttr === 'right') {
+			slide.pan.x = bounds.max.x;
+		} else if (panAttr === 'center') {
+			slide.pan.x = (bounds.min.x + bounds.max.x) / 2;
+		} else if (panAttr.includes(',')) {
+			// Custom x,y coordinates (e.g., "100,200")
+			const [x, y] = panAttr.split(',').map((v) => parseFloat(v.trim()));
+			if (!isNaN(x) && !isNaN(y)) {
+				slide.pan.x = x;
+				slide.pan.y = y;
+			}
 		}
 
 		// Update the slide position
 		slide.applyCurrentZoomPan();
-	}
-
-	/**
-	 * Handle content load event
-	 * @param e - PhotoSwipe content load event
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private handleContentLoad(e: any): void {
-		const { content } = e;
-
-		if (!content || !content.data) {
-			return;
-		}
-
-		// Apply pan settings after zoom is set
-		if (this.lightbox?.pswp) {
-			setTimeout(() => {
-				this.applyPanToEdge(this.lightbox!.pswp!);
-			}, 50);
-		}
 	}
 
 	/**
@@ -273,40 +291,65 @@ export class PhotoSwipeViewer {
 
 /**
  * Initialize PhotoSwipe viewer from DOM data
- * @param gallerySelector
+ * Reads configuration from window.swipecomicData (injected via wp_add_inline_script)
  */
-export function initFromDOM(gallerySelector: string): PhotoSwipeViewer | null {
-	const galleryElement = document.querySelector(gallerySelector);
+export function initFromDOM(): PhotoSwipeViewer | null {
+	// Check if data is available
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const data = (window as any).swipecomicData;
 
-	if (!galleryElement) {
+	if (!data) {
 		// eslint-disable-next-line no-console
-		console.error(`Gallery element not found: ${gallerySelector}`);
-		return null;
-	}
-
-	// Read configuration from data attributes
-	const configData = galleryElement.getAttribute('data-swipecomic-config');
-
-	if (!configData) {
-		// eslint-disable-next-line no-console
-		console.error('SwipeComic configuration data not found');
+		console.error('SwipeComic data not found on window object');
 		return null;
 	}
 
 	try {
-		const config = JSON.parse(configData) as ViewerConfig;
+		// Validate required data structure
+		if (!data.images || !Array.isArray(data.images)) {
+			// eslint-disable-next-line no-console
+			console.error('Invalid SwipeComic data: images array is missing');
+			return null;
+		}
 
-		// Detect mobile
-		config.isMobile = window.innerWidth < 768;
+		// Build viewer config
+		const config: ViewerConfig = {
+			gallerySelector: '#swipecomic-gallery',
+			globalDefaults: data.globalDefaults || { zoom: 'fit', pan: 'center' },
+			episodeDefaults: data.episodeDefaults || { zoom: 'fit', pan: 'center' },
+			images: data.images,
+			isMobile: window.innerWidth < 768,
+		};
 
 		// Create and initialize viewer
 		const viewer = new PhotoSwipeViewer(config);
-		viewer.init();
+		// Use autoOpen setting from data, default to false
+		// wp_localize_script converts booleans to strings, so check for both
+		const autoOpen =
+			data.autoOpen === true || data.autoOpen === '1' || data.autoOpen === 1;
+		viewer.init(autoOpen);
 
 		return viewer;
 	} catch (error) {
 		// eslint-disable-next-line no-console
-		console.error('Failed to parse SwipeComic configuration:', error);
+		console.error('Failed to initialize SwipeComic viewer:', error);
 		return null;
+	}
+}
+
+// Auto-initialize when DOM is ready
+if (typeof window !== 'undefined') {
+	const autoInitViewer = () => {
+		// Only initialize if the gallery element exists on the page
+		if (document.getElementById('swipecomic-gallery')) {
+			initFromDOM();
+		}
+	};
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', autoInitViewer);
+	} else {
+		// DOM already loaded
+		autoInitViewer();
 	}
 }

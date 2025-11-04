@@ -32,6 +32,7 @@ class Assets {
 	public function init() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
+		add_filter( 'script_loader_tag', array( $this, 'add_module_type_attribute' ), 10, 3 );
 	}
 
 	/**
@@ -58,44 +59,32 @@ class Assets {
 				JTZL_SWIPECOMIC_VER
 			);
 
-			// Enqueue PhotoSwipe Lightbox (ES module).
-			wp_enqueue_script(
-				'photoswipe-lightbox',
-				JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe-lightbox.esm.js',
-				array(),
-				'5.4.3',
-				true
-			);
-
-			// Register PhotoSwipe Core (ES module, loaded dynamically).
-			wp_register_script(
-				'photoswipe',
-				JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe.esm.js',
-				array(),
-				'5.4.3',
-				true
-			);
-
-			// Enqueue SwipeComic viewer.
+			// Enqueue SwipeComic viewer (ES module with PhotoSwipe bundled).
 			$manifest = $this->get_manifest();
 			$js_file  = $manifest['swipecomic-viewer.js'] ?? 'swipecomic-viewer.js';
 
 			wp_enqueue_script(
 				'swipecomic-viewer',
 				JTZL_SWIPECOMIC_URL . 'build/' . $js_file,
-				array( 'photoswipe-lightbox' ),
+				array(),
 				JTZL_SWIPECOMIC_VER,
 				true
 			);
 
-			// Pass data to JavaScript.
+			// Get episode/series data.
+			$viewer_data = $this->inject_viewer_data();
+
+			// Pass all data to JavaScript using wp_localize_script.
+			// This creates window.swipecomicData with all episode and config data.
 			wp_localize_script(
 				'swipecomic-viewer',
-				'swipecomicViewerData',
-				array(
-					'ajaxUrl'             => admin_url( 'admin-ajax.php' ),
-					'nonce'               => wp_create_nonce( 'swipecomic_viewer_nonce' ),
-					'photoswipeModuleUrl' => JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe.esm.js',
+				'swipecomicData',
+				array_merge(
+					$viewer_data,
+					array(
+						'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+						'nonce'   => wp_create_nonce( 'swipecomic_viewer_nonce' ),
+					)
 				)
 			);
 		}
@@ -261,6 +250,81 @@ class Assets {
 				'episodeNumberLabel' => __( 'Episode #', 'swipecomic' ),
 			)
 		);
+	}
+
+	/**
+	 * Inject viewer data securely using wp_add_inline_script.
+	 *
+	 * @since 2.0.0
+	 */
+	private function inject_viewer_data() {
+		if ( ! is_singular( 'swipecomic' ) ) {
+			return;
+		}
+
+		// Get episode data.
+		$images       = TemplateFunctions::get_swipecomic_images();
+		$episode_zoom = TemplateFunctions::get_episode_zoom();
+		$episode_pan  = TemplateFunctions::get_episode_pan();
+		$global_zoom  = Settings::get_default_zoom();
+		$global_pan   = Settings::get_default_pan();
+		$series_data  = TemplateFunctions::get_series_data();
+		$series_id    = $series_data ? $series_data['term_id'] : null;
+
+		// Prepare series logo data.
+		$series_logo_url      = false;
+		$series_logo_position = 'upper-left';
+		if ( $series_data && isset( $series_data['logo'] ) ) {
+			$series_logo_url      = $series_data['logo']['url'];
+			$series_logo_position = $series_data['logo']['position'];
+		}
+
+		// Return the data array to be merged with wp_localize_script.
+		return array(
+			'episodeId'       => get_the_ID(),
+			'seriesId'        => $series_id,
+			'images'          => $images,
+			'episodeDefaults' => array(
+				'zoom' => $episode_zoom,
+				'pan'  => $episode_pan,
+			),
+			'seriesLogo'      => array(
+				'url'      => $series_logo_url,
+				'position' => $series_logo_position,
+			),
+			'globalDefaults'  => array(
+				'zoom' => $global_zoom,
+				'pan'  => $global_pan,
+			),
+			'autoOpen'        => true, // Auto-open viewer on page load for comic reading experience.
+		);
+	}
+
+	/**
+	 * Add type="module" attribute to ES module scripts.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $tag    The script tag.
+	 * @param string $handle The script handle.
+	 * @param string $src    The script source URL.
+	 * @return string Modified script tag.
+	 */
+	public function add_module_type_attribute( $tag, $handle, $src ) {
+		// List of script handles that should be loaded as ES modules.
+		$module_handles = array(
+			'swipecomic-viewer',
+		);
+
+		if ( in_array( $handle, $module_handles, true ) ) {
+			// Do not modify if type attribute already present.
+			if ( false === stripos( $tag, ' type=' ) ) {
+				// Safely inject before closing '>' of opening tag.
+				$tag = preg_replace( '/\<script\b/i', '<script type="module"', $tag, 1 );
+			}
+		}
+
+		return $tag;
 	}
 
 	/**
