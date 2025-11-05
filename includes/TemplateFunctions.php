@@ -23,6 +23,7 @@ class TemplateFunctions {
 	public function init() {
 		// Hook template loading.
 		add_filter( 'single_template', array( $this, 'load_single_template' ) );
+		add_filter( 'taxonomy_template', array( $this, 'load_taxonomy_template' ) );
 	}
 
 	/**
@@ -45,6 +46,33 @@ class TemplateFunctions {
 
 			// Fallback to the plugin's template.
 			$plugin_template = JTZL_SWIPECOMIC_DIR . 'templates/single-swipecomic.php';
+			if ( file_exists( $plugin_template ) ) {
+				return $plugin_template;
+			}
+		}
+		return $template;
+	}
+
+	/**
+	 * Load custom taxonomy template for swipecomic_series.
+	 *
+	 * Checks for theme override first, then falls back to plugin template.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $template Path to the template file.
+	 * @return string Modified template path.
+	 */
+	public function load_taxonomy_template( $template ) {
+		if ( is_tax( 'swipecomic_series' ) ) {
+			// Check for an override in the theme/child-theme directory.
+			$theme_template = locate_template( 'taxonomy-swipecomic_series.php' );
+			if ( ! empty( $theme_template ) ) {
+				return $theme_template;
+			}
+
+			// Fallback to the plugin's template.
+			$plugin_template = JTZL_SWIPECOMIC_DIR . 'templates/taxonomy-swipecomic_series.php';
 			if ( file_exists( $plugin_template ) ) {
 				return $plugin_template;
 			}
@@ -94,8 +122,8 @@ class TemplateFunctions {
 
 		$series_id = $series_terms[0]->term_id;
 
-		// Get current episode order.
-		$current_order = get_post_meta( $episode_id, '_swipecomic_episode_order', true );
+		// Get current episode number.
+		$current_number = get_post_meta( $episode_id, '_swipecomic_episode_number', true );
 
 		// Query for adjacent episode.
 		$args = array(
@@ -111,13 +139,13 @@ class TemplateFunctions {
 			),
 			'meta_query'     => array(
 				array(
-					'key'     => '_swipecomic_episode_order',
-					'value'   => $current_order,
+					'key'     => '_swipecomic_episode_number',
+					'value'   => $current_number,
 					'compare' => 'next' === $direction ? '>' : '<',
 					'type'    => 'NUMERIC',
 				),
 			),
-			'meta_key'       => '_swipecomic_episode_order',
+			'meta_key'       => '_swipecomic_episode_number',
 			'orderby'        => 'meta_value_num',
 			'order'          => 'next' === $direction ? 'ASC' : 'DESC',
 		);

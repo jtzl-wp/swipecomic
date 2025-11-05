@@ -103,7 +103,15 @@ export class PhotoSwipeViewer {
 			// If content is still loading, wait for it to complete.
 			// Otherwise, apply pan immediately.
 			if (content.isLoading()) {
-				content.once('loadComplete', applyPan);
+				// Listen for loadComplete event on the pswp instance
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const onLoadComplete = (e: any) => {
+					if (e.content === content) {
+						applyPan();
+						pswp.off('loadComplete', onLoadComplete);
+					}
+				};
+				pswp.on('loadComplete', onLoadComplete);
 			} else {
 				applyPan();
 			}

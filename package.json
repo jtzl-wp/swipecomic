@@ -67,6 +67,9 @@
 			"eslint --fix",
 			"prettier --write"
 		],
+		"*.{css,json,md,yml,yaml}": [
+			"prettier --write"
+		],
 		"*.php": [
 			"vendor/bin/phpcbf --standard=phpcs.xml.dist --report=summary --"
 		]

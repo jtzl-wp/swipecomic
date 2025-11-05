@@ -26,6 +26,7 @@ class Rewrite {
 		add_action( 'template_redirect', array( $this, 'handle_conflicts' ) );
 		add_filter( 'post_type_link', array( $this, 'swipecomic_permalink' ), 10, 2 );
 		add_filter( 'term_link', array( $this, 'series_permalink' ), 10, 3 );
+		add_action( 'pre_get_posts', array( $this, 'fix_series_pagination' ), 1 );
 	}
 
 	/**
@@ -169,6 +170,27 @@ class Rewrite {
 		$vars[] = 'swipecomic_check_series';
 		$vars[] = 'swipecomic_check_single';
 		return $vars;
+	}
+
+	/**
+	 * Fix pagination for series taxonomy archives.
+	 *
+	 * WordPress's default pagination check happens before our custom posts_per_page
+	 * setting is applied, causing 404s on valid page numbers.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param \WP_Query $query The WP_Query instance.
+	 */
+	public function fix_series_pagination( $query ) {
+		// Only run on main query for swipecomic_series taxonomy archives.
+		if ( ! $query->is_main_query() || ! $query->is_tax( 'swipecomic_series' ) ) {
+			return;
+		}
+
+		// Apply the custom posts_per_page setting.
+		$episodes_per_page = Settings::get_episodes_per_page();
+		$query->set( 'posts_per_page', $episodes_per_page );
 	}
 
 	/**

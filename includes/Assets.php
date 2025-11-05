@@ -41,22 +41,26 @@ class Assets {
 	 * @since 1.0.0
 	 */
 	public function enqueue_assets() {
+		// Enqueue frontend CSS on swipecomic posts and series archives.
+		if ( is_singular( 'swipecomic' ) || is_tax( 'swipecomic_series' ) ) {
+			$manifest = $this->get_manifest();
+			$css_file = $manifest['swipecomic.css'] ?? 'swipecomic.css';
+			wp_enqueue_style(
+				'swipecomic-frontend',
+				JTZL_SWIPECOMIC_URL . 'build/' . $css_file,
+				array(),
+				JTZL_SWIPECOMIC_VER
+			);
+		}
+
 		// Only enqueue PhotoSwipe assets on swipecomic posts.
 		if ( is_singular( 'swipecomic' ) ) {
 			// Enqueue PhotoSwipe CSS.
 			wp_enqueue_style(
 				'photoswipe',
 				JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe.css',
-				array(),
+				array( 'swipecomic-frontend' ),
 				'5.4.3'
-			);
-
-			// Enqueue frontend CSS.
-			wp_enqueue_style(
-				'swipecomic-frontend',
-				JTZL_SWIPECOMIC_URL . 'assets/css/swipecomic-frontend.css',
-				array( 'photoswipe' ),
-				JTZL_SWIPECOMIC_VER
 			);
 
 			// Enqueue SwipeComic viewer (ES module with PhotoSwipe bundled).

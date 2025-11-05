@@ -56,6 +56,14 @@ class Settings {
 	const DEFAULT_THUMBNAIL_SIZE = 400;
 
 	/**
+	 * Default episodes per page for series archives.
+	 *
+	 * @since 2.0.0
+	 * @var int
+	 */
+	const DEFAULT_EPISODES_PER_PAGE = 12;
+
+	/**
 	 * Initialize settings.
 	 *
 	 * @since 1.0.0
@@ -68,6 +76,7 @@ class Settings {
 		// Hook into option updates to flush rewrite rules when URL structure changes.
 		add_action( 'update_option_swipecomic_use_url_prefix', array( $this, 'schedule_rewrite_flush' ), 10, 2 );
 		add_action( 'update_option_swipecomic_url_prefix', array( $this, 'schedule_rewrite_flush' ), 10, 2 );
+		add_action( 'update_option_swipecomic_episodes_per_page', array( $this, 'schedule_rewrite_flush' ), 10, 2 );
 	}
 
 	/**
@@ -161,6 +170,25 @@ class Settings {
 			'swipecomic_default_pan',
 			__( 'Default Pan Position', 'swipecomic' ),
 			array( $this, 'render_default_pan_field' ),
+			self::PAGE_SLUG,
+			'swipecomic_default_settings'
+		);
+
+		// Episodes per page setting.
+		register_setting(
+			self::OPTION_GROUP,
+			'swipecomic_episodes_per_page',
+			array(
+				'type'              => 'integer',
+				'default'           => self::DEFAULT_EPISODES_PER_PAGE,
+				'sanitize_callback' => array( $this, 'sanitize_episodes_per_page' ),
+			)
+		);
+
+		add_settings_field(
+			'swipecomic_episodes_per_page',
+			__( 'Episodes Per Page', 'swipecomic' ),
+			array( $this, 'render_episodes_per_page_field' ),
 			self::PAGE_SLUG,
 			'swipecomic_default_settings'
 		);
@@ -283,7 +311,7 @@ class Settings {
 	 * @since 1.0.0
 	 */
 	public function render_default_settings_section() {
-		echo '<p>' . esc_html__( 'Configure default zoom and pan settings for new episodes.', 'swipecomic' ) . '</p>';
+		echo '<p>' . esc_html__( 'Configure default settings for episodes and series archives.', 'swipecomic' ) . '</p>';
 	}
 
 	/**
@@ -319,6 +347,31 @@ class Settings {
 		</select>
 		<p class="description">
 			<?php esc_html_e( 'Default pan position applied to new episodes.', 'swipecomic' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render episodes per page field.
+	 *
+	 * @since 2.0.0
+	 */
+	public function render_episodes_per_page_field() {
+		$per_page = get_option( 'swipecomic_episodes_per_page', self::DEFAULT_EPISODES_PER_PAGE );
+		?>
+		<input 
+			type="number" 
+			name="swipecomic_episodes_per_page" 
+			id="swipecomic_episodes_per_page" 
+			value="<?php echo esc_attr( $per_page ); ?>" 
+			min="1"
+			max="100"
+			step="1"
+			class="small-text"
+		/>
+		<span><?php esc_html_e( 'episodes', 'swipecomic' ); ?></span>
+		<p class="description">
+			<?php esc_html_e( 'Number of episodes to display per page on series archive pages (default: 12).', 'swipecomic' ); ?>
 		</p>
 		<?php
 	}
@@ -573,6 +626,40 @@ class Settings {
 				'error'
 			);
 			return 2000;
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Sanitize episodes per page setting.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param mixed $value Input value.
+	 * @return int Sanitized value.
+	 */
+	public function sanitize_episodes_per_page( $value ) {
+		$value = (int) $value;
+
+		if ( $value < 1 ) {
+			add_settings_error(
+				'swipecomic_episodes_per_page',
+				'episodes_per_page_too_small',
+				__( 'Episodes per page must be at least 1. Using minimum value.', 'swipecomic' ),
+				'error'
+			);
+			return 1;
+		}
+
+		if ( $value > 100 ) {
+			add_settings_error(
+				'swipecomic_episodes_per_page',
+				'episodes_per_page_too_large',
+				__( 'Episodes per page must be at most 100. Using maximum value.', 'swipecomic' ),
+				'error'
+			);
+			return 100;
 		}
 
 		return $value;
@@ -877,5 +964,16 @@ class Settings {
 	 */
 	public static function delete_on_remove() {
 		return (bool) get_option( 'swipecomic_delete_on_remove', false );
+	}
+
+	/**
+	 * Get episodes per page setting.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return int Episodes per page.
+	 */
+	public static function get_episodes_per_page() {
+		return (int) get_option( 'swipecomic_episodes_per_page', self::DEFAULT_EPISODES_PER_PAGE );
 	}
 }
