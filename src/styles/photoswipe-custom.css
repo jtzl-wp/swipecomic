@@ -1,0 +1,281 @@
+/**
+ * PhotoSwipe Custom Styles for SwipeComic
+ * 
+ * This file contains custom styles for PhotoSwipe integration with high specificity
+ * to prevent theme CSS conflicts. Based on approved PoC patterns.
+ */
+
+/* ============================================================================
+   CSS Isolation - High Specificity Selectors
+   ============================================================================ */
+
+/* Ensure PhotoSwipe container has proper isolation */
+.swipecomic-episode .pswp {
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+		Arial, sans-serif !important;
+	line-height: 1.5 !important;
+	box-sizing: border-box !important;
+}
+
+.swipecomic-episode .pswp *,
+.swipecomic-episode .pswp *::before,
+.swipecomic-episode .pswp *::after {
+	box-sizing: border-box !important;
+}
+
+/* Reset any theme styles that might interfere */
+.swipecomic-episode .pswp button {
+	background: none !important;
+	border: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	font: inherit !important;
+	color: inherit !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+}
+
+/* ============================================================================
+   Hidden Gallery Anchors (from PoC)
+   ============================================================================ */
+
+.pswp-gallery a {
+	display: none !important;
+}
+
+/* Hide PSWP placeholder to avoid brief overlap on open (from PoC) */
+.pswp__img--placeholder {
+	display: none !important;
+}
+
+/* ============================================================================
+   Drag Hint Styles (from PoC)
+   ============================================================================ */
+
+.drag-hint {
+	position: fixed;
+	left: 50%;
+	bottom: 60px;
+	bottom: max(60px, calc(env(safe-area-inset-bottom) + 40px));
+	transform: translateX(-50%);
+	background: rgba(0, 0, 0, 0.75);
+	color: #fff;
+	padding: 12px 18px;
+	border-radius: 9999px;
+	font-size: 15px;
+	display: none;
+	pointer-events: none;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+	z-index: 999999;
+	white-space: nowrap;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ============================================================================
+   Mobile Controls Visibility (from PoC)
+   ============================================================================ */
+
+/* Force controls to always show on touch devices */
+@media (hover: none) and (pointer: coarse) {
+	.pswp__ui,
+	.pswp__top-bar,
+	.pswp__button--arrow--prev,
+	.pswp__button--arrow--next {
+		opacity: 1 !important;
+		visibility: visible !important;
+	}
+}
+
+/* ============================================================================
+   Logo Overlay Positioning
+   ============================================================================ */
+
+.swipecomic-logo-overlay {
+	position: absolute;
+	z-index: 10000;
+	max-width: 15vw;
+	max-height: 10vh;
+	pointer-events: none;
+	opacity: 0.9;
+	transition: opacity 0.3s ease;
+}
+
+.swipecomic-logo-overlay.upper-left {
+	top: 20px;
+	left: 20px;
+}
+
+.swipecomic-logo-overlay.upper-right {
+	top: 20px;
+	right: 20px;
+}
+
+.swipecomic-logo-overlay.lower-left {
+	bottom: 20px;
+	left: 20px;
+}
+
+.swipecomic-logo-overlay.lower-right {
+	bottom: 20px;
+	right: 20px;
+}
+
+.swipecomic-logo-overlay img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+/* Hide logo when zoomed in */
+.pswp--zoomed-in .swipecomic-logo-overlay {
+	opacity: 0;
+}
+
+/* ============================================================================
+   Responsive Breakpoints
+   ============================================================================ */
+
+/* Mobile devices (< 768px) */
+@media (max-width: 767px) {
+	.drag-hint {
+		bottom: 80px;
+		bottom: max(80px, calc(env(safe-area-inset-bottom) + 60px));
+		font-size: 16px;
+		padding: 14px 20px;
+		background: rgba(0, 0, 0, 0.85);
+	}
+
+	.swipecomic-logo-overlay {
+		max-width: 20vw;
+		max-height: 8vh;
+	}
+
+	.swipecomic-logo-overlay.upper-left,
+	.swipecomic-logo-overlay.upper-right {
+		top: 10px;
+	}
+
+	.swipecomic-logo-overlay.lower-left,
+	.swipecomic-logo-overlay.lower-right {
+		bottom: 10px;
+	}
+
+	.swipecomic-logo-overlay.upper-left,
+	.swipecomic-logo-overlay.lower-left {
+		left: 10px;
+	}
+
+	.swipecomic-logo-overlay.upper-right,
+	.swipecomic-logo-overlay.lower-right {
+		right: 10px;
+	}
+}
+
+/* Tablet devices (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+	.swipecomic-logo-overlay {
+		max-width: 18vw;
+		max-height: 9vh;
+	}
+
+	.drag-hint {
+		font-size: 15px;
+		padding: 12px 18px;
+	}
+}
+
+/* Desktop devices (> 1024px) */
+@media (min-width: 1025px) {
+	.swipecomic-logo-overlay {
+		max-width: 15vw;
+		max-height: 10vh;
+	}
+
+	.swipecomic-logo-overlay.upper-left,
+	.swipecomic-logo-overlay.upper-right {
+		top: 30px;
+	}
+
+	.swipecomic-logo-overlay.lower-left,
+	.swipecomic-logo-overlay.lower-right {
+		bottom: 30px;
+	}
+
+	.swipecomic-logo-overlay.upper-left,
+	.swipecomic-logo-overlay.lower-left {
+		left: 30px;
+	}
+
+	.swipecomic-logo-overlay.upper-right,
+	.swipecomic-logo-overlay.lower-right {
+		right: 30px;
+	}
+}
+
+/* ============================================================================
+   Loading States
+   ============================================================================ */
+
+.swipecomic-episode .pswp__preloader {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+/* ============================================================================
+   Episode Transition Indicator
+   ============================================================================ */
+
+.swipecomic-episode-transition {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(0, 0, 0, 0.85);
+	color: #fff;
+	padding: 16px 24px;
+	border-radius: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	z-index: 999998;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.swipecomic-episode-transition.visible {
+	opacity: 1;
+}
+
+/* ============================================================================
+   Accessibility - Focus Indicators
+   ============================================================================ */
+
+.swipecomic-episode .pswp button:focus-visible {
+	outline: 2px solid #667eea !important;
+	outline-offset: 2px !important;
+}
+
+/* ============================================================================
+   Motion Preferences
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+	.drag-hint,
+	.swipecomic-logo-overlay,
+	.swipecomic-episode-transition {
+		transition: none !important;
+	}
+
+	.swipecomic-episode .pswp * {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

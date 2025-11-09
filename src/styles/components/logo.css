@@ -1,0 +1,70 @@
+/**
+ * Series Logo Component Styles
+ * 
+ * Styles for series logo positioning and display.
+ *
+ * @package   JTZL_SwipeComic
+ * @since     2.0.0
+ */
+
+/* Series Logo */
+.swipecomic-logo {
+	position: absolute;
+	z-index: 10;
+	max-width: 200px;
+	max-height: 150px;
+}
+
+.swipecomic-logo img {
+	width: 100%;
+	height: auto;
+	display: block;
+}
+
+.swipecomic-logo-upper-left {
+	top: 20px;
+	left: 20px;
+}
+
+.swipecomic-logo-upper-right {
+	top: 20px;
+	right: 20px;
+}
+
+.swipecomic-logo-lower-left {
+	bottom: 20px;
+	left: 20px;
+}
+
+.swipecomic-logo-lower-right {
+	bottom: 20px;
+	right: 20px;
+}
+
+/* Mobile devices (< 768px) */
+@media (max-width: 767px) {
+	.swipecomic-logo {
+		max-width: 120px;
+		max-height: 90px;
+	}
+
+	.swipecomic-logo-upper-left,
+	.swipecomic-logo-upper-right {
+		top: 10px;
+	}
+
+	.swipecomic-logo-lower-left,
+	.swipecomic-logo-lower-right {
+		bottom: 10px;
+	}
+
+	.swipecomic-logo-upper-left,
+	.swipecomic-logo-lower-left {
+		left: 10px;
+	}
+
+	.swipecomic-logo-upper-right,
+	.swipecomic-logo-lower-right {
+		right: 10px;
+	}
+}

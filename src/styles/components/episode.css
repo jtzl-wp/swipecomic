@@ -1,0 +1,123 @@
+/**
+ * Episode Component Styles
+ * 
+ * Styles for individual episode display including container, header, images, and metadata.
+ *
+ * @package   JTZL_SwipeComic
+ * @since     2.0.0
+ */
+
+/* Base container */
+.swipecomic-container {
+	width: 100%;
+	max-width: 100%;
+	margin: 0 auto;
+}
+
+.swipecomic-app {
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+		Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* Episode Container */
+.swipecomic-episode {
+	position: relative;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+/* Header */
+.swipecomic-header {
+	margin-bottom: 30px;
+	text-align: center;
+}
+
+.swipecomic-title {
+	font-size: 2em;
+	margin: 0 0 10px;
+}
+
+/* Episode/Chapter Number Display */
+.swipecomic-meta {
+	margin: 10px 0 20px;
+	font-size: 1.1em;
+	color: #666;
+	font-weight: 500;
+}
+
+.swipecomic-episode-number,
+.swipecomic-chapter-number {
+	display: inline-block;
+	margin: 0 5px;
+}
+
+/* Images Container */
+.swipecomic-images {
+	margin: 20px 0;
+}
+
+.swipecomic-images img {
+	display: block;
+	width: 100%;
+	height: auto;
+	margin-bottom: 10px;
+}
+
+.swipecomic-image-wrapper {
+	margin-bottom: 20px;
+	text-align: center;
+}
+
+.swipecomic-image {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin: 0 auto;
+}
+
+/* No Images Message */
+.swipecomic-no-images {
+	text-align: center;
+	padding: 40px 20px;
+	color: #666;
+	font-style: italic;
+}
+
+/* Footer */
+.swipecomic-footer {
+	margin-top: 40px;
+	padding-top: 20px;
+	border-top: 1px solid #ddd;
+}
+
+/* Mobile devices (< 768px) */
+@media (max-width: 767px) {
+	.swipecomic-episode {
+		padding: 10px;
+	}
+
+	.swipecomic-title {
+		font-size: 1.5em;
+	}
+
+	.swipecomic-meta {
+		font-size: 1em;
+	}
+
+	.swipecomic-image-wrapper {
+		margin-bottom: 10px;
+	}
+}
+
+/* Tablet devices (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+	.swipecomic-episode {
+		padding: 15px;
+	}
+
+	.swipecomic-title {
+		font-size: 1.8em;
+	}
+}

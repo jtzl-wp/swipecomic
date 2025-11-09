@@ -1,0 +1,77 @@
+/**
+ * Episode Navigation Component Styles
+ * 
+ * Styles for episode navigation controls (prev/next).
+ *
+ * @package   JTZL_SwipeComic
+ * @since     2.0.0
+ */
+
+/* Episode Navigation */
+.swipecomic-navigation {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 40px;
+	padding: 20px 0;
+	border-top: 1px solid #ddd;
+	gap: 20px;
+}
+
+.swipecomic-navigation a {
+	display: inline-flex;
+	align-items: center;
+	padding: 12px 24px;
+	background: #667eea;
+	color: #fff;
+	text-decoration: none;
+	border-radius: 8px;
+	font-weight: 600;
+	transition:
+		background 0.2s ease,
+		transform 0.2s ease;
+}
+
+.swipecomic-navigation a:hover {
+	background: #5568d3;
+	transform: translateY(-2px);
+}
+
+.swipecomic-navigation a:active {
+	transform: translateY(0);
+}
+
+/* Positioning handled by parent's justify-content: space-between */
+
+/* Mobile devices (< 768px) */
+@media (max-width: 767px) {
+	.swipecomic-navigation {
+		flex-direction: column;
+		gap: 15px;
+	}
+
+	.swipecomic-navigation a {
+		width: 100%;
+		justify-content: center;
+		padding: 14px 20px;
+	}
+
+	.swipecomic-navigation .prev-episode,
+	.swipecomic-navigation .next-episode {
+		margin: 0;
+	}
+}
+
+/* Tablet devices (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+	.swipecomic-navigation a {
+		padding: 12px 20px;
+	}
+}
+
+/* Desktop devices (> 1024px) */
+@media (min-width: 1025px) {
+	.swipecomic-navigation a:hover {
+		box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+	}
+}
