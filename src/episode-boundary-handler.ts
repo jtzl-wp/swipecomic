@@ -5,6 +5,8 @@
  * Provides seamless navigation across episode boundaries
  */
 
+import { showErrorNotification } from './notification-utils';
+
 export interface EpisodeData {
 	id: number;
 	title: string;
@@ -114,19 +116,42 @@ export class EpisodeBoundaryHandler {
 			});
 
 			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
+				let errorMsg: string;
+				if (response.status === 404) {
+					errorMsg = 'Episode not found';
+				} else if (response.status === 403) {
+					errorMsg = 'Access denied';
+				} else if (response.status >= 500) {
+					errorMsg = 'Server error occurred';
+				} else {
+					errorMsg = `Network error (${response.status})`;
+				}
+				throw new Error(errorMsg);
 			}
 
 			const result: AjaxResponse = await response.json();
 
 			if (!result.success || !result.data) {
-				throw new Error(result.error || 'Failed to fetch episode data');
+				// Don't show error notification for "no more episodes" scenarios
+				// Just return null silently
+				// eslint-disable-next-line no-console
+				console.log('No adjacent episode available');
+				return null;
 			}
 
 			return result.data;
 		} catch (error) {
+			// Log detailed error for debugging
 			// eslint-disable-next-line no-console
 			console.error('Failed to fetch episode:', error);
+
+			// Show user-friendly error notification
+			showErrorNotification(
+				error instanceof Error
+					? error.message
+					: 'Unable to load episode. Please try again.'
+			);
+
 			return null;
 		}
 	}

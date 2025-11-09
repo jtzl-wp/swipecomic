@@ -15,6 +15,7 @@ import {
 	EpisodeData,
 } from './episode-boundary-handler';
 import { LogoOverlayController, LogoConfig } from './logo-overlay-controller';
+import { showErrorNotification } from './notification-utils';
 import {
 	ImageData,
 	DefaultSettings,
@@ -119,6 +120,9 @@ export class PhotoSwipeViewer {
 
 			// Preloading (from PoC)
 			preload: [0, 1], // Only next slide preloads
+
+			// Loading indicators
+			preloaderDelay: 500, // Show loading spinner after 500ms delay
 
 			// Trap focus for accessibility
 			trapFocus: true,
@@ -240,6 +244,35 @@ export class PhotoSwipeViewer {
 				this.handleBoundaryCheck();
 			});
 		}
+
+		// Set up loading state feedback after PhotoSwipe initializes
+		this.lightbox.on('afterInit', () => {
+			if (!this.lightbox?.pswp) return;
+
+			const pswp = this.lightbox.pswp;
+
+			// Loading state feedback
+			pswp.on('contentLoad', ({ content }) => {
+				// Content started loading
+				// eslint-disable-next-line no-console
+				console.log(`Loading image ${content.index + 1}...`);
+			});
+
+			pswp.on('loadComplete', ({ content, isError }) => {
+				if (isError) {
+					// Content failed to load
+					// eslint-disable-next-line no-console
+					console.error(`✗ Failed to load image ${content.index + 1}`);
+
+					// Show user-friendly error message
+					this.showImageLoadError(content.index + 1);
+				} else {
+					// Content finished loading successfully
+					// eslint-disable-next-line no-console
+					console.log(`✓ Image ${content.index + 1} loaded`);
+				}
+			});
+		});
 
 		this.lightbox.init();
 
@@ -862,58 +895,63 @@ export class PhotoSwipeViewer {
 				'prev'
 			);
 
-			if (prevEpisodeData) {
-				// Update current episode ID
-				this.boundaryHandler.updateCurrentEpisodeId(prevEpisodeData.id);
-
-				// Get episode defaults from response or fall back to current defaults
-				const episodeDefaults: DefaultSettings = prevEpisodeData.episodeDefaults
-					? {
-							zoom: prevEpisodeData.episodeDefaults.zoom as ZoomValue,
-							pan: prevEpisodeData.episodeDefaults.pan as PanValue,
-						}
-					: {
-							zoom: this.config.episodeDefaults.zoom,
-							pan: this.config.episodeDefaults.pan,
-						};
-
-				// Convert episode data to ImageData format
-				const newImages: ImageData[] = prevEpisodeData.images.map((img) => ({
-					id: img.id,
-					url: img.url,
-					width: img.width,
-					height: img.height,
-					zoom: episodeDefaults.zoom,
-					pan: episodeDefaults.pan,
-				}));
-
-				// Update config with new images and navigation
-				this.config.images = newImages;
-				this.config.episodeId = prevEpisodeData.id;
-				this.config.episodeDefaults = episodeDefaults;
-
-				// Update navigation from the response
-				if (prevEpisodeData.navigation) {
-					this.config.navigation = {
-						nextEpisodeId: prevEpisodeData.navigation.nextEpisodeId,
-						prevEpisodeId: prevEpisodeData.navigation.prevEpisodeId,
-					};
-				}
-
-				// Update browser URL and title
-				this.updateBrowserURL(prevEpisodeData.url, prevEpisodeData.title);
-
-				// Update page content
-				this.updatePageContent(prevEpisodeData);
-
-				// Reload the gallery with new images, opening at the last image
-				this.reloadGallery(newImages, newImages.length - 1);
-
+			if (!prevEpisodeData) {
+				// Error notification already shown by boundary handler
 				// eslint-disable-next-line no-console
-				console.log(
-					`✅ Episode transition: "${prevEpisodeData.title}" (${newImages.length} image${newImages.length !== 1 ? 's' : ''})`
-				);
+				console.error('Failed to load previous episode');
+				return;
 			}
+
+			// Update current episode ID
+			this.boundaryHandler.updateCurrentEpisodeId(prevEpisodeData.id);
+
+			// Get episode defaults from response or fall back to current defaults
+			const episodeDefaults: DefaultSettings = prevEpisodeData.episodeDefaults
+				? {
+						zoom: prevEpisodeData.episodeDefaults.zoom as ZoomValue,
+						pan: prevEpisodeData.episodeDefaults.pan as PanValue,
+					}
+				: {
+						zoom: this.config.episodeDefaults.zoom,
+						pan: this.config.episodeDefaults.pan,
+					};
+
+			// Convert episode data to ImageData format
+			const newImages: ImageData[] = prevEpisodeData.images.map((img) => ({
+				id: img.id,
+				url: img.url,
+				width: img.width,
+				height: img.height,
+				zoom: episodeDefaults.zoom,
+				pan: episodeDefaults.pan,
+			}));
+
+			// Update config with new images and navigation
+			this.config.images = newImages;
+			this.config.episodeId = prevEpisodeData.id;
+			this.config.episodeDefaults = episodeDefaults;
+
+			// Update navigation from the response
+			if (prevEpisodeData.navigation) {
+				this.config.navigation = {
+					nextEpisodeId: prevEpisodeData.navigation.nextEpisodeId,
+					prevEpisodeId: prevEpisodeData.navigation.prevEpisodeId,
+				};
+			}
+
+			// Update browser URL and title
+			this.updateBrowserURL(prevEpisodeData.url, prevEpisodeData.title);
+
+			// Update page content
+			this.updatePageContent(prevEpisodeData);
+
+			// Reload the gallery with new images, opening at the last image
+			this.reloadGallery(newImages, newImages.length - 1);
+
+			// eslint-disable-next-line no-console
+			console.log(
+				`✅ Episode transition: "${prevEpisodeData.title}" (${newImages.length} image${newImages.length !== 1 ? 's' : ''})`
+			);
 		} catch (error) {
 			// eslint-disable-next-line no-console
 			console.error('Failed to transition to previous episode:', error);
@@ -943,58 +981,63 @@ export class PhotoSwipeViewer {
 				'next'
 			);
 
-			if (nextEpisodeData) {
-				// Update current episode ID
-				this.boundaryHandler.updateCurrentEpisodeId(nextEpisodeData.id);
-
-				// Get episode defaults from response or fall back to current defaults
-				const episodeDefaults: DefaultSettings = nextEpisodeData.episodeDefaults
-					? {
-							zoom: nextEpisodeData.episodeDefaults.zoom as ZoomValue,
-							pan: nextEpisodeData.episodeDefaults.pan as PanValue,
-						}
-					: {
-							zoom: this.config.episodeDefaults.zoom,
-							pan: this.config.episodeDefaults.pan,
-						};
-
-				// Convert episode data to ImageData format
-				const newImages: ImageData[] = nextEpisodeData.images.map((img) => ({
-					id: img.id,
-					url: img.url,
-					width: img.width,
-					height: img.height,
-					zoom: episodeDefaults.zoom,
-					pan: episodeDefaults.pan,
-				}));
-
-				// Update config with new images and navigation
-				this.config.images = newImages;
-				this.config.episodeId = nextEpisodeData.id;
-				this.config.episodeDefaults = episodeDefaults;
-
-				// Update navigation from the response
-				if (nextEpisodeData.navigation) {
-					this.config.navigation = {
-						nextEpisodeId: nextEpisodeData.navigation.nextEpisodeId,
-						prevEpisodeId: nextEpisodeData.navigation.prevEpisodeId,
-					};
-				}
-
-				// Update browser URL and title
-				this.updateBrowserURL(nextEpisodeData.url, nextEpisodeData.title);
-
-				// Update page content
-				this.updatePageContent(nextEpisodeData);
-
-				// Reload the gallery with new images
-				this.reloadGallery(newImages);
-
+			if (!nextEpisodeData) {
+				// Error notification already shown by boundary handler
 				// eslint-disable-next-line no-console
-				console.log(
-					`✅ Episode transition: "${nextEpisodeData.title}" (${newImages.length} image${newImages.length !== 1 ? 's' : ''})`
-				);
+				console.error('Failed to load next episode');
+				return;
 			}
+
+			// Update current episode ID
+			this.boundaryHandler.updateCurrentEpisodeId(nextEpisodeData.id);
+
+			// Get episode defaults from response or fall back to current defaults
+			const episodeDefaults: DefaultSettings = nextEpisodeData.episodeDefaults
+				? {
+						zoom: nextEpisodeData.episodeDefaults.zoom as ZoomValue,
+						pan: nextEpisodeData.episodeDefaults.pan as PanValue,
+					}
+				: {
+						zoom: this.config.episodeDefaults.zoom,
+						pan: this.config.episodeDefaults.pan,
+					};
+
+			// Convert episode data to ImageData format
+			const newImages: ImageData[] = nextEpisodeData.images.map((img) => ({
+				id: img.id,
+				url: img.url,
+				width: img.width,
+				height: img.height,
+				zoom: episodeDefaults.zoom,
+				pan: episodeDefaults.pan,
+			}));
+
+			// Update config with new images and navigation
+			this.config.images = newImages;
+			this.config.episodeId = nextEpisodeData.id;
+			this.config.episodeDefaults = episodeDefaults;
+
+			// Update navigation from the response
+			if (nextEpisodeData.navigation) {
+				this.config.navigation = {
+					nextEpisodeId: nextEpisodeData.navigation.nextEpisodeId,
+					prevEpisodeId: nextEpisodeData.navigation.prevEpisodeId,
+				};
+			}
+
+			// Update browser URL and title
+			this.updateBrowserURL(nextEpisodeData.url, nextEpisodeData.title);
+
+			// Update page content
+			this.updatePageContent(nextEpisodeData);
+
+			// Reload the gallery with new images
+			this.reloadGallery(newImages);
+
+			// eslint-disable-next-line no-console
+			console.log(
+				`✅ Episode transition: "${nextEpisodeData.title}" (${newImages.length} image${newImages.length !== 1 ? 's' : ''})`
+			);
 		} catch (error) {
 			// eslint-disable-next-line no-console
 			console.error('Failed to transition to next episode:', error);
@@ -1167,6 +1210,17 @@ export class PhotoSwipeViewer {
 			link.appendChild(img);
 			gallery.appendChild(link);
 		});
+	}
+
+	/**
+	 * Show error message for failed image load
+	 * @param imageNumber - The image number that failed to load
+	 */
+	private showImageLoadError(imageNumber: number): void {
+		showErrorNotification(
+			`Failed to load image ${imageNumber}. Please check your connection and try again.`,
+			5000
+		);
 	}
 
 	/**

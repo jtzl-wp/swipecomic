@@ -268,11 +268,57 @@
    Loading States
    ============================================================================ */
 
+/* Loading spinner container */
 .swipecomic-episode .pswp__preloader {
 	position: absolute;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+	width: 60px;
+	height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	pointer-events: none;
+}
+
+/* Show preloader when loading */
+.swipecomic-episode .pswp__preloader--active {
+	opacity: 1;
+}
+
+/* Loading spinner animation */
+.swipecomic-episode .pswp__preloader__icn {
+	width: 40px;
+	height: 40px;
+	border: 3px solid rgba(255, 255, 255, 0.2);
+	border-top-color: rgba(255, 255, 255, 0.9);
+	border-radius: 50%;
+	animation: pswp-preloader-spin 1s linear infinite;
+}
+
+@keyframes pswp-preloader-spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+/* Subtle preloading indicator for next image */
+.swipecomic-episode .pswp__preloader--preloading {
+	opacity: 0.5;
+	width: 30px;
+	height: 30px;
+}
+
+.swipecomic-episode .pswp__preloader--preloading .pswp__preloader__icn {
+	width: 20px;
+	height: 20px;
+	border-width: 2px;
 }
 
 /* ============================================================================
@@ -300,6 +346,72 @@
 
 .swipecomic-episode-transition.visible {
 	opacity: 1;
+}
+
+/* ============================================================================
+   Error Handling
+   ============================================================================ */
+
+/* Error message for failed image loads */
+.swipecomic-episode .pswp__error-msg {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(211, 47, 47, 0.95);
+	color: #fff;
+	padding: 16px 24px;
+	border-radius: 8px;
+	font-size: 15px;
+	font-weight: 500;
+	text-align: center;
+	max-width: 80%;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Error notification for AJAX failures */
+.swipecomic-error-notification {
+	position: fixed;
+	top: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(211, 47, 47, 0.95);
+	color: #fff;
+	padding: 14px 20px;
+	border-radius: 8px;
+	font-size: 15px;
+	font-weight: 500;
+	z-index: 999999;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	max-width: 90%;
+	text-align: center;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.swipecomic-error-notification.visible {
+	opacity: 1;
+}
+
+/* Mobile adjustments for error notifications */
+@media (max-width: 767px) {
+	.swipecomic-error-notification {
+		top: 10px;
+		font-size: 14px;
+		padding: 12px 16px;
+		max-width: 95%;
+	}
+
+	.swipecomic-episode .pswp__error-msg {
+		font-size: 14px;
+		padding: 14px 20px;
+		max-width: 90%;
+	}
 }
 
 /* ============================================================================
