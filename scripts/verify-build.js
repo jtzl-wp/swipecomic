@@ -15,14 +15,51 @@
 const fs = require('fs');
 const path = require('path');
 
-const { readManifest, MANIFEST_PATH } = require('./manifest-manager');
-
 // Exit codes
 const EXIT_SUCCESS = 0;
 const EXIT_FAILURE = 1;
 
+// Manifest path
+const MANIFEST_PATH = path.join(
+	__dirname,
+	'..',
+	'build',
+	'asset-manifest.json'
+);
+
+/**
+ * Read the asset manifest file.
+ *
+ * @return {Object} Manifest object or empty object if not found/invalid
+ */
+function readManifest() {
+	try {
+		if (!fs.existsSync(MANIFEST_PATH)) {
+			return {};
+		}
+
+		const content = fs.readFileSync(MANIFEST_PATH, 'utf8');
+		const manifest = JSON.parse(content);
+
+		// Validate manifest structure
+		if (typeof manifest !== 'object' || manifest === null) {
+			console.warn('Invalid manifest structure, returning empty manifest');
+			return {};
+		}
+
+		return manifest;
+	} catch (error) {
+		console.warn(`Failed to read manifest: ${error.message}`);
+		return {};
+	}
+}
+
 // Expected asset types that should be in the manifest
-const EXPECTED_ASSETS = ['swipecomic.js', 'swipecomic.css'];
+const EXPECTED_ASSETS = [
+	'swipecomic.js',
+	'swipecomic-viewer.js',
+	'swipecomic.css',
+];
 
 // Optional assets that may be present
 const OPTIONAL_ASSETS = [];
@@ -232,10 +269,10 @@ async function checkForOrphanedFiles(manifest) {
 			Object.values(manifest).filter((v) => typeof v === 'string')
 		);
 
-		// Patterns for hashed files
+		// Patterns for hashed files (esbuild uses uppercase hash)
 		const hashedPatterns = [
-			/^swipecomic\.[a-f0-9]{8}\.js$/,
-			/^swipecomic\.[a-f0-9]{8}\.css$/,
+			/^swipecomic-viewer\.[A-Z0-9]+\.js$/,
+			/^swipecomic\.[A-Z0-9]+\.js$/,
 		];
 
 		for (const file of files) {
