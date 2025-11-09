@@ -8,12 +8,23 @@
 export interface EpisodeData {
 	id: number;
 	title: string;
+	url: string;
+	episodeChapter?: string;
+	content?: string;
 	images: Array<{
 		id: number;
 		url: string;
 		width: number;
 		height: number;
 	}>;
+	episodeDefaults?: {
+		zoom: string;
+		pan: string;
+	};
+	navigation?: {
+		nextEpisodeId?: number;
+		prevEpisodeId?: number;
+	};
 }
 
 export interface AjaxResponse {

@@ -9,11 +9,17 @@ import PhotoSwipe from 'photoswipe';
 // eslint-disable-next-line import/no-unresolved
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 
+import {
+	EpisodeBoundaryHandler,
+	BoundaryConfig,
+	EpisodeData,
+} from './episode-boundary-handler';
 import { LogoOverlayController, LogoConfig } from './logo-overlay-controller';
 import {
-	SettingsResolver,
 	ImageData,
 	DefaultSettings,
+	ZoomValue,
+	PanValue,
 } from './settings-resolver';
 
 export interface ViewerConfig {
@@ -24,30 +30,51 @@ export interface ViewerConfig {
 	isMobile: boolean;
 	seriesLogo?: LogoConfig;
 	seriesArchiveUrl?: string; // URL to series archive page
-}
-
-export interface EpisodeData {
-	id: number;
-	title: string;
-	images: ImageData[];
+	navigation?: {
+		nextEpisodeId?: number;
+		prevEpisodeId?: number;
+	};
+	ajaxUrl?: string;
+	nonce?: string;
+	episodeId?: number;
 }
 
 export class PhotoSwipeViewer {
 	private lightbox: PhotoSwipeLightbox | null = null;
-	private settingsResolver: SettingsResolver;
 	private config: ViewerConfig;
 	private logoController: LogoOverlayController | null = null;
+	private boundaryHandler: EpisodeBoundaryHandler | null = null;
+	private isTransitioning = false;
+	private uiHideTimeout: ReturnType<typeof setTimeout> | null = null;
+	private uiShowHandler: (() => void) | null = null;
 
 	constructor(config: ViewerConfig) {
 		this.config = config;
-		this.settingsResolver = new SettingsResolver(
-			config.globalDefaults,
-			config.episodeDefaults
-		);
 
 		// Initialize logo controller if logo is configured
 		if (config.seriesLogo && config.seriesLogo.url) {
 			this.logoController = new LogoOverlayController(config.seriesLogo);
+		}
+
+		// Initialize episode boundary handler if navigation is available
+		if (
+			config.ajaxUrl &&
+			config.nonce &&
+			config.episodeId &&
+			config.navigation
+		) {
+			const boundaryConfig: BoundaryConfig = {
+				ajaxUrl: config.ajaxUrl,
+				nonce: config.nonce,
+				currentEpisodeId: config.episodeId,
+			};
+			this.boundaryHandler = new EpisodeBoundaryHandler(boundaryConfig);
+
+			// Prefetch adjacent episodes
+			this.boundaryHandler.prefetchAdjacentEpisodes(
+				config.navigation.nextEpisodeId,
+				config.navigation.prevEpisodeId
+			);
 		}
 	}
 
@@ -63,7 +90,7 @@ export class PhotoSwipeViewer {
 
 			// Reading experience (from PoC)
 			wheelToZoom: false,
-			allowPanToNext: false, // Horizontal drag pans image instead of swiping
+			allowPanToNext: true, // Allow swipe navigation between images
 			closeOnVerticalDrag: false,
 			showHideAnimationType: 'none',
 			showAnimationDuration: 0,
@@ -72,9 +99,14 @@ export class PhotoSwipeViewer {
 			bgOpacity: 0.9,
 
 			// Disable accidental zooms (from PoC)
-			imageClickAction: 'none',
-			doubleTapAction: 'none',
-			tapAction: this.config.isMobile ? 'none' : 'toggle-controls',
+			imageClickAction: false,
+			doubleTapAction: false,
+			tapAction: this.config.isMobile ? false : 'toggle-controls',
+
+			// Touch gestures (built-in PhotoSwipe features)
+			// - Swipe left/right: Navigate between images (enabled by default)
+			// - Pinch-to-zoom: Zoom in/out on images (enabled by default)
+			// - Drag-to-pan: Pan within zoomed images (enabled by default)
 
 			// Zoom settings
 			initialZoomLevel: this.getInitialZoomLevel.bind(this),
@@ -82,8 +114,8 @@ export class PhotoSwipeViewer {
 			maxZoomLevel: 4,
 
 			// Keyboard navigation
-			arrowKeys: true,
-			escKey: true,
+			arrowKeys: true, // Left/right arrows navigate between images
+			escKey: true, // Escape key closes viewer
 
 			// Preloading (from PoC)
 			preload: [0, 1], // Only next slide preloads
@@ -96,6 +128,9 @@ export class PhotoSwipeViewer {
 				'<div class="pswp__error-msg">The image could not be loaded.</div>',
 		});
 
+		// Track which slides have shown the drag hint
+		const hintShownForSlide = new Set<number>();
+
 		// Apply pan-to-edge logic on slide activation
 		this.lightbox.on('contentActivate', ({ content }) => {
 			if (!this.lightbox?.pswp) return;
@@ -106,6 +141,10 @@ export class PhotoSwipeViewer {
 				// Ensure the slide is still the current one before panning
 				if (pswp.currSlide === content.slide) {
 					this.applyPanToEdge(pswp);
+					// Show drag hint if image is wide (skip first slide, handled in openingAnimationEnd)
+					if (pswp.currIndex !== 0) {
+						this.showDragHintIfWide(pswp, content.slide, hintShownForSlide);
+					}
 				}
 			};
 
@@ -158,11 +197,49 @@ export class PhotoSwipeViewer {
 		// Hide page content when viewer opens, show when it closes
 		this.lightbox.on('afterInit', () => {
 			this.hidePageContent();
+			this.setupCustomKeyboardHandlers();
+			this.setupUIAutoHide();
+			this.setupPopStateHandler();
+
+			// Set up boundary navigation after PhotoSwipe is initialized
+			if (this.boundaryHandler) {
+				this.setupBoundaryNavigation();
+			}
+		});
+
+		// Show drag hint on opening animation end (always show for first slide)
+		this.lightbox.on('openingAnimationEnd', () => {
+			if (!this.lightbox?.pswp) return;
+
+			const pswp = this.lightbox.pswp;
+
+			// Always show hint on first slide, check width on other slides
+			if (pswp.currIndex === 0) {
+				const hintEl = document.getElementById('drag-hint');
+				if (hintEl) {
+					hintShownForSlide.add(0);
+					hintEl.style.display = 'block';
+					setTimeout(() => {
+						hintEl.style.display = 'none';
+					}, 2500);
+				}
+			} else {
+				this.showDragHintIfWide(pswp, pswp.currSlide, hintShownForSlide);
+			}
 		});
 
 		this.lightbox.on('destroy', () => {
 			this.showPageContent();
+			this.removeCustomKeyboardHandlers();
+			this.removePopStateHandler();
 		});
+
+		// Handle episode boundary transitions
+		if (this.boundaryHandler) {
+			this.lightbox.on('change', () => {
+				this.handleBoundaryCheck();
+			});
+		}
 
 		this.lightbox.init();
 
@@ -178,19 +255,19 @@ export class PhotoSwipeViewer {
 	 * @param zoomLevelObject - PhotoSwipe zoom level object
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private getInitialZoomLevel(zoomLevelObject: any): number | string {
+	private getInitialZoomLevel(zoomLevelObject: any): number {
 		// Get the item data from PhotoSwipe
 		const item = zoomLevelObject.itemData;
 
 		if (!item || !item.element) {
-			return 'fit'; // Default to fit
+			return zoomLevelObject.fit; // Default to fit
 		}
 
 		// Read zoom setting from data attribute
 		const zoomAttr = item.element.getAttribute('data-initial-zoom');
 
 		if (!zoomAttr) {
-			return 'fit';
+			return zoomLevelObject.fit;
 		}
 
 		// Handle vFill - use PhotoSwipe's calculated vFill value
@@ -200,7 +277,7 @@ export class PhotoSwipeViewer {
 
 		// Handle fit
 		if (zoomAttr === 'fit') {
-			return 'fit';
+			return zoomLevelObject.fit;
 		}
 
 		// Handle custom numeric zoom (e.g., "150" means 1.5x)
@@ -211,7 +288,7 @@ export class PhotoSwipeViewer {
 		}
 
 		// Fallback to fit
-		return 'fit';
+		return zoomLevelObject.fit;
 	}
 
 	/**
@@ -256,26 +333,149 @@ export class PhotoSwipeViewer {
 	private registerCustomUI(): void {
 		if (!this.lightbox?.pswp) return;
 
-		// Add custom counter
-		this.lightbox.pswp.ui?.registerElement({
+		const pswp = this.lightbox.pswp;
+
+		// Add custom counter in top bar (before zoom button)
+		pswp.ui?.registerElement({
 			name: 'custom-counter',
-			order: 9,
+			order: 5, // Before zoom button (order 7)
 			isButton: false,
-			appendTo: 'wrapper',
+			appendTo: 'bar',
 			html: '',
-			onInit: (el: HTMLElement, pswp: PhotoSwipe) => {
-				pswp.on('change', () => {
-					const total = pswp.getNumItems();
-					const current = pswp.currIndex + 1;
+			onInit: (el: HTMLElement, pswpInstance: PhotoSwipe) => {
+				pswpInstance.on('change', () => {
+					const total = pswpInstance.getNumItems();
+					const current = pswpInstance.currIndex + 1;
 					el.textContent = `${current} / ${total}`;
 				});
 
 				// Initial update
-				const total = pswp.getNumItems();
-				const current = pswp.currIndex + 1;
+				const total = pswpInstance.getNumItems();
+				const current = pswpInstance.currIndex + 1;
 				el.textContent = `${current} / ${total}`;
 			},
 		});
+
+		// Modify arrow button behavior when episode navigation is available
+		if (this.boundaryHandler) {
+			// Wait for UI to be ready, then modify arrow button behavior
+			setTimeout(() => {
+				const updateArrowState = () => {
+					if (!pswp) return;
+
+					const currentIndex = pswp.currIndex;
+					const totalImages = pswp.getNumItems();
+
+					// Find the arrow buttons
+					const arrowNext = pswp.element?.querySelector(
+						'.pswp__button--arrow--next'
+					) as HTMLElement;
+					const arrowPrev = pswp.element?.querySelector(
+						'.pswp__button--arrow--prev'
+					) as HTMLElement;
+
+					// Update next button state
+					if (arrowNext) {
+						const hasNextImage = currentIndex < totalImages - 1;
+						const hasNextEpisode = this.config.navigation?.nextEpisodeId;
+						const shouldEnable = hasNextImage || hasNextEpisode;
+
+						// Use disabled attribute instead of display to preserve auto-hide
+						if (shouldEnable) {
+							arrowNext.removeAttribute('disabled');
+							arrowNext.style.pointerEvents = 'auto';
+						} else {
+							arrowNext.setAttribute('disabled', 'true');
+							arrowNext.style.pointerEvents = 'none';
+							arrowNext.style.opacity = '0.3';
+						}
+					}
+
+					// Update prev button state
+					if (arrowPrev) {
+						const hasPrevImage = currentIndex > 0;
+						const hasPrevEpisode = this.config.navigation?.prevEpisodeId;
+						// Enable prev button if:
+						// - There's a previous image in current episode, OR
+						// - We're on first image AND there's a previous episode
+						const shouldEnable =
+							hasPrevImage || (currentIndex === 0 && hasPrevEpisode);
+
+						// Use disabled attribute instead of display to preserve auto-hide
+						if (shouldEnable) {
+							arrowPrev.removeAttribute('disabled');
+							arrowPrev.style.pointerEvents = 'auto';
+						} else {
+							arrowPrev.setAttribute('disabled', 'true');
+							arrowPrev.style.pointerEvents = 'none';
+							arrowPrev.style.opacity = '0.3';
+						}
+					}
+				};
+
+				// Update on slide change
+				pswp.on('change', updateArrowState);
+
+				// Initial update
+				updateArrowState();
+			}, 0);
+		}
+	}
+
+	/**
+	 * Show drag hint if image is wider than viewport
+	 * Based on PoC implementation
+	 * @param pswp
+	 * @param slide
+	 * @param hintShownForSlide
+	 */
+	private showDragHintIfWide(
+		pswp: PhotoSwipe,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		slide: any,
+		hintShownForSlide: Set<number>
+	): void {
+		if (!slide) return;
+
+		const slideKey = slide.index !== undefined ? slide.index : pswp.currIndex;
+
+		const viewportW = pswp.viewportSize?.x;
+		const viewportH = pswp.viewportSize?.y;
+		if (!viewportW || !viewportH) return;
+
+		// Get image dimensions
+		let imgWidth = slide.width || slide.data?.width || slide.data?.w;
+		let imgHeight = slide.height || slide.data?.height || slide.data?.h;
+
+		// If still no dimensions, try from the element
+		if (!imgWidth || !imgHeight) {
+			const element = slide.data?.element;
+			if (element) {
+				imgWidth = parseInt(element.getAttribute('data-pswp-width'));
+				imgHeight = parseInt(element.getAttribute('data-pswp-height'));
+			}
+		}
+
+		if (!imgWidth || !imgHeight) return;
+
+		// Calculate if image at vFill zoom (filling viewport height) would be wider than viewport
+		// vFill means image height = viewport height, so image width at vFill = (imgWidth/imgHeight) * viewportH
+		const widthAtVFill = (imgWidth / imgHeight) * viewportH;
+		const imageIsWider = widthAtVFill > viewportW;
+
+		if (!imageIsWider) return;
+
+		// Show hint only once per slide per session
+		if (hintShownForSlide.has(slideKey)) return;
+		hintShownForSlide.add(slideKey);
+
+		const hintEl = document.getElementById('drag-hint');
+		if (!hintEl) return;
+
+		hintEl.style.display = 'block';
+		setTimeout(() => {
+			hintEl.style.display = 'none';
+		}, 2200);
 	}
 
 	/**
@@ -294,21 +494,6 @@ export class PhotoSwipeViewer {
 				// By not providing other properties, we effectively disable it.
 			});
 		});
-	}
-
-	/**
-	 * Find image data by slide data
-	 * @param slideData - PhotoSwipe slide data object
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private findImageData(slideData: any): ImageData | null {
-		if (!slideData || !slideData.src) {
-			return null;
-		}
-
-		// Find matching image by URL
-		const image = this.config.images.find((img) => img.url === slideData.src);
-		return image || null;
 	}
 
 	/**
@@ -358,6 +543,140 @@ export class PhotoSwipeViewer {
 	}
 
 	/**
+	 * Set up auto-hide UI functionality
+	 * PhotoSwipe v5 doesn't have built-in auto-hide, so we implement it
+	 */
+	private setupUIAutoHide(): void {
+		if (!this.lightbox?.pswp) return;
+
+		const pswp = this.lightbox.pswp;
+		const UI_HIDE_DELAY = 4000; // 4 seconds
+
+		const scheduleUIHide = () => {
+			// Clear existing timeout
+			if (this.uiHideTimeout) {
+				clearTimeout(this.uiHideTimeout);
+			}
+
+			// Show UI
+			pswp.element?.classList.add('pswp--ui-visible');
+
+			// Schedule hide
+			this.uiHideTimeout = setTimeout(() => {
+				pswp.element?.classList.remove('pswp--ui-visible');
+			}, UI_HIDE_DELAY);
+		};
+
+		this.uiShowHandler = () => {
+			pswp.element?.classList.add('pswp--ui-visible');
+			scheduleUIHide();
+		};
+
+		// Show UI on mouse move (desktop)
+		pswp.element?.addEventListener('mousemove', this.uiShowHandler);
+
+		// Show UI on touch/tap (mobile)
+		pswp.element?.addEventListener('touchstart', this.uiShowHandler);
+
+		// Show UI on keyboard interaction
+		document.addEventListener('keydown', this.uiShowHandler);
+
+		// Initial schedule
+		scheduleUIHide();
+
+		// Clean up on destroy
+		pswp.on('destroy', () => {
+			if (this.uiHideTimeout) {
+				clearTimeout(this.uiHideTimeout);
+			}
+			// Remove event listeners
+			if (this.uiShowHandler) {
+				pswp.element?.removeEventListener('mousemove', this.uiShowHandler);
+				pswp.element?.removeEventListener('touchstart', this.uiShowHandler);
+				document.removeEventListener('keydown', this.uiShowHandler);
+			}
+		});
+	}
+
+	/**
+	 * Handle browser back/forward navigation
+	 * When user clicks back/forward after episode transitions, reload the page
+	 */
+	private popStateHandler = (): void => {
+		// If PhotoSwipe is open and user navigates back/forward, reload the page
+		// This ensures the page content matches the URL
+		if (this.lightbox?.pswp) {
+			window.location.reload();
+		}
+	};
+
+	/**
+	 * Set up popstate handler for browser back/forward buttons
+	 */
+	private setupPopStateHandler(): void {
+		window.addEventListener('popstate', this.popStateHandler);
+	}
+
+	/**
+	 * Remove popstate handler
+	 */
+	private removePopStateHandler(): void {
+		window.removeEventListener('popstate', this.popStateHandler);
+	}
+
+	/**
+	 * Custom keyboard handler for Home/End keys and episode navigation
+	 * @param e - Keyboard event
+	 */
+	private keyboardHandler = (e: KeyboardEvent): void => {
+		if (!this.lightbox?.pswp) return;
+
+		const pswp = this.lightbox.pswp;
+
+		// Home key - go to first image
+		if (e.key === 'Home') {
+			e.preventDefault();
+			pswp.goTo(0);
+		}
+
+		// End key - go to last image
+		if (e.key === 'End') {
+			e.preventDefault();
+			const lastIndex = pswp.getNumItems() - 1;
+			pswp.goTo(lastIndex);
+		}
+
+		// Handle episode navigation for single-image episodes
+		if (this.boundaryHandler && pswp.getNumItems() === 1) {
+			// Right arrow - go to next episode
+			if (e.key === 'ArrowRight' && this.config.navigation?.nextEpisodeId) {
+				e.preventDefault();
+				this.transitionToNextEpisode();
+			}
+
+			// Left arrow - go to previous episode
+			if (e.key === 'ArrowLeft' && this.config.navigation?.prevEpisodeId) {
+				e.preventDefault();
+				this.transitionToPrevEpisode();
+			}
+		}
+	};
+
+	/**
+	 * Set up custom keyboard handlers
+	 */
+	private setupCustomKeyboardHandlers(): void {
+		document.addEventListener('keydown', this.keyboardHandler);
+	}
+
+	/**
+	 * Remove custom keyboard handlers
+	 */
+	private removeCustomKeyboardHandlers(): void {
+		document.removeEventListener('keydown', this.keyboardHandler);
+	}
+
+	/**
 	 * Hide page content when viewer opens
 	 */
 	private hidePageContent(): void {
@@ -385,6 +704,469 @@ export class PhotoSwipeViewer {
 			// eslint-disable-next-line no-console
 			console.warn('SwipeComic: Could not find .swipecomic-episode element');
 		}
+	}
+
+	/**
+	 * Set up boundary navigation handlers
+	 * Intercepts navigation attempts at episode boundaries
+	 */
+	private setupBoundaryNavigation(): void {
+		if (!this.lightbox?.pswp) {
+			return;
+		}
+
+		const pswp = this.lightbox.pswp;
+
+		// Override the next() method to handle episode transitions
+		const originalNext = pswp.next.bind(pswp);
+		pswp.next = () => {
+			const currentIndex = pswp.currIndex;
+			const totalImages = pswp.getNumItems();
+
+			// If at last image and next episode exists, transition
+			if (
+				currentIndex === totalImages - 1 &&
+				this.config.navigation?.nextEpisodeId &&
+				!this.isTransitioning
+			) {
+				this.transitionToNextEpisode();
+			} else {
+				originalNext();
+			}
+		};
+
+		// Override the prev() method to handle episode transitions
+		const originalPrev = pswp.prev.bind(pswp);
+		pswp.prev = () => {
+			const currentIndex = pswp.currIndex;
+
+			// If at first image and prev episode exists, transition
+			if (
+				currentIndex === 0 &&
+				this.config.navigation?.prevEpisodeId &&
+				!this.isTransitioning
+			) {
+				this.transitionToPrevEpisode();
+			} else {
+				originalPrev();
+			}
+		};
+
+		// Detect swipe attempts at boundaries
+		// PhotoSwipe's gesture system prevents swiping beyond boundaries,
+		// but we can detect the attempt and trigger episode transitions
+		let swipeStartX = 0;
+		let swipeStartIndex = 0;
+
+		pswp.on('pointerDown', (e) => {
+			if (this.isTransitioning) return;
+			const event = e.originalEvent as PointerEvent | TouchEvent;
+			if ('touches' in event && event.touches) {
+				swipeStartX = event.touches[0]?.clientX || 0;
+			} else if ('clientX' in event) {
+				swipeStartX = event.clientX || 0;
+			}
+			swipeStartIndex = pswp.currIndex;
+		});
+
+		pswp.on('pointerUp', (e) => {
+			if (this.isTransitioning) return;
+
+			const event = e.originalEvent as PointerEvent | TouchEvent;
+			let swipeEndX = 0;
+			if ('changedTouches' in event && event.changedTouches) {
+				swipeEndX = event.changedTouches[0]?.clientX || 0;
+			} else if ('clientX' in event) {
+				swipeEndX = event.clientX || 0;
+			}
+
+			const swipeDelta = swipeStartX - swipeEndX;
+			const swipeThreshold = 50; // Minimum swipe distance in pixels
+
+			const currentIndex = pswp.currIndex;
+			const totalImages = pswp.getNumItems();
+
+			// Check if we're still on the same slide (swipe was blocked by boundary)
+			if (
+				currentIndex === swipeStartIndex &&
+				Math.abs(swipeDelta) > swipeThreshold
+			) {
+				// Swipe left (next) at last image
+				if (
+					swipeDelta > 0 &&
+					currentIndex === totalImages - 1 &&
+					this.config.navigation?.nextEpisodeId
+				) {
+					this.transitionToNextEpisode();
+				}
+				// Swipe right (prev) at first image
+				else if (
+					swipeDelta < 0 &&
+					currentIndex === 0 &&
+					this.config.navigation?.prevEpisodeId
+				) {
+					this.transitionToPrevEpisode();
+				}
+			}
+		});
+	}
+
+	/**
+	 * Handle episode boundary checking
+	 * Detects when user reaches the last image and loads next episode
+	 */
+	private handleBoundaryCheck(): void {
+		if (!this.lightbox?.pswp || !this.boundaryHandler || this.isTransitioning) {
+			return;
+		}
+
+		const pswp = this.lightbox.pswp;
+		const currentIndex = pswp.currIndex;
+		const totalImages = pswp.getNumItems();
+
+		// Check if we're at the last image
+		if (currentIndex === totalImages - 1) {
+			// Check if there's a next episode
+			if (this.config.navigation?.nextEpisodeId) {
+				// Prefetch next episode if not already cached
+				if (
+					!this.boundaryHandler.isCached(this.config.navigation.nextEpisodeId)
+				) {
+					this.boundaryHandler.fetchEpisode(
+						this.config.navigation.nextEpisodeId,
+						'next'
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Transition to previous episode
+	 * Called when user swipes backward from the first image
+	 */
+	private async transitionToPrevEpisode(): Promise<void> {
+		if (
+			!this.boundaryHandler ||
+			!this.config.navigation?.prevEpisodeId ||
+			this.isTransitioning
+		) {
+			return;
+		}
+
+		this.isTransitioning = true;
+
+		try {
+			const prevEpisodeData = await this.boundaryHandler.fetchEpisode(
+				this.config.navigation.prevEpisodeId,
+				'prev'
+			);
+
+			if (prevEpisodeData) {
+				// Update current episode ID
+				this.boundaryHandler.updateCurrentEpisodeId(prevEpisodeData.id);
+
+				// Get episode defaults from response or fall back to current defaults
+				const episodeDefaults: DefaultSettings = prevEpisodeData.episodeDefaults
+					? {
+							zoom: prevEpisodeData.episodeDefaults.zoom as ZoomValue,
+							pan: prevEpisodeData.episodeDefaults.pan as PanValue,
+						}
+					: {
+							zoom: this.config.episodeDefaults.zoom,
+							pan: this.config.episodeDefaults.pan,
+						};
+
+				// Convert episode data to ImageData format
+				const newImages: ImageData[] = prevEpisodeData.images.map((img) => ({
+					id: img.id,
+					url: img.url,
+					width: img.width,
+					height: img.height,
+					zoom: episodeDefaults.zoom,
+					pan: episodeDefaults.pan,
+				}));
+
+				// Update config with new images and navigation
+				this.config.images = newImages;
+				this.config.episodeId = prevEpisodeData.id;
+				this.config.episodeDefaults = episodeDefaults;
+
+				// Update navigation from the response
+				if (prevEpisodeData.navigation) {
+					this.config.navigation = {
+						nextEpisodeId: prevEpisodeData.navigation.nextEpisodeId,
+						prevEpisodeId: prevEpisodeData.navigation.prevEpisodeId,
+					};
+				}
+
+				// Update browser URL and title
+				this.updateBrowserURL(prevEpisodeData.url, prevEpisodeData.title);
+
+				// Update page content
+				this.updatePageContent(prevEpisodeData);
+
+				// Reload the gallery with new images, opening at the last image
+				this.reloadGallery(newImages, newImages.length - 1);
+
+				// eslint-disable-next-line no-console
+				console.log(
+					`✅ Episode transition: "${prevEpisodeData.title}" (${newImages.length} image${newImages.length !== 1 ? 's' : ''})`
+				);
+			}
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error('Failed to transition to previous episode:', error);
+		} finally {
+			this.isTransitioning = false;
+		}
+	}
+
+	/**
+	 * Transition to next episode
+	 * Called when user swipes forward from the last image
+	 */
+	private async transitionToNextEpisode(): Promise<void> {
+		if (
+			!this.boundaryHandler ||
+			!this.config.navigation?.nextEpisodeId ||
+			this.isTransitioning
+		) {
+			return;
+		}
+
+		this.isTransitioning = true;
+
+		try {
+			const nextEpisodeData = await this.boundaryHandler.fetchEpisode(
+				this.config.navigation.nextEpisodeId,
+				'next'
+			);
+
+			if (nextEpisodeData) {
+				// Update current episode ID
+				this.boundaryHandler.updateCurrentEpisodeId(nextEpisodeData.id);
+
+				// Get episode defaults from response or fall back to current defaults
+				const episodeDefaults: DefaultSettings = nextEpisodeData.episodeDefaults
+					? {
+							zoom: nextEpisodeData.episodeDefaults.zoom as ZoomValue,
+							pan: nextEpisodeData.episodeDefaults.pan as PanValue,
+						}
+					: {
+							zoom: this.config.episodeDefaults.zoom,
+							pan: this.config.episodeDefaults.pan,
+						};
+
+				// Convert episode data to ImageData format
+				const newImages: ImageData[] = nextEpisodeData.images.map((img) => ({
+					id: img.id,
+					url: img.url,
+					width: img.width,
+					height: img.height,
+					zoom: episodeDefaults.zoom,
+					pan: episodeDefaults.pan,
+				}));
+
+				// Update config with new images and navigation
+				this.config.images = newImages;
+				this.config.episodeId = nextEpisodeData.id;
+				this.config.episodeDefaults = episodeDefaults;
+
+				// Update navigation from the response
+				if (nextEpisodeData.navigation) {
+					this.config.navigation = {
+						nextEpisodeId: nextEpisodeData.navigation.nextEpisodeId,
+						prevEpisodeId: nextEpisodeData.navigation.prevEpisodeId,
+					};
+				}
+
+				// Update browser URL and title
+				this.updateBrowserURL(nextEpisodeData.url, nextEpisodeData.title);
+
+				// Update page content
+				this.updatePageContent(nextEpisodeData);
+
+				// Reload the gallery with new images
+				this.reloadGallery(newImages);
+
+				// eslint-disable-next-line no-console
+				console.log(
+					`✅ Episode transition: "${nextEpisodeData.title}" (${newImages.length} image${newImages.length !== 1 ? 's' : ''})`
+				);
+			}
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error('Failed to transition to next episode:', error);
+		} finally {
+			this.isTransitioning = false;
+		}
+	}
+
+	/**
+	 * Update browser URL and document title
+	 * @param url   - New URL to set
+	 * @param title - New page title
+	 */
+	private updateBrowserURL(url: string, title: string): void {
+		if (!url) {
+			return;
+		}
+
+		try {
+			// Update browser URL without reloading the page
+			window.history.pushState({ episodeUrl: url }, '', url);
+
+			// Update document title
+			document.title = title;
+
+			// eslint-disable-next-line no-console
+			console.log(`🔗 URL updated: ${url}`);
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error('Failed to update browser URL:', error);
+		}
+	}
+
+	/**
+	 * Update page content with new episode data
+	 * @param episodeData - Episode data to display
+	 */
+	private updatePageContent(episodeData: EpisodeData): void {
+		// Update title
+		const titleElement = document.querySelector('.swipecomic-title');
+		if (titleElement) {
+			titleElement.textContent = episodeData.title;
+		}
+
+		// Update episode/chapter metadata
+		const metaElement = document.querySelector('.swipecomic-episode-chapter');
+		if (metaElement) {
+			if (episodeData.episodeChapter) {
+				metaElement.textContent = episodeData.episodeChapter;
+				// Show the meta container if it was hidden
+				const metaContainer = metaElement.closest('.swipecomic-meta');
+				if (metaContainer) {
+					(metaContainer as HTMLElement).style.display = '';
+				}
+			} else {
+				// Hide the meta container if there's no episode/chapter info
+				const metaContainer = metaElement.closest('.swipecomic-meta');
+				if (metaContainer) {
+					(metaContainer as HTMLElement).style.display = 'none';
+				}
+			}
+		}
+
+		// Update content (footer)
+		const footerElement = document.querySelector('.swipecomic-footer');
+		if (footerElement && episodeData.content) {
+			footerElement.innerHTML = episodeData.content;
+			(footerElement as HTMLElement).style.display = '';
+		} else if (footerElement) {
+			// Hide footer if there's no content
+			(footerElement as HTMLElement).style.display = 'none';
+		}
+
+		// Update navigation links
+		const prevLink = document.querySelector(
+			'.swipecomic-navigation .prev-episode'
+		) as HTMLAnchorElement;
+		const nextLink = document.querySelector(
+			'.swipecomic-navigation .next-episode'
+		) as HTMLAnchorElement;
+
+		if (prevLink) {
+			if (episodeData.navigation?.prevEpisodeId) {
+				// We don't have the URL for the prev episode, so we'll just show/hide it
+				prevLink.style.display = '';
+			} else {
+				prevLink.style.display = 'none';
+			}
+		}
+
+		if (nextLink) {
+			if (episodeData.navigation?.nextEpisodeId) {
+				// We don't have the URL for the next episode, so we'll just show/hide it
+				nextLink.style.display = '';
+			} else {
+				nextLink.style.display = 'none';
+			}
+		}
+
+		// eslint-disable-next-line no-console
+		console.log('📄 Page content updated');
+	}
+
+	/**
+	 * Reload gallery with new images
+	 * @param images     - New images to load
+	 * @param startIndex - Index to open at (default: 0)
+	 */
+	private reloadGallery(images: ImageData[], startIndex = 0): void {
+		if (!this.lightbox?.pswp) {
+			return;
+		}
+
+		const pswp = this.lightbox.pswp;
+
+		// Define the reload logic to be executed after PhotoSwipe is fully destroyed
+		const reload = () => {
+			// Update DOM with new images
+			this.updateGalleryDOM(images);
+
+			// Small delay to ensure PhotoSwipe is fully cleaned up
+			// This is necessary because PhotoSwipe needs time to remove event listeners
+			// and clean up its internal state before we can reinitialize
+			setTimeout(() => {
+				if (this.lightbox) {
+					this.lightbox.loadAndOpen(startIndex);
+				}
+			}, 50);
+
+			// Remove the event listener to avoid it being called again
+			pswp.off('destroy', reload);
+		};
+
+		// Listen for the 'destroy' event (fires after close is complete)
+		pswp.on('destroy', reload);
+
+		// Close the current instance
+		pswp.close();
+	}
+
+	/**
+	 * Update gallery DOM with new images
+	 * @param images - New images to display
+	 */
+	private updateGalleryDOM(images: ImageData[]): void {
+		const gallery = document.querySelector(this.config.gallerySelector);
+		if (!gallery) {
+			return;
+		}
+
+		// Clear existing gallery items
+		gallery.innerHTML = '';
+
+		// Add new gallery items
+		images.forEach((image) => {
+			const link = document.createElement('a');
+			link.href = image.url;
+			link.setAttribute('data-pswp-width', image.width.toString());
+			link.setAttribute('data-pswp-height', image.height.toString());
+			link.setAttribute(
+				'data-initial-zoom',
+				image.zoom ? String(image.zoom) : 'fit'
+			);
+			link.setAttribute('data-pan-direction', image.pan || 'center');
+
+			const img = document.createElement('img');
+			img.src = image.url;
+			img.alt = '';
+
+			link.appendChild(img);
+			gallery.appendChild(link);
+		});
 	}
 
 	/**
@@ -442,6 +1224,10 @@ export function initFromDOM(): PhotoSwipeViewer | null {
 							linkUrl: data.seriesArchiveUrl || undefined,
 						}
 					: undefined,
+			navigation: data.navigation || undefined,
+			ajaxUrl: data.ajaxUrl || undefined,
+			nonce: data.nonce || undefined,
+			episodeId: data.episodeId || undefined,
 		};
 
 		// Create and initialize viewer

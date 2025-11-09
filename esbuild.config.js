@@ -65,6 +65,54 @@ function generateManifest(metafile) {
 }
 
 /**
+ * Clean up old hashed files that are no longer in the manifest.
+ *
+ * @param {Object} manifest - Current manifest with active files
+ * @return {void}
+ */
+function cleanOldHashedFiles(manifest) {
+	const buildDir = path.join(__dirname, 'build');
+
+	if (!fs.existsSync(buildDir)) {
+		return;
+	}
+
+	try {
+		const files = fs.readdirSync(buildDir);
+		const activeFiles = new Set(Object.values(manifest).filter(Boolean));
+
+		// Pattern for hashed files: name.[HASH].ext
+		const hashedPattern = /^(.+?)\.[A-Z0-9]{8}\.([^.]+)$/;
+
+		files.forEach((file) => {
+			// Skip non-hashed files and the manifest itself
+			if (
+				!hashedPattern.test(file) ||
+				file === 'asset-manifest.json' ||
+				file.endsWith('.map')
+			) {
+				return;
+			}
+
+			// If file is not in the active manifest, remove it
+			if (!activeFiles.has(file)) {
+				const filePath = path.join(buildDir, file);
+				try {
+					fs.unlinkSync(filePath);
+					console.log(`🗑️  Cleaned up old file: ${file}`);
+				} catch (unlinkError) {
+					console.warn(
+						`Failed to remove old file ${file}: ${unlinkError.message}`
+					);
+				}
+			}
+		});
+	} catch (error) {
+		console.warn(`Failed to clean old files: ${error.message}`);
+	}
+}
+
+/**
  * Write manifest to disk.
  *
  * @param {Object} manifest - Manifest object to write
@@ -79,8 +127,12 @@ function writeManifest(manifest) {
 		fs.mkdirSync(buildDir, { recursive: true });
 	}
 
-	// Write manifest
+	// Write manifest before cleaning up old files
 	fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+
+	// Clean up old files now that the new manifest is in place
+	cleanOldHashedFiles(manifest);
+
 	console.log('📝 Generated asset manifest');
 }
 

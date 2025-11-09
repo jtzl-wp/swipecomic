@@ -207,9 +207,8 @@ async function hashFile(filePath) {
 		// Clean old files before creating new one
 		cleanOldFiles(filePath, hash);
 
-		// Atomically copy and then remove to avoid data loss
+		// Copy to hashed filename (keep source file intact)
 		fs.copyFileSync(filePath, hashedPath);
-		fs.unlinkSync(filePath);
 
 		// Update manifest
 		const logicalName = getLogicalName(filePath);

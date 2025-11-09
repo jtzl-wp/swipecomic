@@ -17,34 +17,34 @@ use JTZL\SwipeComic\TemplateFunctions;
 use JTZL\SwipeComic\Settings;
 
 // Check if theme supports FSE or traditional templates.
-$is_block_theme = function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
+$jtzl_swipecomic_is_block_theme = function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
 
-if ( ! $is_block_theme ) {
+if ( ! $jtzl_swipecomic_is_block_theme ) {
 	get_header();
 }
 
 // Get current series term.
-$current_term = get_queried_object();
+$jtzl_swipecomic_current_term = get_queried_object();
 
 // Get series metadata.
-$series_data = TemplateFunctions::get_series_data( $current_term->term_id );
+$jtzl_swipecomic_series_data = TemplateFunctions::get_series_data( $jtzl_swipecomic_current_term->term_id );
 
 // Query episodes in series ordered by episode_number.
 // For taxonomy archives, we need to check both 'paged' and 'page' query vars.
-$current_page      = max( 1, get_query_var( 'paged' ), get_query_var( 'page' ) );
-$episodes_per_page = Settings::get_episodes_per_page();
+$jtzl_swipecomic_current_page      = max( 1, get_query_var( 'paged' ), get_query_var( 'page' ) );
+$jtzl_swipecomic_episodes_per_page = Settings::get_episodes_per_page();
 
-$episodes_query = new WP_Query(
+$jtzl_swipecomic_episodes_query = new WP_Query(
 	array(
 		'post_type'      => 'swipecomic',
-		'posts_per_page' => $episodes_per_page,
-		'paged'          => $current_page,
+		'posts_per_page' => $jtzl_swipecomic_episodes_per_page,
+		'paged'          => $jtzl_swipecomic_current_page,
 		'post_status'    => 'publish',
 		'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 			array(
 				'taxonomy' => 'swipecomic_series',
 				'field'    => 'term_id',
-				'terms'    => $current_term->term_id,
+				'terms'    => $jtzl_swipecomic_current_term->term_id,
 			),
 		),
 		'meta_key'       => '_swipecomic_episode_number', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
@@ -55,7 +55,7 @@ $episodes_query = new WP_Query(
 
 ?>
 
-<?php if ( $is_block_theme ) : ?>
+<?php if ( $jtzl_swipecomic_is_block_theme ) : ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -70,37 +70,37 @@ $episodes_query = new WP_Query(
 <div class="swipecomic-series-archive">
 	
 	<header class="series-header">
-		<?php if ( $series_data && ! empty( $series_data['cover_image']['url'] ) ) : ?>
+		<?php if ( $jtzl_swipecomic_series_data && ! empty( $jtzl_swipecomic_series_data['cover_image']['url'] ) ) : ?>
 			<div class="series-cover-wrapper">
-				<img src="<?php echo esc_url( $series_data['cover_image']['url'] ); ?>" 
-					alt="<?php echo esc_attr( $series_data['name'] ); ?>" 
+				<img src="<?php echo esc_url( $jtzl_swipecomic_series_data['cover_image']['url'] ); ?>" 
+					alt="<?php echo esc_attr( $jtzl_swipecomic_series_data['name'] ); ?>" 
 					class="series-cover" />
 			</div>
 		<?php endif; ?>
 		
-		<h1 class="series-title"><?php echo esc_html( $current_term->name ); ?></h1>
+		<h1 class="series-title"><?php echo esc_html( $jtzl_swipecomic_current_term->name ); ?></h1>
 		
-		<?php if ( $series_data && ! empty( $series_data['description'] ) ) : ?>
+		<?php if ( $jtzl_swipecomic_series_data && ! empty( $jtzl_swipecomic_series_data['description'] ) ) : ?>
 			<div class="series-description">
-				<?php echo wp_kses_post( wpautop( $series_data['description'] ) ); ?>
+				<?php echo wp_kses_post( wpautop( $jtzl_swipecomic_series_data['description'] ) ); ?>
 			</div>
 		<?php endif; ?>
 	</header>
 
-	<?php if ( $episodes_query->have_posts() ) : ?>
+	<?php if ( $jtzl_swipecomic_episodes_query->have_posts() ) : ?>
 		<div class="series-episodes">
 			<?php
-			while ( $episodes_query->have_posts() ) :
-				$episodes_query->the_post();
-				$thumbnail      = TemplateFunctions::get_swipecomic_thumbnail( get_the_ID() );
-				$episode_number = TemplateFunctions::get_episode_number( get_the_ID() );
-				$chapter_number = TemplateFunctions::get_chapter_number( get_the_ID() );
+			while ( $jtzl_swipecomic_episodes_query->have_posts() ) :
+				$jtzl_swipecomic_episodes_query->the_post();
+				$jtzl_swipecomic_thumbnail      = TemplateFunctions::get_swipecomic_thumbnail( get_the_ID() );
+				$jtzl_swipecomic_episode_number = TemplateFunctions::get_episode_number( get_the_ID() );
+				$jtzl_swipecomic_chapter_number = TemplateFunctions::get_chapter_number( get_the_ID() );
 				?>
 				<article class="series-episode-card">
 					<a href="<?php echo esc_url( get_permalink() ); ?>" class="episode-card-link">
-						<?php if ( $thumbnail ) : ?>
+						<?php if ( $jtzl_swipecomic_thumbnail ) : ?>
 							<div class="episode-thumbnail-wrapper">
-								<img src="<?php echo esc_url( $thumbnail ); ?>" 
+								<img src="<?php echo esc_url( $jtzl_swipecomic_thumbnail ); ?>" 
 									alt="<?php echo esc_attr( get_the_title() ); ?>" 
 									class="episode-thumbnail"
 									loading="lazy" />
@@ -110,15 +110,15 @@ $episodes_query = new WP_Query(
 						<div class="episode-info">
 							<h2 class="episode-title"><?php the_title(); ?></h2>
 							
-							<?php if ( $episode_number || $chapter_number ) : ?>
+							<?php if ( $jtzl_swipecomic_episode_number || $jtzl_swipecomic_chapter_number ) : ?>
 								<div class="episode-meta">
 									<?php
-									if ( $chapter_number && $episode_number ) {
-										echo esc_html( sprintf( 'Chapter %s, Episode %s', $chapter_number, $episode_number ) );
-									} elseif ( $episode_number ) {
-										echo esc_html( sprintf( 'Episode %s', $episode_number ) );
-									} elseif ( $chapter_number ) {
-										echo esc_html( sprintf( 'Chapter %s', $chapter_number ) );
+									if ( $jtzl_swipecomic_chapter_number && $jtzl_swipecomic_episode_number ) {
+										echo esc_html( sprintf( 'Chapter %s, Episode %s', $jtzl_swipecomic_chapter_number, $jtzl_swipecomic_episode_number ) );
+									} elseif ( $jtzl_swipecomic_episode_number ) {
+										echo esc_html( sprintf( 'Episode %s', $jtzl_swipecomic_episode_number ) );
+									} elseif ( $jtzl_swipecomic_chapter_number ) {
+										echo esc_html( sprintf( 'Chapter %s', $jtzl_swipecomic_chapter_number ) );
 									}
 									?>
 								</div>
@@ -131,15 +131,15 @@ $episodes_query = new WP_Query(
 		
 		<?php
 		// Pagination.
-		if ( $episodes_query->max_num_pages > 1 ) :
+		if ( $jtzl_swipecomic_episodes_query->max_num_pages > 1 ) :
 			?>
 			<nav class="series-pagination" aria-label="<?php esc_attr_e( 'Episodes pagination', 'swipecomic' ); ?>">
 				<?php
 				echo wp_kses_post(
 					paginate_links(
 						array(
-							'total'     => $episodes_query->max_num_pages,
-							'current'   => $current_page,
+							'total'     => $jtzl_swipecomic_episodes_query->max_num_pages,
+							'current'   => $jtzl_swipecomic_current_page,
 							'prev_text' => __( '&laquo; Previous', 'swipecomic' ),
 							'next_text' => __( 'Next &raquo;', 'swipecomic' ),
 							'type'      => 'list',
@@ -159,7 +159,7 @@ $episodes_query = new WP_Query(
 
 <?php
 
-if ( ! $is_block_theme ) {
+if ( ! $jtzl_swipecomic_is_block_theme ) {
 	get_footer();
 } else {
 	wp_footer();

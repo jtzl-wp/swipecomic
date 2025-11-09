@@ -17,20 +17,20 @@ use JTZL\SwipeComic\TemplateFunctions;
 use JTZL\SwipeComic\Settings;
 
 // Check if theme supports FSE or traditional templates.
-$is_block_theme = function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
+$jtzl_swipecomic_is_block_theme = function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
 
-if ( ! $is_block_theme ) {
+if ( ! $jtzl_swipecomic_is_block_theme ) {
 	get_header();
 }
 
 // Get episode data.
-$images          = TemplateFunctions::get_swipecomic_images();
-$episode_chapter = TemplateFunctions::format_episode_chapter();
-$navigation      = TemplateFunctions::get_episode_navigation();
+$jtzl_swipecomic_images          = TemplateFunctions::get_swipecomic_images();
+$jtzl_swipecomic_episode_chapter = TemplateFunctions::format_episode_chapter();
+$jtzl_swipecomic_navigation      = TemplateFunctions::get_episode_navigation();
 
 ?>
 
-<?php if ( $is_block_theme ) : ?>
+<?php if ( $jtzl_swipecomic_is_block_theme ) : ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -47,25 +47,25 @@ $navigation      = TemplateFunctions::get_episode_navigation();
 	<header class="swipecomic-header">
 		<h1 class="swipecomic-title"><?php the_title(); ?></h1>
 		
-		<?php if ( $episode_chapter ) : ?>
+		<?php if ( $jtzl_swipecomic_episode_chapter ) : ?>
 			<div class="swipecomic-meta">
-				<span class="swipecomic-episode-chapter"><?php echo esc_html( $episode_chapter ); ?></span>
+				<span class="swipecomic-episode-chapter"><?php echo esc_html( $jtzl_swipecomic_episode_chapter ); ?></span>
 			</div>
 		<?php endif; ?>
 	</header>
 
-	<?php if ( ! empty( $images ) ) : ?>
+	<?php if ( ! empty( $jtzl_swipecomic_images ) ) : ?>
 		<!-- PhotoSwipe gallery with thumbnail previews -->
 		<div id="swipecomic-gallery" class="pswp-gallery swipecomic-images">
-			<?php foreach ( $images as $image ) : ?>
-				<a href="<?php echo esc_url( $image['url'] ); ?>"
-					data-pswp-width="<?php echo esc_attr( $image['width'] ); ?>"
-					data-pswp-height="<?php echo esc_attr( $image['height'] ); ?>"
-					data-initial-zoom="<?php echo esc_attr( $image['zoom'] ); ?>"
-					data-pan-direction="<?php echo esc_attr( $image['pan'] ); ?>"
+			<?php foreach ( $jtzl_swipecomic_images as $jtzl_swipecomic_image ) : ?>
+				<a href="<?php echo esc_url( $jtzl_swipecomic_image['url'] ); ?>"
+					data-pswp-width="<?php echo esc_attr( $jtzl_swipecomic_image['width'] ); ?>"
+					data-pswp-height="<?php echo esc_attr( $jtzl_swipecomic_image['height'] ); ?>"
+					data-initial-zoom="<?php echo esc_attr( $jtzl_swipecomic_image['zoom'] ); ?>"
+					data-pan-direction="<?php echo esc_attr( $jtzl_swipecomic_image['pan'] ); ?>"
 					class="swipecomic-image-link">
-					<img src="<?php echo esc_url( $image['url'] ); ?>" 
-						alt="<?php echo esc_attr( $image['alt'] ); ?>"
+					<img src="<?php echo esc_url( $jtzl_swipecomic_image['url'] ); ?>" 
+						alt="<?php echo esc_attr( $jtzl_swipecomic_image['alt'] ); ?>"
 						class="swipecomic-image"
 						loading="lazy" />
 				</a>
@@ -79,16 +79,16 @@ $navigation      = TemplateFunctions::get_episode_navigation();
 	<div id="drag-hint" class="drag-hint">Drag sideways to read ↔︎</div>
 
 	<!-- Episode navigation -->
-	<?php if ( $navigation['prev'] || $navigation['next'] ) : ?>
+	<?php if ( $jtzl_swipecomic_navigation['prev'] || $jtzl_swipecomic_navigation['next'] ) : ?>
 		<nav class="swipecomic-navigation">
-			<?php if ( $navigation['prev'] ) : ?>
-				<a href="<?php echo esc_url( get_permalink( $navigation['prev'] ) ); ?>" class="prev-episode">
+			<?php if ( $jtzl_swipecomic_navigation['prev'] ) : ?>
+				<a href="<?php echo esc_url( get_permalink( $jtzl_swipecomic_navigation['prev'] ) ); ?>" class="prev-episode">
 					← Previous Episode
 				</a>
 			<?php endif; ?>
 			
-			<?php if ( $navigation['next'] ) : ?>
-				<a href="<?php echo esc_url( get_permalink( $navigation['next'] ) ); ?>" class="next-episode">
+			<?php if ( $jtzl_swipecomic_navigation['next'] ) : ?>
+				<a href="<?php echo esc_url( get_permalink( $jtzl_swipecomic_navigation['next'] ) ); ?>" class="next-episode">
 					Next Episode →
 				</a>
 			<?php endif; ?>
@@ -136,7 +136,7 @@ $navigation      = TemplateFunctions::get_episode_navigation();
 
 <?php
 
-if ( ! $is_block_theme ) {
+if ( ! $jtzl_swipecomic_is_block_theme ) {
 	get_footer();
 } else {
 	wp_footer();

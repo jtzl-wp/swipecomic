@@ -76,15 +76,37 @@
 }
 
 /* ============================================================================
+   UI Auto-Hide Behavior
+   ============================================================================ */
+
+/* Hide UI elements when not in ui-visible state */
+.pswp:not(.pswp--ui-visible) .pswp__top-bar,
+.pswp:not(.pswp--ui-visible) .pswp__button--arrow--prev,
+.pswp:not(.pswp--ui-visible) .pswp__button--arrow--next {
+	opacity: 0 !important;
+	pointer-events: none !important;
+	transition: opacity 0.3s ease !important;
+}
+
+/* Show UI elements when in ui-visible state */
+.pswp--ui-visible .pswp__top-bar,
+.pswp--ui-visible .pswp__button--arrow--prev,
+.pswp--ui-visible .pswp__button--arrow--next {
+	opacity: 1 !important;
+	pointer-events: auto !important;
+	transition: opacity 0.3s ease !important;
+}
+
+/* ============================================================================
    Mobile Controls Visibility (from PoC)
    ============================================================================ */
 
-/* Force controls to always show on touch devices */
+/* On touch devices, ensure controls are visible when UI is active */
 @media (hover: none) and (pointer: coarse) {
-	.pswp__ui,
-	.pswp__top-bar,
-	.pswp__button--arrow--prev,
-	.pswp__button--arrow--next {
+	.pswp--ui-visible .pswp__ui,
+	.pswp--ui-visible .pswp__top-bar,
+	.pswp--ui-visible .pswp__button--arrow--prev,
+	.pswp--ui-visible .pswp__button--arrow--next {
 		opacity: 1 !important;
 		visibility: visible !important;
 	}
@@ -278,6 +300,40 @@
 
 .swipecomic-episode-transition.visible {
 	opacity: 1;
+}
+
+/* ============================================================================
+   Counter Styling
+   ============================================================================ */
+
+/* Hide default PhotoSwipe counter */
+.pswp__counter {
+	display: none !important;
+}
+
+/* Style custom counter in top bar */
+.pswp__custom-counter {
+	color: #fff;
+	font-size: 13px;
+	font-weight: 400;
+	padding: 0 12px;
+	pointer-events: none;
+	user-select: none;
+	order: 7; /* Position after preloader but before zoom/close */
+	display: flex;
+	align-items: center;
+	height: 60px; /* Match top bar height */
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Ensure zoom and close buttons come after counter */
+.pswp__button--zoom {
+	order: 8 !important;
+}
+
+.pswp__button--close {
+	order: 9 !important;
 }
 
 /* ============================================================================

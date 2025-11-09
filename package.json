@@ -4,14 +4,16 @@
 	"description": "SwipeComic plugin assets - JavaScript build system for comic reader functionality",
 	"private": true,
 	"scripts": {
-		"build": "npm run build:js && npm run build:css && npm run build:admin && npm run verify:build",
+		"build": "npm run typecheck && npm run build:js && npm run build:css && npm run build:admin && npm run verify:build",
 		"build:js": "NODE_ENV=production node esbuild.config.js",
-		"build:css": "postcss src/styles/globals.css -o build/swipecomic.css && node scripts/hash-assets.js",
+		"build:css": "postcss src/styles/globals.css -o build/swipecomic.css && cp node_modules/photoswipe/dist/photoswipe.css build/photoswipe.css && node scripts/hash-assets.js",
 		"build:admin": "node scripts/hash-assets.js",
 		"build:prod": "npm run build",
 		"build:analyze": "NODE_ENV=production ANALYZE=true node esbuild.config.js && npm run verify:build",
 		"analyze:bundle": "node scripts/analyze-bundle.js",
 		"verify:build": "node scripts/verify-build.js",
+		"typecheck": "tsc --noEmit",
+		"typecheck:watch": "tsc --noEmit --watch",
 		"dev": "npm run dev:js & npm run dev:css",
 		"dev:js": "NODE_ENV=development node -e \"const { startDevWatch } = require('./esbuild.config.js'); startDevWatch();\"",
 		"dev:css": "node scripts/css-watch.js",
@@ -64,6 +66,7 @@
 	},
 	"lint-staged": {
 		"*.{js,ts,tsx}": [
+			"bash -c 'tsc --noEmit'",
 			"eslint --fix",
 			"prettier --write"
 		],

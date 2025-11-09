@@ -58,7 +58,7 @@ class Assets {
 			// Enqueue PhotoSwipe CSS.
 			wp_enqueue_style(
 				'photoswipe',
-				JTZL_SWIPECOMIC_URL . 'node_modules/photoswipe/dist/photoswipe.css',
+				JTZL_SWIPECOMIC_URL . 'build/photoswipe.css',
 				array( 'swipecomic-frontend' ),
 				'5.4.3'
 			);
@@ -292,6 +292,9 @@ class Assets {
 			}
 		}
 
+		// Get adjacent episode IDs for navigation.
+		$navigation = TemplateFunctions::get_episode_navigation( get_the_ID() );
+
 		// Return the data array to be merged with wp_localize_script.
 		return array(
 			'episodeId'        => get_the_ID(),
@@ -311,6 +314,10 @@ class Assets {
 				'pan'  => $global_pan,
 			),
 			'autoOpen'         => true, // Auto-open viewer on page load for comic reading experience.
+			'navigation'       => array(
+				'nextEpisodeId' => $navigation['next'],
+				'prevEpisodeId' => $navigation['prev'],
+			),
 		);
 	}
 
