@@ -9,6 +9,7 @@ import PhotoSwipe from 'photoswipe';
 // eslint-disable-next-line import/no-unresolved
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 
+import { LogoOverlayController, LogoConfig } from './logo-overlay-controller';
 import {
 	SettingsResolver,
 	ImageData,
@@ -21,6 +22,8 @@ export interface ViewerConfig {
 	episodeDefaults: DefaultSettings;
 	images: ImageData[];
 	isMobile: boolean;
+	seriesLogo?: LogoConfig;
+	seriesArchiveUrl?: string; // URL to series archive page
 }
 
 export interface EpisodeData {
@@ -33,6 +36,7 @@ export class PhotoSwipeViewer {
 	private lightbox: PhotoSwipeLightbox | null = null;
 	private settingsResolver: SettingsResolver;
 	private config: ViewerConfig;
+	private logoController: LogoOverlayController | null = null;
 
 	constructor(config: ViewerConfig) {
 		this.config = config;
@@ -40,6 +44,11 @@ export class PhotoSwipeViewer {
 			config.globalDefaults,
 			config.episodeDefaults
 		);
+
+		// Initialize logo controller if logo is configured
+		if (config.seriesLogo && config.seriesLogo.url) {
+			this.logoController = new LogoOverlayController(config.seriesLogo);
+		}
 	}
 
 	/**
@@ -126,6 +135,34 @@ export class PhotoSwipeViewer {
 		if (this.config.isMobile) {
 			this.enforceMobileControls();
 		}
+
+		// Render series logo when PhotoSwipe opens
+		if (this.logoController) {
+			this.lightbox.on('afterInit', () => {
+				this.renderSeriesLogo();
+			});
+
+			// Update logo size on viewport resize
+			this.lightbox.on('resize', () => {
+				this.updateLogoSize();
+			});
+
+			// Remove logo when PhotoSwipe closes
+			this.lightbox.on('destroy', () => {
+				if (this.logoController) {
+					this.logoController.remove();
+				}
+			});
+		}
+
+		// Hide page content when viewer opens, show when it closes
+		this.lightbox.on('afterInit', () => {
+			this.hidePageContent();
+		});
+
+		this.lightbox.on('destroy', () => {
+			this.showPageContent();
+		});
 
 		this.lightbox.init();
 
@@ -287,9 +324,77 @@ export class PhotoSwipeViewer {
 	}
 
 	/**
+	 * Render series logo overlay
+	 */
+	private renderSeriesLogo(): void {
+		if (!this.logoController || !this.lightbox?.pswp) return;
+
+		// Get PhotoSwipe container element
+		const pswpElement = this.lightbox.pswp.element;
+		if (!pswpElement) return;
+
+		// Get viewport size
+		const viewportSize = {
+			width: window.innerWidth,
+			height: window.innerHeight,
+		};
+
+		// Render logo
+		this.logoController.render(pswpElement, viewportSize);
+	}
+
+	/**
+	 * Update logo size on viewport resize
+	 */
+	private updateLogoSize(): void {
+		if (!this.logoController) return;
+
+		const viewportSize = {
+			width: window.innerWidth,
+			height: window.innerHeight,
+		};
+
+		this.logoController.updateSize(viewportSize);
+	}
+
+	/**
+	 * Hide page content when viewer opens
+	 */
+	private hidePageContent(): void {
+		const article = document.querySelector('.swipecomic-episode');
+		if (article) {
+			article.classList.add('swipecomic-viewer-open');
+			// eslint-disable-next-line no-console
+			console.log('SwipeComic: Page content hidden');
+		} else {
+			// eslint-disable-next-line no-console
+			console.warn('SwipeComic: Could not find .swipecomic-episode element');
+		}
+	}
+
+	/**
+	 * Show page content when viewer closes
+	 */
+	private showPageContent(): void {
+		const article = document.querySelector('.swipecomic-episode');
+		if (article) {
+			article.classList.remove('swipecomic-viewer-open');
+			// eslint-disable-next-line no-console
+			console.log('SwipeComic: Page content shown');
+		} else {
+			// eslint-disable-next-line no-console
+			console.warn('SwipeComic: Could not find .swipecomic-episode element');
+		}
+	}
+
+	/**
 	 * Destroy the lightbox instance
 	 */
 	destroy(): void {
+		if (this.logoController) {
+			this.logoController.remove();
+		}
+
 		if (this.lightbox) {
 			this.lightbox.destroy();
 			this.lightbox = null;
@@ -327,6 +432,16 @@ export function initFromDOM(): PhotoSwipeViewer | null {
 			episodeDefaults: data.episodeDefaults || { zoom: 'fit', pan: 'center' },
 			images: data.images,
 			isMobile: window.innerWidth < 768,
+			seriesArchiveUrl: data.seriesArchiveUrl || undefined,
+			seriesLogo:
+				data.seriesLogo && data.seriesLogo.url
+					? {
+							url: data.seriesLogo.url,
+							position: data.seriesLogo.position || 'upper-left',
+							alt: 'Series logo',
+							linkUrl: data.seriesArchiveUrl || undefined,
+						}
+					: undefined,
 		};
 
 		// Create and initialize viewer

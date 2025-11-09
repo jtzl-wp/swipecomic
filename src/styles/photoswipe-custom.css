@@ -40,7 +40,8 @@
    Hidden Gallery Anchors (from PoC)
    ============================================================================ */
 
-.pswp-gallery a {
+/* Only hide gallery anchors when viewer is open */
+.swipecomic-episode.swipecomic-viewer-open .pswp-gallery a {
 	display: none !important;
 }
 
@@ -87,6 +88,32 @@
 		opacity: 1 !important;
 		visibility: visible !important;
 	}
+}
+
+/* ============================================================================
+   Hide Page Content When Viewer is Open
+   ============================================================================ */
+
+/* Hide the page content when PhotoSwipe viewer is open */
+.swipecomic-episode.swipecomic-viewer-open
+	> *:not(#swipecomic-gallery):not(#drag-hint) {
+	display: none !important;
+}
+
+/* Ensure the gallery itself is also hidden (it contains the anchor links) */
+.swipecomic-episode.swipecomic-viewer-open #swipecomic-gallery {
+	display: none !important;
+}
+
+/* Hide the page content when PhotoSwipe viewer is open */
+.swipecomic-episode.swipecomic-viewer-open
+	> *:not(#swipecomic-gallery):not(#drag-hint) {
+	display: none !important;
+}
+
+/* Ensure the gallery itself is also hidden (it contains the anchor links) */
+.swipecomic-episode.swipecomic-viewer-open #swipecomic-gallery {
+	display: none !important;
 }
 
 /* ============================================================================

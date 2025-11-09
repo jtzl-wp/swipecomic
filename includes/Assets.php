@@ -278,29 +278,39 @@ class Assets {
 		// Prepare series logo data.
 		$series_logo_url      = false;
 		$series_logo_position = 'upper-left';
+		$series_archive_url   = false;
 		if ( $series_data && isset( $series_data['logo'] ) ) {
 			$series_logo_url      = $series_data['logo']['url'];
 			$series_logo_position = $series_data['logo']['position'];
 		}
 
+		// Get series archive URL if series exists.
+		if ( $series_id ) {
+			$series_archive_url = get_term_link( $series_id, 'swipecomic_series' );
+			if ( is_wp_error( $series_archive_url ) ) {
+				$series_archive_url = false;
+			}
+		}
+
 		// Return the data array to be merged with wp_localize_script.
 		return array(
-			'episodeId'       => get_the_ID(),
-			'seriesId'        => $series_id,
-			'images'          => $images,
-			'episodeDefaults' => array(
+			'episodeId'        => get_the_ID(),
+			'seriesId'         => $series_id,
+			'images'           => $images,
+			'episodeDefaults'  => array(
 				'zoom' => $episode_zoom,
 				'pan'  => $episode_pan,
 			),
-			'seriesLogo'      => array(
+			'seriesLogo'       => array(
 				'url'      => $series_logo_url,
 				'position' => $series_logo_position,
 			),
-			'globalDefaults'  => array(
+			'seriesArchiveUrl' => $series_archive_url,
+			'globalDefaults'   => array(
 				'zoom' => $global_zoom,
 				'pan'  => $global_pan,
 			),
-			'autoOpen'        => true, // Auto-open viewer on page load for comic reading experience.
+			'autoOpen'         => true, // Auto-open viewer on page load for comic reading experience.
 		);
 	}
 

@@ -15,6 +15,7 @@ export interface LogoConfig {
 	url: string;
 	position: LogoPosition;
 	alt?: string;
+	linkUrl?: string; // URL to navigate to when logo is clicked
 }
 
 export interface ViewportSize {
@@ -96,22 +97,43 @@ export class LogoOverlayController {
 		Object.assign(this.logoElement.style, {
 			position: 'absolute',
 			zIndex: '10',
-			pointerEvents: 'none', // Critical: don't block gestures
+			pointerEvents: this.config.linkUrl ? 'auto' : 'none', // Enable pointer events if clickable
 			maxWidth: `${size.maxWidth}px`,
 			maxHeight: `${size.maxHeight}px`,
+			cursor: this.config.linkUrl ? 'pointer' : 'default',
 			...positionStyles,
 		});
 
-		// Create image element
-		const img = document.createElement('img');
-		img.src = this.config.url;
-		img.alt = this.config.alt || 'Series logo';
-		img.style.width = '100%';
-		img.style.height = 'auto';
-		img.style.display = 'block';
-		img.style.pointerEvents = 'none'; // Ensure image also doesn't block
+		// Create image element (or link if linkUrl is provided)
+		if (this.config.linkUrl) {
+			// Create clickable link
+			const link = document.createElement('a');
+			link.href = this.config.linkUrl;
+			link.style.display = 'block';
+			link.style.textDecoration = 'none';
 
-		this.logoElement.appendChild(img);
+			const img = document.createElement('img');
+			img.src = this.config.url;
+			img.alt = this.config.alt || 'Series logo';
+			img.style.width = '100%';
+			img.style.height = 'auto';
+			img.style.display = 'block';
+
+			link.appendChild(img);
+			this.logoElement.appendChild(link);
+		} else {
+			// Create non-clickable image
+			const img = document.createElement('img');
+			img.src = this.config.url;
+			img.alt = this.config.alt || 'Series logo';
+			img.style.width = '100%';
+			img.style.height = 'auto';
+			img.style.display = 'block';
+			img.style.pointerEvents = 'none';
+
+			this.logoElement.appendChild(img);
+		}
+
 		container.appendChild(this.logoElement);
 	}
 
