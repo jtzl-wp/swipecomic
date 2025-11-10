@@ -189,6 +189,7 @@
 
 /* Mobile devices (< 768px) */
 @media (max-width: 767px) {
+	/* Drag hint positioning for mobile */
 	.drag-hint {
 		bottom: 80px;
 		bottom: max(80px, calc(env(safe-area-inset-bottom) + 60px));
@@ -197,6 +198,7 @@
 		background: rgba(0, 0, 0, 0.85);
 	}
 
+	/* Logo sizing for mobile */
 	.swipecomic-logo-overlay {
 		max-width: 20vw;
 		max-height: 8vh;
@@ -221,28 +223,129 @@
 	.swipecomic-logo-overlay.lower-right {
 		right: 10px;
 	}
+
+	/* Touch target sizes - minimum 44x44px for accessibility */
+	.pswp__button {
+		min-width: 44px !important;
+		min-height: 44px !important;
+		padding: 12px !important;
+	}
+
+	.pswp__button--arrow--prev,
+	.pswp__button--arrow--next {
+		width: 60px !important;
+		height: 60px !important;
+	}
+
+	/* Increase touch target for close button */
+	.pswp__button--close {
+		width: 50px !important;
+		height: 50px !important;
+	}
+
+	/* Increase touch target for zoom button */
+	.pswp__button--zoom {
+		width: 50px !important;
+		height: 50px !important;
+	}
+
+	/* Ensure controls are always visible on mobile (from PoC) */
+	.pswp--ui-visible .pswp__top-bar,
+	.pswp--ui-visible .pswp__button--arrow--prev,
+	.pswp--ui-visible .pswp__button--arrow--next {
+		opacity: 1 !important;
+		visibility: visible !important;
+	}
+
+	/* Increase spacing for mobile UI elements */
+	.pswp__top-bar {
+		padding: 8px !important;
+	}
+
+	/* Make counter more visible on mobile */
+	.pswp__custom-counter {
+		font-size: 14px !important;
+		padding: 0 16px !important;
+	}
 }
 
 /* Tablet devices (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
+	/* Logo sizing for tablets - balanced between mobile and desktop */
 	.swipecomic-logo-overlay {
 		max-width: 18vw;
 		max-height: 9vh;
 	}
 
+	/* Drag hint sizing for tablets */
 	.drag-hint {
 		font-size: 15px;
 		padding: 12px 18px;
+		bottom: 70px;
+		bottom: max(70px, calc(env(safe-area-inset-bottom) + 50px));
+	}
+
+	/* Touch targets for tablets - slightly smaller than mobile but still accessible */
+	.pswp__button {
+		min-width: 40px !important;
+		min-height: 40px !important;
+		padding: 10px !important;
+	}
+
+	.pswp__button--arrow--prev,
+	.pswp__button--arrow--next {
+		width: 50px !important;
+		height: 50px !important;
+	}
+
+	/* Balance touch and mouse support - show hover states but keep touch-friendly sizes */
+	.pswp__button:hover {
+		opacity: 0.9 !important;
+		transition: opacity 0.2s ease !important;
+	}
+
+	/* Adjust logo positioning for tablets */
+	.swipecomic-logo-overlay.upper-left,
+	.swipecomic-logo-overlay.upper-right {
+		top: 15px;
+	}
+
+	.swipecomic-logo-overlay.lower-left,
+	.swipecomic-logo-overlay.lower-right {
+		bottom: 15px;
+	}
+
+	.swipecomic-logo-overlay.upper-left,
+	.swipecomic-logo-overlay.lower-left {
+		left: 15px;
+	}
+
+	.swipecomic-logo-overlay.upper-right,
+	.swipecomic-logo-overlay.lower-right {
+		right: 15px;
+	}
+
+	/* Counter sizing for tablets */
+	.pswp__custom-counter {
+		font-size: 13px !important;
+		padding: 0 14px !important;
+	}
+
+	/* Top bar spacing for tablets */
+	.pswp__top-bar {
+		padding: 6px !important;
 	}
 }
 
 /* Desktop devices (> 1024px) */
 @media (min-width: 1025px) {
+	/* Logo sizing for desktop - optimal for larger screens */
 	.swipecomic-logo-overlay {
 		max-width: 15vw;
 		max-height: 10vh;
 	}
 
+	/* Logo positioning for desktop - more spacing from edges */
 	.swipecomic-logo-overlay.upper-left,
 	.swipecomic-logo-overlay.upper-right {
 		top: 30px;
@@ -261,6 +364,73 @@
 	.swipecomic-logo-overlay.upper-right,
 	.swipecomic-logo-overlay.lower-right {
 		right: 30px;
+	}
+
+	/* Hover states for UI elements on desktop */
+	.pswp__button:hover {
+		opacity: 1 !important;
+		background: rgba(255, 255, 255, 0.15) !important;
+		transition:
+			opacity 0.2s ease,
+			background 0.2s ease !important;
+	}
+
+	.pswp__button--arrow--prev:hover,
+	.pswp__button--arrow--next:hover {
+		background: rgba(255, 255, 255, 0.2) !important;
+	}
+
+	.pswp__button--close:hover {
+		background: rgba(255, 0, 0, 0.3) !important;
+	}
+
+	/* Desktop-specific button sizing - smaller, more refined */
+	.pswp__button {
+		min-width: 36px !important;
+		min-height: 36px !important;
+		padding: 8px !important;
+	}
+
+	.pswp__button--arrow--prev,
+	.pswp__button--arrow--next {
+		width: 44px !important;
+		height: 44px !important;
+	}
+
+	/* Drag hint positioning for desktop */
+	.drag-hint {
+		font-size: 15px;
+		padding: 12px 18px;
+		bottom: 60px;
+		bottom: max(60px, calc(env(safe-area-inset-bottom) + 40px));
+	}
+
+	/* Counter styling for desktop */
+	.pswp__custom-counter {
+		font-size: 13px !important;
+		padding: 0 12px !important;
+	}
+
+	/* Top bar spacing for desktop */
+	.pswp__top-bar {
+		padding: 4px !important;
+	}
+
+	/* Logo hover effect on desktop */
+	.swipecomic-logo-overlay:hover {
+		opacity: 1;
+		transition: opacity 0.2s ease;
+	}
+
+	/* Cursor pointer for interactive elements */
+	.pswp__button {
+		cursor: pointer !important;
+	}
+
+	/* Show focus indicators more prominently on desktop */
+	.pswp__button:focus-visible {
+		outline: 3px solid #667eea !important;
+		outline-offset: 3px !important;
 	}
 }
 

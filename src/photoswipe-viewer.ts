@@ -512,10 +512,54 @@ export class PhotoSwipeViewer {
 	}
 
 	/**
-	 * Enforce mobile-specific controls
+	 * Enforce mobile-specific controls (from PoC)
 	 */
 	private enforceMobileControls(): void {
 		if (!this.lightbox || !this.config.isMobile) return;
+
+		// On mobile, force controls to always be visible (from PoC)
+		this.lightbox.on('afterInit', () => {
+			if (!this.lightbox?.pswp) return;
+
+			const pswp = this.lightbox.pswp;
+
+			// Add ui-visible class immediately
+			pswp.element?.classList.add('pswp--ui-visible');
+
+			// Prevent controls from ever being hidden on mobile (from PoC)
+			const keepControlsVisible = () => {
+				if (!pswp.element?.classList.contains('pswp--ui-visible')) {
+					pswp.element?.classList.add('pswp--ui-visible');
+				}
+			};
+
+			// Also check on any UI update event (from PoC)
+			pswp.on('change', keepControlsVisible);
+
+			// Use MutationObserver to efficiently keep controls visible
+			const observer = new MutationObserver((mutationsList) => {
+				for (const mutation of mutationsList) {
+					if (
+						mutation.type === 'attributes' &&
+						mutation.attributeName === 'class'
+					) {
+						const target = mutation.target as HTMLElement;
+						if (!target.classList.contains('pswp--ui-visible')) {
+							target.classList.add('pswp--ui-visible');
+						}
+					}
+				}
+			});
+
+			if (pswp.element) {
+				observer.observe(pswp.element, { attributes: true });
+			}
+
+			// Clean up on destroy
+			pswp.on('destroy', () => {
+				observer.disconnect();
+			});
+		});
 
 		// Hide desktop-only controls on mobile
 		this.lightbox.on('uiRegister', () => {
@@ -696,10 +740,64 @@ export class PhotoSwipeViewer {
 	};
 
 	/**
+	 * Mouse wheel handler for desktop zoom (with Ctrl key)
+	 * @param e - Wheel event
+	 */
+	private wheelHandler = (e: WheelEvent): void => {
+		if (!this.lightbox?.pswp) return;
+
+		// Only enable on desktop (not mobile)
+		if (this.config.isMobile) return;
+
+		// Only zoom with Ctrl key pressed
+		if (!e.ctrlKey && !e.metaKey) return;
+
+		e.preventDefault();
+
+		const pswp = this.lightbox.pswp;
+		const slide = pswp.currSlide;
+
+		if (!slide) return;
+
+		// Get mouse position relative to the slide
+		const rect = pswp.element?.getBoundingClientRect();
+		if (!rect) return;
+
+		// Get current zoom level
+		const currentZoom = slide.currZoomLevel || 1;
+
+		// Calculate new zoom level based on wheel direction
+		const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1; // Zoom out if scrolling down, zoom in if scrolling up
+		const maxZoom =
+			typeof pswp.options.maxZoomLevel === 'number'
+				? pswp.options.maxZoomLevel
+				: 4;
+		const newZoom = Math.max(
+			slide.zoomLevels?.fit || 1,
+			Math.min(maxZoom, currentZoom + zoomDelta)
+		);
+
+		const mouseX = e.clientX - rect.left;
+		const mouseY = e.clientY - rect.top;
+
+		// Zoom to the mouse position
+		slide.zoomTo(
+			newZoom,
+			{ x: mouseX, y: mouseY },
+			300 // Animation duration in ms
+		);
+	};
+
+	/**
 	 * Set up custom keyboard handlers
 	 */
 	private setupCustomKeyboardHandlers(): void {
 		document.addEventListener('keydown', this.keyboardHandler);
+
+		// Add wheel handler for desktop zoom (Ctrl + wheel)
+		if (!this.config.isMobile) {
+			document.addEventListener('wheel', this.wheelHandler, { passive: false });
+		}
 	}
 
 	/**
@@ -707,6 +805,11 @@ export class PhotoSwipeViewer {
 	 */
 	private removeCustomKeyboardHandlers(): void {
 		document.removeEventListener('keydown', this.keyboardHandler);
+
+		// Remove wheel handler
+		if (!this.config.isMobile) {
+			document.removeEventListener('wheel', this.wheelHandler);
+		}
 	}
 
 	/**
@@ -1261,13 +1364,18 @@ export function initFromDOM(): PhotoSwipeViewer | null {
 			return null;
 		}
 
+		// Detect mobile/touch devices (from PoC)
+		const isMobile =
+			('ontouchstart' in window || navigator.maxTouchPoints > 0) &&
+			/Mobi/i.test(navigator.userAgent);
+
 		// Build viewer config
 		const config: ViewerConfig = {
 			gallerySelector: '#swipecomic-gallery',
 			globalDefaults: data.globalDefaults || { zoom: 'fit', pan: 'center' },
 			episodeDefaults: data.episodeDefaults || { zoom: 'fit', pan: 'center' },
 			images: data.images,
-			isMobile: window.innerWidth < 768,
+			isMobile,
 			seriesArchiveUrl: data.seriesArchiveUrl || undefined,
 			seriesLogo:
 				data.seriesLogo && data.seriesLogo.url
