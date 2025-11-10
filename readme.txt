@@ -1,14 +1,14 @@
 === SwipeComic ===
 Contributors: jtzl
-Tags: comic, webcomic, manga, reader, mobile
+Tags: comic, webcomic, manga, reader, mobile, photoswipe
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 1.0.0-alpha.9
+Stable tag: 1.0.0-beta.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A mobile-first comic reader for WordPress with intuitive episode management and clean URLs.
+A mobile-first comic reader for WordPress with PhotoSwipe integration, swipe navigation, and intuitive episode management.
 
 == Description ==
 
@@ -19,11 +19,27 @@ SwipeComic is a modern comic reader plugin for WordPress designed for webcomic c
 * Custom post type for comic episodes with classic editor support
 * A custom series taxonomy for organizing episodes
 * Clean, SEO-friendly URLs (e.g., /series-name/episode-name/)
+* PhotoSwipe 5 integration for immersive comic viewing
+* Touch-optimized swipe navigation with pinch-to-zoom
 * Drag-and-drop image gallery with reordering
 * Per-image zoom and pan settings with inheritance
 * Series cover images and logos with positioning
 * Episode ordering within series via drag-and-drop
+* Automatic episode navigation (previous/next)
+* Series archive pages with episode listings
 * Optimized image handling (preserves originals, generates only needed thumbnails)
+
+**Reader Features:**
+
+* PhotoSwipe 5 lightbox viewer with smooth transitions
+* Touch gestures: swipe left/right, pinch-to-zoom, drag-to-pan
+* Keyboard navigation: arrow keys, Escape, Home, End
+* Automatic episode transitions at boundaries
+* Drag hint for wide images (shows once per slide)
+* Series logo overlay with configurable positioning
+* Mobile-optimized controls and touch targets
+* Loading indicators and error handling
+* Responsive design for mobile, tablet, and desktop
 
 **Admin Features:**
 
@@ -57,8 +73,18 @@ SwipeComic is a modern comic reader plugin for WordPress designed for webcomic c
 
 * WordPress 6.8 or higher
 * PHP 8.1 or higher
+* Modern browser with ES6 module support
 * Composer (for development)
 * Node.js 20.x (for asset building)
+
+**Browser Support:**
+
+* Chrome 90+
+* Firefox 88+
+* Safari 14+
+* Edge 90+
+* iOS Safari 14+
+* Chrome Android 90+
 
 **Installation Steps:**
 
@@ -113,11 +139,23 @@ If your site uses object caching (like Redis, Memcached, or similar), WordPress 
 
 = Is this plugin mobile-friendly? =
 
-Yes! SwipeComic is built with a mobile-first approach. The current alpha release provides basic responsive display. Advanced mobile features like swipe navigation will be added in future releases.
+Yes! SwipeComic is built with a mobile-first approach and includes touch-optimized swipe navigation, pinch-to-zoom, and drag-to-pan gestures. The PhotoSwipe viewer is fully responsive and works seamlessly on mobile, tablet, and desktop devices.
 
 = Can I customize the frontend templates? =
 
 Yes! Copy the template files from the plugin's `templates/` directory to your theme's `swipecomic/` directory and customize as needed.
+
+= How do I navigate between episodes? =
+
+Episodes display previous/next navigation links automatically. In the PhotoSwipe viewer, you can also swipe through all images in an episode, and the plugin will automatically load the next episode when you reach the end.
+
+= What is the drag hint? =
+
+For wide images that extend beyond the viewport, a subtle drag hint appears to indicate you can pan horizontally. The hint shows once per slide and always appears on the first image.
+
+= Can I use keyboard shortcuts? =
+
+Yes! Use arrow keys to navigate between images, Escape to close the viewer, and Home/End to jump to the first/last image in the current episode.
 
 == Screenshots ==
 
@@ -129,6 +167,30 @@ Yes! Copy the template files from the plugin's `templates/` directory to your th
 6. Clean URL structure for episodes and series
 
 == Changelog ==
+
+= 1.0.0-beta.1 =
+
+This beta release adds the PhotoSwipe viewer integration and advanced reader features. The plugin now provides a complete comic reading experience with touch-optimized navigation.
+
+**New Features:**
+
+* PhotoSwipe 5.4.3 integration with TypeScript support
+* Touch-optimized swipe navigation (left/right)
+* Pinch-to-zoom and drag-to-pan gestures
+* Keyboard navigation (arrows, Escape, Home, End)
+* Automatic episode transitions at boundaries
+* AJAX-powered adjacent episode loading
+* Drag hint for wide images (shows once per slide)
+* Series logo overlay with configurable positioning
+* Episode navigation links (previous/next)
+* Series archive pages with episode listings
+* Episode and chapter number display
+* Mobile-optimized controls and touch targets
+* Loading indicators and progress display
+* Error handling with user-friendly messages
+* Responsive design for mobile, tablet, and desktop
+* CSS isolation to prevent theme conflicts
+* Tested with Twenty Twenty Five and GeneratePress themes
 
 = 1.0.0-alpha.1 =
 
@@ -153,27 +215,3 @@ This is the first alpha release of SwipeComic, focusing on core content manageme
 * Security measures (nonces, capability checks, sanitization)
 * Activation/deactivation hooks with proper cleanup
 * Data validation and error handling
-
-**Known Limitations:**
-
-* Basic frontend display only (no advanced viewer yet)
-* No swipe navigation (planned for Phase 2)
-* No episode navigation controls (planned for Phase 2)
-* No PhotoSwipe integration (planned for Phase 2)
-* Limited template customization options
-
-**Coming in Future Releases:**
-
-* Advanced image viewer with zoom/pan controls
-* Touch-optimized swipe navigation
-* Episode navigation (previous/next)
-* PhotoSwipe integration for lightbox viewing
-* Series archive pages with episode listings
-* Additional template tags and hooks
-* Performance optimizations
-* Accessibility improvements
-
-== Upgrade Notice ==
-
-= 1.0.0-alpha.1 =
-Initial alpha release. This is a development version for testing and feedback. Not recommended for production use yet.
