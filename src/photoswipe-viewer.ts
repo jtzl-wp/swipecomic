@@ -891,18 +891,23 @@ export class PhotoSwipeViewer {
 		// Detect swipe attempts at boundaries
 		// PhotoSwipe's gesture system prevents swiping beyond boundaries,
 		// but we can detect the attempt and trigger episode transitions
-		let swipeStartX = 0;
-		let swipeStartIndex = 0;
+		const swipeState = {
+			startX: 0,
+			startIndex: 0,
+			startPanX: 0,
+		};
 
 		pswp.on('pointerDown', (e) => {
 			if (this.isTransitioning) return;
 			const event = e.originalEvent as PointerEvent | TouchEvent;
 			if ('touches' in event && event.touches) {
-				swipeStartX = event.touches[0]?.clientX || 0;
+				swipeState.startX = event.touches[0]?.clientX || 0;
 			} else if ('clientX' in event) {
-				swipeStartX = event.clientX || 0;
+				swipeState.startX = event.clientX || 0;
 			}
-			swipeStartIndex = pswp.currIndex;
+			swipeState.startIndex = pswp.currIndex;
+			// Store the pan position at the start of the gesture
+			swipeState.startPanX = pswp.currSlide?.pan?.x || 0;
 		});
 
 		pswp.on('pointerUp', (e) => {
@@ -916,16 +921,41 @@ export class PhotoSwipeViewer {
 				swipeEndX = event.clientX || 0;
 			}
 
-			const swipeDelta = swipeStartX - swipeEndX;
+			const swipeDelta = swipeState.startX - swipeEndX;
 			const swipeThreshold = 50; // Minimum swipe distance in pixels
+
+			// Get current slide
+			const currSlide = pswp.currSlide;
+			if (!currSlide) return;
 
 			const currentIndex = pswp.currIndex;
 			const totalImages = pswp.getNumItems();
 
-			// Check if we're still on the same slide (swipe was blocked by boundary)
+			// Check if the pan position changed during the gesture
+			const swipeEndPanX = currSlide.pan?.x || 0;
+			const panChanged = Math.abs(swipeEndPanX - swipeState.startPanX) > 5; // 5px tolerance
+
+			// Check if image is at pan boundary (can't pan further in swipe direction)
+			const bounds = currSlide.bounds;
+			let atPanBoundary = false;
+			if (bounds) {
+				const panTolerance = 5; // pixels
+				if (swipeDelta > 0 && typeof bounds.max?.x === 'number') {
+					// Swiping left (next) - check if at right edge of pan
+					atPanBoundary = Math.abs(swipeEndPanX - bounds.max.x) < panTolerance;
+				} else if (swipeDelta < 0 && typeof bounds.min?.x === 'number') {
+					// Swiping right (prev) - check if at left edge of pan
+					atPanBoundary = Math.abs(swipeEndPanX - bounds.min.x) < panTolerance;
+				}
+			}
+
+			// Only trigger episode transitions if:
+			// 1. We're still on the same slide (swipe was blocked by boundary)
+			// 2. Either the pan didn't change (not zoomed/panning) OR we're at the pan boundary
 			if (
-				currentIndex === swipeStartIndex &&
-				Math.abs(swipeDelta) > swipeThreshold
+				currentIndex === swipeState.startIndex &&
+				Math.abs(swipeDelta) > swipeThreshold &&
+				(!panChanged || atPanBoundary)
 			) {
 				// Swipe left (next) at last image
 				if (
