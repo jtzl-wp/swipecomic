@@ -2,7 +2,7 @@
  * SwipeComic Frontend Styles
  * 
  * Main entry point for frontend styles.
- * Phase 2 includes PhotoSwipe viewer integration.
+ * Phase 2 includes PhotoSwipe viewer integration with CSS isolation.
  *
  * @package   JTZL_SwipeComic
  * @since     2.0.0
@@ -18,3 +18,75 @@
 
 /* Import layout styles */
 @import "./layouts/series-archive.css";
+
+/* ============================================================================
+   CSS Custom Properties (Scoped Variables)
+   ============================================================================ */
+
+/* 
+ * Scoped to .swipecomic-episode to prevent conflicts with theme variables
+ * This ensures our custom properties don't leak into the global scope
+ */
+.swipecomic-episode,
+.swipecomic-series-archive {
+	/* PhotoSwipe viewer colors */
+	--swipecomic-bg: rgba(0, 0, 0, 0.9);
+	--swipecomic-ui-color: #fff;
+	--swipecomic-ui-bg: rgba(0, 0, 0, 0.75);
+
+	/* Logo overlay */
+	--swipecomic-logo-padding: 20px;
+	--swipecomic-logo-opacity: 0.9;
+
+	/* Navigation colors */
+	--swipecomic-nav-bg: #667eea;
+	--swipecomic-nav-hover: #5568d3;
+	--swipecomic-nav-text: #fff;
+
+	/* Episode card colors */
+	--swipecomic-card-bg: #fff;
+	--swipecomic-card-border: #ddd;
+	--swipecomic-card-shadow: rgba(0, 0, 0, 0.1);
+
+	/* Text colors */
+	--swipecomic-text-primary: #333;
+	--swipecomic-text-secondary: #666;
+	--swipecomic-text-accent: #667eea;
+
+	/* Spacing */
+	--swipecomic-spacing-xs: 5px;
+	--swipecomic-spacing-sm: 10px;
+	--swipecomic-spacing-md: 20px;
+	--swipecomic-spacing-lg: 40px;
+	--swipecomic-spacing-xl: 60px;
+
+	/* Border radius */
+	--swipecomic-radius-sm: 4px;
+	--swipecomic-radius-md: 8px;
+	--swipecomic-radius-lg: 12px;
+
+	/* Transitions */
+	--swipecomic-transition-fast: 0.2s ease;
+	--swipecomic-transition-normal: 0.3s ease;
+	--swipecomic-transition-slow: 0.5s ease;
+
+	/* Typography */
+	--swipecomic-font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+		Cantarell, "Helvetica Neue", sans-serif;
+	--swipecomic-font-size-base: 16px;
+	--swipecomic-font-size-sm: 14px;
+	--swipecomic-font-size-lg: 18px;
+	--swipecomic-line-height-base: 1.5;
+	--swipecomic-line-height-tight: 1.2;
+
+	/* Z-index layers */
+	--swipecomic-z-base: 1;
+	--swipecomic-z-dropdown: 1000;
+	--swipecomic-z-sticky: 1020;
+	--swipecomic-z-fixed: 1030;
+	--swipecomic-z-modal-backdrop: 1040;
+	--swipecomic-z-modal: 1050;
+	--swipecomic-z-popover: 1060;
+	--swipecomic-z-tooltip: 1070;
+}

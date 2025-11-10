@@ -2,122 +2,255 @@
  * Episode Component Styles
  * 
  * Styles for individual episode display including container, header, images, and metadata.
+ * Uses high-specificity selectors and CSS isolation to prevent theme conflicts.
  *
  * @package   JTZL_SwipeComic
  * @since     2.0.0
  */
 
-/* Base container */
+/* ============================================================================
+   CSS Isolation - Reset Theme Styles
+   ============================================================================ */
+
+/* Scoped CSS Custom Properties for Episode Component */
+.swipecomic-episode {
+	/* Color variables */
+	--swipecomic-text-primary: #333;
+	--swipecomic-text-secondary: #666;
+	--swipecomic-text-accent: #667eea;
+	--swipecomic-border-color: #ddd;
+	--swipecomic-bg-color: #fff;
+
+	/* Spacing variables */
+	--swipecomic-spacing-xs: 5px;
+	--swipecomic-spacing-sm: 10px;
+	--swipecomic-spacing-md: 20px;
+	--swipecomic-spacing-lg: 40px;
+
+	/* Typography variables */
+	--swipecomic-font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+		Cantarell, "Helvetica Neue", sans-serif;
+	--swipecomic-font-size-base: 16px;
+	--swipecomic-line-height-base: 1.5;
+}
+
+/* Base container with CSS reset */
 .swipecomic-container {
-	width: 100%;
-	max-width: 100%;
-	margin: 0 auto;
+	width: 100% !important;
+	max-width: 100% !important;
+	margin: 0 auto !important;
+	box-sizing: border-box !important;
+}
+
+.swipecomic-container *,
+.swipecomic-container *::before,
+.swipecomic-container *::after {
+	box-sizing: border-box !important;
 }
 
 .swipecomic-app {
-	font-family:
-		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-		Cantarell, "Helvetica Neue", sans-serif;
+	font-family: var(--swipecomic-font-family) !important;
+	font-size: var(--swipecomic-font-size-base) !important;
+	line-height: var(--swipecomic-line-height-base) !important;
 }
 
-/* Episode Container */
+/* Episode Container with high specificity and comprehensive reset */
 .swipecomic-episode {
-	position: relative;
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 20px;
+	position: relative !important;
+	max-width: 1200px !important;
+	margin: 0 auto !important;
+	padding: 20px !important;
+	box-sizing: border-box !important;
+	font-family: var(--swipecomic-font-family) !important;
+	font-size: var(--swipecomic-font-size-base) !important;
+	line-height: var(--swipecomic-line-height-base) !important;
+	color: var(--swipecomic-text-primary) !important;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
 }
 
-/* Header */
-.swipecomic-header {
-	margin-bottom: 30px;
-	text-align: center;
+/* Reset common theme overrides */
+.swipecomic-episode * {
+	box-sizing: border-box !important;
 }
 
-.swipecomic-title {
-	font-size: 2em;
-	margin: 0 0 10px;
+.swipecomic-episode img {
+	max-width: 100% !important;
+	height: auto !important;
+	border: none !important;
+	box-shadow: none !important;
+	display: block !important;
+	border-radius: 0 !important;
+	object-fit: contain !important;
 }
 
-/* Episode/Chapter Number Display */
-.swipecomic-meta {
-	margin: 10px 0 20px;
-	font-size: 1.1em;
-	color: #666;
-	font-weight: 500;
+.swipecomic-episode a {
+	text-decoration: none !important;
+	color: inherit !important;
 }
 
-.swipecomic-episode-number,
-.swipecomic-chapter-number {
-	display: inline-block;
-	margin: 0 5px;
+.swipecomic-episode a:hover {
+	text-decoration: none !important;
 }
 
-/* Images Container */
-.swipecomic-images {
-	margin: 20px 0;
+/* Reset button styles that themes might override */
+.swipecomic-episode button {
+	font-family: inherit !important;
+	font-size: inherit !important;
+	line-height: inherit !important;
+	color: inherit !important;
+	background: none !important;
+	border: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	cursor: pointer !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
 }
 
-.swipecomic-images img {
-	display: block;
-	width: 100%;
-	height: auto;
-	margin-bottom: 10px;
+/* Reset form elements */
+.swipecomic-episode input,
+.swipecomic-episode select,
+.swipecomic-episode textarea {
+	font-family: inherit !important;
+	font-size: inherit !important;
+	line-height: inherit !important;
+	color: inherit !important;
+	margin: 0 !important;
 }
 
-.swipecomic-image-wrapper {
-	margin-bottom: 20px;
-	text-align: center;
+/* Reset lists */
+.swipecomic-episode ul,
+.swipecomic-episode ol {
+	list-style: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
 }
 
-.swipecomic-image {
-	max-width: 100%;
-	height: auto;
-	display: block;
-	margin: 0 auto;
+/* Reset headings */
+.swipecomic-episode h1,
+.swipecomic-episode h2,
+.swipecomic-episode h3,
+.swipecomic-episode h4,
+.swipecomic-episode h5,
+.swipecomic-episode h6 {
+	font-family: inherit !important;
+	line-height: 1.2 !important;
+	color: inherit !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: none !important;
+	background: none !important;
 }
 
-/* No Images Message */
-.swipecomic-no-images {
-	text-align: center;
-	padding: 40px 20px;
-	color: #666;
-	font-style: italic;
+/* Reset paragraphs */
+.swipecomic-episode p {
+	margin: 0 !important;
+	padding: 0 !important;
 }
 
-/* Footer */
-.swipecomic-footer {
-	margin-top: 40px;
-	padding-top: 20px;
-	border-top: 1px solid #ddd;
+/* Header with isolation */
+.swipecomic-episode .swipecomic-header {
+	margin-bottom: 30px !important;
+	text-align: center !important;
+	padding: 0 !important;
+}
+
+.swipecomic-episode .swipecomic-title {
+	font-size: 2em !important;
+	margin: 0 0 10px !important;
+	padding: 0 !important;
+	font-weight: 700 !important;
+	line-height: 1.2 !important;
+	color: inherit !important;
+}
+
+/* Episode/Chapter Number Display with isolation */
+.swipecomic-episode .swipecomic-meta {
+	margin: 10px 0 20px !important;
+	font-size: 1.1em !important;
+	color: #666 !important;
+	font-weight: 500 !important;
+	padding: 0 !important;
+}
+
+.swipecomic-episode .swipecomic-episode-number,
+.swipecomic-episode .swipecomic-chapter-number {
+	display: inline-block !important;
+	margin: 0 5px !important;
+}
+
+/* Images Container with isolation */
+.swipecomic-episode .swipecomic-images {
+	margin: 20px 0 !important;
+}
+
+.swipecomic-episode .swipecomic-images img {
+	display: block !important;
+	width: 100% !important;
+	height: auto !important;
+	margin-bottom: 10px !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+.swipecomic-episode .swipecomic-image-wrapper {
+	margin-bottom: 20px !important;
+	text-align: center !important;
+}
+
+.swipecomic-episode .swipecomic-image {
+	max-width: 100% !important;
+	height: auto !important;
+	display: block !important;
+	margin: 0 auto !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+/* No Images Message with isolation */
+.swipecomic-episode .swipecomic-no-images {
+	text-align: center !important;
+	padding: 40px 20px !important;
+	color: #666 !important;
+	font-style: italic !important;
+}
+
+/* Footer with isolation */
+.swipecomic-episode .swipecomic-footer {
+	margin-top: 40px !important;
+	padding-top: 20px !important;
+	border-top: 1px solid #ddd !important;
 }
 
 /* Mobile devices (< 768px) */
 @media (max-width: 767px) {
 	.swipecomic-episode {
-		padding: 10px;
+		padding: 10px !important;
 	}
 
-	.swipecomic-title {
-		font-size: 1.5em;
+	.swipecomic-episode .swipecomic-title {
+		font-size: 1.5em !important;
 	}
 
-	.swipecomic-meta {
-		font-size: 1em;
+	.swipecomic-episode .swipecomic-meta {
+		font-size: 1em !important;
 	}
 
-	.swipecomic-image-wrapper {
-		margin-bottom: 10px;
+	.swipecomic-episode .swipecomic-image-wrapper {
+		margin-bottom: 10px !important;
 	}
 }
 
 /* Tablet devices (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
 	.swipecomic-episode {
-		padding: 15px;
+		padding: 15px !important;
 	}
 
-	.swipecomic-title {
-		font-size: 1.8em;
+	.swipecomic-episode .swipecomic-title {
+		font-size: 1.8em !important;
 	}
 }

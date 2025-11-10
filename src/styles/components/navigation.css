@@ -2,76 +2,122 @@
  * Episode Navigation Component Styles
  * 
  * Styles for episode navigation controls (prev/next).
+ * Uses high-specificity selectors and CSS isolation to prevent theme conflicts.
  *
  * @package   JTZL_SwipeComic
  * @since     2.0.0
  */
 
-/* Episode Navigation */
-.swipecomic-navigation {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-top: 40px;
-	padding: 20px 0;
-	border-top: 1px solid #ddd;
-	gap: 20px;
+/* ============================================================================
+   CSS Isolation - Episode Navigation
+   ============================================================================ */
+
+/* Scoped CSS Custom Properties for Navigation */
+.swipecomic-episode .swipecomic-navigation {
+	/* Color variables */
+	--nav-bg-color: #667eea;
+	--nav-bg-hover: #5568d3;
+	--nav-text-color: #fff;
+	--nav-border-color: #ddd;
+
+	/* Spacing variables */
+	--nav-padding-vertical: 12px;
+	--nav-padding-horizontal: 24px;
+	--nav-gap: 20px;
+	--nav-border-radius: 8px;
+
+	/* Transition variables */
+	--nav-transition: 0.2s ease;
 }
 
-.swipecomic-navigation a {
-	display: inline-flex;
-	align-items: center;
-	padding: 12px 24px;
-	background: #667eea;
-	color: #fff;
-	text-decoration: none;
-	border-radius: 8px;
-	font-weight: 600;
+/* Episode Navigation with high specificity */
+.swipecomic-episode .swipecomic-navigation {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+	margin-top: 40px !important;
+	padding: 20px 0 !important;
+	border-top: 1px solid var(--nav-border-color) !important;
+	gap: var(--nav-gap) !important;
+	box-sizing: border-box !important;
+	flex-wrap: wrap !important;
+}
+
+.swipecomic-episode .swipecomic-navigation a {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: var(--nav-padding-vertical) var(--nav-padding-horizontal) !important;
+	background: var(--nav-bg-color) !important;
+	color: var(--nav-text-color) !important;
+	text-decoration: none !important;
+	border-radius: var(--nav-border-radius) !important;
+	font-weight: 600 !important;
 	transition:
-		background 0.2s ease,
-		transform 0.2s ease;
+		background var(--nav-transition),
+		transform var(--nav-transition),
+		box-shadow var(--nav-transition) !important;
+	border: none !important;
+	box-shadow: none !important;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+	font-size: 16px !important;
+	line-height: 1.5 !important;
+	cursor: pointer !important;
+	text-align: center !important;
+	white-space: nowrap !important;
+	user-select: none !important;
+	-webkit-user-select: none !important;
+	-moz-user-select: none !important;
+	-ms-user-select: none !important;
 }
 
-.swipecomic-navigation a:hover {
-	background: #5568d3;
-	transform: translateY(-2px);
+.swipecomic-episode .swipecomic-navigation a:hover {
+	background: #5568d3 !important;
+	transform: translateY(-2px) !important;
+	color: #fff !important;
 }
 
-.swipecomic-navigation a:active {
-	transform: translateY(0);
+.swipecomic-episode .swipecomic-navigation a:active {
+	transform: translateY(0) !important;
+}
+
+.swipecomic-episode .swipecomic-navigation a:focus-visible {
+	outline: 2px solid #667eea !important;
+	outline-offset: 2px !important;
 }
 
 /* Positioning handled by parent's justify-content: space-between */
 
 /* Mobile devices (< 768px) */
 @media (max-width: 767px) {
-	.swipecomic-navigation {
-		flex-direction: column;
-		gap: 15px;
+	.swipecomic-episode .swipecomic-navigation {
+		flex-direction: column !important;
+		gap: 15px !important;
 	}
 
-	.swipecomic-navigation a {
-		width: 100%;
-		justify-content: center;
-		padding: 14px 20px;
+	.swipecomic-episode .swipecomic-navigation a {
+		width: 100% !important;
+		justify-content: center !important;
+		padding: 14px 20px !important;
 	}
 
-	.swipecomic-navigation .prev-episode,
-	.swipecomic-navigation .next-episode {
-		margin: 0;
+	.swipecomic-episode .swipecomic-navigation .prev-episode,
+	.swipecomic-episode .swipecomic-navigation .next-episode {
+		margin: 0 !important;
 	}
 }
 
 /* Tablet devices (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
-	.swipecomic-navigation a {
-		padding: 12px 20px;
+	.swipecomic-episode .swipecomic-navigation a {
+		padding: 12px 20px !important;
 	}
 }
 
 /* Desktop devices (> 1024px) */
 @media (min-width: 1025px) {
-	.swipecomic-navigation a:hover {
-		box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+	.swipecomic-episode .swipecomic-navigation a:hover {
+		box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
 	}
 }

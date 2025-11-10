@@ -2,225 +2,340 @@
  * Series Archive Layout Styles
  * 
  * Styles for series archive page including header, episode grid, and cards.
+ * Uses high-specificity selectors and CSS isolation to prevent theme conflicts.
  *
  * @package   JTZL_SwipeComic
  * @since     2.0.0
  */
 
+/* ============================================================================
+   CSS Isolation - Series Archive
+   ============================================================================ */
+
+/* Scoped CSS Custom Properties for Series Archive */
 .swipecomic-series-archive {
-	width: 100%;
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 40px 20px;
+	/* Color variables */
+	--archive-bg-color: #fff;
+	--archive-card-bg: #fff;
+	--archive-card-border: #ddd;
+	--archive-card-shadow: rgba(0, 0, 0, 0.1);
+	--archive-text-primary: #333;
+	--archive-text-secondary: #666;
+	--archive-text-accent: #667eea;
+	--archive-hover-shadow: rgba(0, 0, 0, 0.15);
+
+	/* Spacing variables */
+	--archive-padding: 40px 20px;
+	--archive-gap: 30px;
+	--archive-card-padding: 20px;
+
+	/* Border radius */
+	--archive-radius: 12px;
+	--archive-radius-sm: 4px;
+
+	/* Transitions */
+	--archive-transition: 0.2s ease;
+
+	/* Grid */
+	--archive-grid-min-width: 280px;
 }
 
-/* Series Header */
-.series-header {
-	text-align: center;
-	margin-bottom: 50px;
+.swipecomic-series-archive {
+	width: 100% !important;
+	max-width: 1200px !important;
+	margin: 0 auto !important;
+	padding: var(--archive-padding) !important;
+	box-sizing: border-box !important;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+		Cantarell, "Helvetica Neue", sans-serif !important;
+	font-size: 16px !important;
+	line-height: 1.5 !important;
+	color: var(--archive-text-primary) !important;
 }
 
-.series-cover-wrapper {
-	margin-bottom: 20px;
+/* Reset common theme overrides */
+.swipecomic-series-archive * {
+	box-sizing: border-box !important;
 }
 
-.series-cover {
-	max-width: 600px;
-	width: 100%;
-	height: auto;
-	margin: 0 auto 30px;
-	border-radius: 12px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.swipecomic-series-archive img {
+	max-width: 100% !important;
+	height: auto !important;
+	border: none !important;
+	display: block !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
 }
 
-.series-title {
-	font-size: 2.5em;
-	margin: 0 0 20px;
-	font-weight: 800;
-	color: #333;
+.swipecomic-series-archive a {
+	text-decoration: none !important;
+	color: inherit !important;
 }
 
-.series-description {
-	font-size: 1.1em;
-	line-height: 1.6;
-	color: #666;
-	max-width: 800px;
-	margin: 0 auto;
+.swipecomic-series-archive a:hover {
+	text-decoration: none !important;
 }
 
-/* Episodes Grid */
-.series-episodes {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 30px;
-	margin-top: 40px;
+/* Reset headings */
+.swipecomic-series-archive h1,
+.swipecomic-series-archive h2,
+.swipecomic-series-archive h3,
+.swipecomic-series-archive h4,
+.swipecomic-series-archive h5,
+.swipecomic-series-archive h6 {
+	font-family: inherit !important;
+	line-height: 1.2 !important;
+	color: inherit !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: none !important;
+	background: none !important;
 }
 
-.series-episode-card {
-	background: #fff;
-	border: 1px solid #ddd;
-	border-radius: 12px;
-	overflow: hidden;
+/* Reset paragraphs */
+.swipecomic-series-archive p {
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Reset lists */
+.swipecomic-series-archive ul,
+.swipecomic-series-archive ol {
+	list-style: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+/* Reset buttons */
+.swipecomic-series-archive button {
+	font-family: inherit !important;
+	font-size: inherit !important;
+	line-height: inherit !important;
+	color: inherit !important;
+	background: none !important;
+	border: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	cursor: pointer !important;
+}
+
+/* Series Header with isolation */
+.swipecomic-series-archive .series-header {
+	text-align: center !important;
+	margin-bottom: 50px !important;
+	padding: 0 !important;
+}
+
+.swipecomic-series-archive .series-cover-wrapper {
+	margin-bottom: 20px !important;
+}
+
+.swipecomic-series-archive .series-cover {
+	max-width: 600px !important;
+	width: 100% !important;
+	height: auto !important;
+	margin: 0 auto 30px !important;
+	border-radius: 12px !important;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+	border: none !important;
+	display: block !important;
+}
+
+.swipecomic-series-archive .series-title {
+	font-size: 2.5em !important;
+	margin: 0 0 20px !important;
+	font-weight: 800 !important;
+	color: #333 !important;
+	padding: 0 !important;
+	line-height: 1.2 !important;
+}
+
+.swipecomic-series-archive .series-description {
+	font-size: 1.1em !important;
+	line-height: 1.6 !important;
+	color: #666 !important;
+	max-width: 800px !important;
+	margin: 0 auto !important;
+	padding: 0 !important;
+}
+
+/* Episodes Grid with isolation */
+.swipecomic-series-archive .series-episodes {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+	gap: 30px !important;
+	margin-top: 40px !important;
+}
+
+.swipecomic-series-archive .series-episode-card {
+	background: #fff !important;
+	border: 1px solid #ddd !important;
+	border-radius: 12px !important;
+	overflow: hidden !important;
 	transition:
 		transform 0.2s ease,
-		box-shadow 0.2s ease;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		box-shadow 0.2s ease !important;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
-.series-episode-card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+.swipecomic-series-archive .series-episode-card:hover {
+	transform: translateY(-4px) !important;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
 }
 
-.series-episode-card a,
-.episode-card-link {
-	display: block;
-	text-decoration: none;
-	color: inherit;
+.swipecomic-series-archive .series-episode-card a,
+.swipecomic-series-archive .episode-card-link {
+	display: block !important;
+	text-decoration: none !important;
+	color: inherit !important;
 }
 
-.episode-thumbnail-wrapper {
-	position: relative;
-	width: 100%;
-	padding-bottom: 150%; /* 2:3 aspect ratio for comic pages */
-	overflow: hidden;
-	background: #f5f5f5;
+.swipecomic-series-archive .episode-thumbnail-wrapper {
+	position: relative !important;
+	width: 100% !important;
+	padding-bottom: 150% !important; /* 2:3 aspect ratio for comic pages */
+	overflow: hidden !important;
+	background: #f5f5f5 !important;
 }
 
-.episode-thumbnail {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	display: block;
+.swipecomic-series-archive .episode-thumbnail {
+	position: absolute !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: cover !important;
+	display: block !important;
+	border: none !important;
 }
 
-.episode-info {
-	padding: 20px;
+.swipecomic-series-archive .episode-info {
+	padding: 20px !important;
 }
 
-.episode-title {
-	font-size: 1.3em;
-	margin: 0 0 10px;
-	font-weight: 700;
-	color: #333;
-	line-height: 1.3;
+.swipecomic-series-archive .episode-title {
+	font-size: 1.3em !important;
+	margin: 0 0 10px !important;
+	font-weight: 700 !important;
+	color: #333 !important;
+	line-height: 1.3 !important;
+	padding: 0 !important;
 }
 
-.episode-meta {
-	font-size: 0.95em;
-	color: #667eea;
-	font-weight: 600;
+.swipecomic-series-archive .episode-meta {
+	font-size: 0.95em !important;
+	color: #667eea !important;
+	font-weight: 600 !important;
 }
 
-.series-no-episodes {
-	text-align: center;
-	font-size: 1.2em;
-	color: #999;
-	padding: 40px 20px;
+.swipecomic-series-archive .series-no-episodes {
+	text-align: center !important;
+	font-size: 1.2em !important;
+	color: #999 !important;
+	padding: 40px 20px !important;
 }
 
-/* Pagination */
-.series-pagination {
-	margin-top: 40px;
-	text-align: center;
+/* Pagination with isolation */
+.swipecomic-series-archive .series-pagination {
+	margin-top: 40px !important;
+	text-align: center !important;
 }
 
-.series-pagination .page-numbers {
-	display: inline-flex;
-	list-style: none;
-	padding: 0;
-	margin: 0;
-	gap: 8px;
-	flex-wrap: wrap;
-	justify-content: center;
+.swipecomic-series-archive .series-pagination .page-numbers {
+	display: inline-flex !important;
+	list-style: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	gap: 8px !important;
+	flex-wrap: wrap !important;
+	justify-content: center !important;
 }
 
-.series-pagination .page-numbers li {
-	display: inline-block;
+.swipecomic-series-archive .series-pagination .page-numbers li {
+	display: inline-block !important;
 }
 
-.series-pagination .page-numbers a,
-.series-pagination .page-numbers span {
-	display: inline-block;
-	padding: 10px 16px;
-	background: #f5f5f5;
-	color: #333;
-	text-decoration: none;
-	border-radius: 4px;
+.swipecomic-series-archive .series-pagination .page-numbers a,
+.swipecomic-series-archive .series-pagination .page-numbers span {
+	display: inline-block !important;
+	padding: 10px 16px !important;
+	background: #f5f5f5 !important;
+	color: #333 !important;
+	text-decoration: none !important;
+	border-radius: 4px !important;
 	transition:
 		background 0.2s ease,
-		color 0.2s ease;
-	font-weight: 500;
+		color 0.2s ease !important;
+	font-weight: 500 !important;
+	border: none !important;
 }
 
-.series-pagination .page-numbers a:hover {
-	background: #0073aa;
-	color: #fff;
+.swipecomic-series-archive .series-pagination .page-numbers a:hover {
+	background: #0073aa !important;
+	color: #fff !important;
 }
 
-.series-pagination .page-numbers .current {
-	background: #0073aa;
-	color: #fff;
+.swipecomic-series-archive .series-pagination .page-numbers .current {
+	background: #0073aa !important;
+	color: #fff !important;
 }
 
-.series-pagination .page-numbers .dots {
-	background: transparent;
-	color: #999;
+.swipecomic-series-archive .series-pagination .page-numbers .dots {
+	background: transparent !important;
+	color: #999 !important;
 }
 
 /* Mobile devices (< 768px) */
 @media (max-width: 767px) {
 	.swipecomic-series-archive {
-		padding: 20px 10px;
+		padding: 20px 10px !important;
 	}
 
-	.series-title {
-		font-size: 1.8em;
+	.swipecomic-series-archive .series-title {
+		font-size: 1.8em !important;
 	}
 
-	.series-description {
-		font-size: 1em;
+	.swipecomic-series-archive .series-description {
+		font-size: 1em !important;
 	}
 
-	.series-episodes {
-		grid-template-columns: 1fr;
-		gap: 20px;
+	.swipecomic-series-archive .series-episodes {
+		grid-template-columns: 1fr !important;
+		gap: 20px !important;
 	}
 
-	.episode-info {
-		padding: 15px;
+	.swipecomic-series-archive .episode-info {
+		padding: 15px !important;
 	}
 
-	.episode-title {
-		font-size: 1.1em;
+	.swipecomic-series-archive .episode-title {
+		font-size: 1.1em !important;
 	}
 }
 
 /* Tablet devices (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
-	.series-title {
-		font-size: 2.2em;
+	.swipecomic-series-archive .series-title {
+		font-size: 2.2em !important;
 	}
 
-	.series-episodes {
-		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-		gap: 25px;
+	.swipecomic-series-archive .series-episodes {
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+		gap: 25px !important;
 	}
 }
 
 /* Desktop devices (> 1024px) */
 @media (min-width: 1025px) {
-	.series-episode-card:hover .episode-title {
-		color: #667eea;
+	.swipecomic-series-archive .series-episode-card:hover .episode-title {
+		color: #667eea !important;
 	}
 }
 
 /* Additional responsive breakpoint */
 @media (max-width: 480px) {
-	.series-episodes {
-		grid-template-columns: 1fr;
+	.swipecomic-series-archive .series-episodes {
+		grid-template-columns: 1fr !important;
 	}
 }
