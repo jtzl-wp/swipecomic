@@ -36,8 +36,9 @@
 	/* Transitions */
 	--archive-transition: 0.2s ease;
 
-	/* Grid */
-	--archive-grid-min-width: 280px;
+	/* Grid - dynamically set from PHP, fallback to 280px */
+	--thumbnail-size: 400px; /* Fallback if not set by PHP */
+	--archive-grid-min-width: min(280px, calc(var(--thumbnail-size) - 20px));
 }
 
 .swipecomic-series-archive {
@@ -163,7 +164,10 @@
 /* Episodes Grid with isolation */
 .swipecomic-series-archive .series-episodes {
 	display: grid !important;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+	grid-template-columns: repeat(
+		auto-fill,
+		minmax(var(--archive-grid-min-width), 1fr)
+	) !important;
 	gap: 30px !important;
 	margin-top: 40px !important;
 }
@@ -194,7 +198,7 @@
 .swipecomic-series-archive .episode-thumbnail-wrapper {
 	position: relative !important;
 	width: 100% !important;
-	padding-bottom: 150% !important; /* 2:3 aspect ratio for comic pages */
+	padding-bottom: 100% !important; /* 1:1 aspect ratio (square) */
 	overflow: hidden !important;
 	background: #f5f5f5 !important;
 }
@@ -338,4 +342,17 @@
 	.swipecomic-series-archive .series-episodes {
 		grid-template-columns: 1fr !important;
 	}
+}
+
+/* Force full width on archive pages when theme applies sidebar layout */
+.post-type-archive-swipecomic .site-content,
+.tax-swipecomic_series .site-content {
+	max-width: 100% !important;
+}
+
+.post-type-archive-swipecomic .swipecomic-series-archive,
+.tax-swipecomic_series .swipecomic-series-archive {
+	max-width: 1200px !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
 }

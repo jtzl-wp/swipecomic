@@ -104,6 +104,18 @@
 					$(e.currentTarget).closest('.swipecomic-image-item')
 				);
 			});
+
+			// Cover image set button
+			$('#swipecomic-set-cover-image').on('click', (e) => {
+				e.preventDefault();
+				this.openCoverImageUploader();
+			});
+
+			// Cover image remove button (using event delegation for dynamically added button)
+			$(document).on('click', '#swipecomic-remove-cover-image', (e) => {
+				e.preventDefault();
+				this.removeCoverImage();
+			});
 		},
 
 		/**
@@ -162,6 +174,148 @@
 
 			// Open the media frame
 			this.frame.open();
+		},
+
+		/**
+		 * Open WordPress media uploader for cover image
+		 */
+		openCoverImageUploader() {
+			// Create cover image frame if it doesn't exist
+			if (!this.coverFrame) {
+				this.coverFrame = wp.media({
+					title: 'Select Cover Image',
+					button: {
+						text: 'Set Cover Image',
+					},
+					multiple: false,
+					library: {
+						type: 'image',
+					},
+				});
+
+				// Handle image selection
+				this.coverFrame.on('select', () => {
+					const attachment = this.coverFrame
+						.state()
+						.get('selection')
+						.first()
+						.toJSON();
+					this.setCoverImage(attachment);
+				});
+			}
+
+			// Open the media frame
+			this.coverFrame.open();
+		},
+
+		/**
+		 * Set cover image
+		 *
+		 * @param {Object} attachment - WordPress media attachment object
+		 */
+		setCoverImage(attachment) {
+			const preview = $('#swipecomic-cover-image-preview');
+			const imageId = $('#swipecomic-cover-image-id');
+			const setButton = $('#swipecomic-set-cover-image');
+			const removeButton = $('#swipecomic-remove-cover-image');
+
+			// Update preview
+			const imgHtml = attachment.sizes?.medium
+				? `<img src="${attachment.sizes.medium.url}" id="swipecomic-cover-image-display" alt="${attachment.alt || ''}" />`
+				: `<img src="${attachment.url}" id="swipecomic-cover-image-display" alt="${attachment.alt || ''}" />`;
+
+			preview.html(imgHtml);
+
+			// Update hidden field
+			imageId.val(attachment.id);
+
+			// Update button text
+			setButton.text('Change Cover Image');
+
+			// Show remove button if it doesn't exist
+			if (removeButton.length === 0) {
+				setButton.after(
+					'<button type="button" class="button swipecomic-remove-cover-image" id="swipecomic-remove-cover-image">Remove Cover Image</button>'
+				);
+			} else {
+				removeButton.show();
+			}
+		},
+
+		/**
+		 * Remove cover image
+		 */
+		removeCoverImage() {
+			const confirmMessage = swipecomicAdmin.deleteOnRemove
+				? 'Are you sure you want to delete the cover image? This will permanently remove it from your Media Library and cannot be undone.'
+				: 'Remove the cover image from this episode? It will remain in your Media Library.';
+
+			// eslint-disable-next-line no-alert
+			if (!confirm(confirmMessage)) {
+				return;
+			}
+
+			const preview = $('#swipecomic-cover-image-preview');
+			const imageId = $('#swipecomic-cover-image-id');
+			const setButton = $('#swipecomic-set-cover-image');
+			const removeButton = $('#swipecomic-remove-cover-image');
+			const currentImageId = parseInt(imageId.val(), 10);
+
+			// Check if we should delete or just detach
+			if (swipecomicAdmin.deleteOnRemove && currentImageId) {
+				// Delete the image via AJAX
+				$.ajax({
+					url: swipecomicAdmin.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'swipecomic_delete_image',
+						nonce: swipecomicAdmin.nonce,
+						attachment_id: currentImageId,
+					},
+					success: (response) => {
+						if (response.success) {
+							this.clearCoverImageUI(preview, imageId, setButton, removeButton);
+						} else {
+							// eslint-disable-next-line no-alert
+							alert(
+								response.data.message ||
+									'Failed to delete cover image. Please try again.'
+							);
+						}
+					},
+					error: () => {
+						// eslint-disable-next-line no-alert
+						alert('Error deleting cover image. Please try again.');
+					},
+				});
+			} else {
+				// Just detach - remove from episode but keep in Media Library
+				this.clearCoverImageUI(preview, imageId, setButton, removeButton);
+			}
+		},
+
+		/**
+		 * Clear cover image UI elements
+		 *
+		 * @param {Object} preview      Preview element
+		 * @param {Object} imageId      Image ID input element
+		 * @param {Object} setButton    Set button element
+		 * @param {Object} removeButton Remove button element
+		 */
+		clearCoverImageUI(preview, imageId, setButton, removeButton) {
+			// Update preview to placeholder
+			preview.html(
+				'<div class="swipecomic-cover-placeholder"><span class="dashicons dashicons-format-image"></span><p>No cover image set</p></div>'
+			);
+
+			// Clear hidden field
+			imageId.val('');
+
+			// Update button text
+			setButton.text('Set Cover Image');
+
+			// Hide remove button
+			removeButton.hide();
 		},
 
 		/**

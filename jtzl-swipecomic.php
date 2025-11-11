@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SwipeComic
  * Description: A mobile-first comic reader for WordPress with swipe navigation and responsive design.
- * Version:     1.0.0-beta.1
+ * Version:     1.0.0-beta.2
  * Author:      JT G.
  * Text Domain: swipecomic
  * License:     GPLv2 or later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin version and paths.
-define( 'JTZL_SWIPECOMIC_VER', '1.0.0-beta.1' );
+define( 'JTZL_SWIPECOMIC_VER', '1.0.0-beta.2' );
 define( 'JTZL_SWIPECOMIC_URL', plugin_dir_url( __FILE__ ) );
 define( 'JTZL_SWIPECOMIC_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -106,6 +106,15 @@ class JTZL_SwipeComic {
 	private $template_functions;
 
 	/**
+	 * TemplateLoader instance.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var TemplateLoader
+	 */
+	private $template_loader;
+
+	/**
 	 * AjaxHandlers instance.
 	 *
 	 * @since 2.0.0
@@ -129,6 +138,7 @@ class JTZL_SwipeComic {
 		$this->meta_boxes         = new JTZL\SwipeComic\MetaBoxes();
 		$this->image_handler      = new JTZL\SwipeComic\ImageHandler();
 		$this->template_functions = new JTZL\SwipeComic\TemplateFunctions();
+		$this->template_loader    = new JTZL\SwipeComic\TemplateLoader();
 		$this->ajax_handlers      = new JTZL\SwipeComic\AjaxHandlers();
 
 		// Initialize components.
@@ -140,6 +150,7 @@ class JTZL_SwipeComic {
 		$this->meta_boxes->init();
 		$this->image_handler->init();
 		$this->template_functions->init();
+		$this->template_loader->init();
 		$this->ajax_handlers->init();
 	}
 

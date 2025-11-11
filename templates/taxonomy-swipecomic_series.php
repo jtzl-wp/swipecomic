@@ -67,7 +67,7 @@ $jtzl_swipecomic_episodes_query = new WP_Query(
 	<?php wp_body_open(); ?>
 <?php endif; ?>
 
-<div class="swipecomic-series-archive">
+<div class="swipecomic-series-archive" style="--thumbnail-size: <?php echo esc_attr( Settings::get_thumbnail_size() ); ?>px;">
 	
 	<header class="series-header">
 		<?php if ( $jtzl_swipecomic_series_data && ! empty( $jtzl_swipecomic_series_data['cover_image']['url'] ) ) : ?>

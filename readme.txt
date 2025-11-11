@@ -3,7 +3,7 @@ Contributors: jtzl
 Tags: comic, webcomic, manga, reader, mobile, photoswipe
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 1.0.0-beta.1
+Stable tag: 1.0.0-beta.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,6 +44,7 @@ SwipeComic is a modern comic reader plugin for WordPress designed for webcomic c
 **Admin Features:**
 
 * Intuitive episode editor with image gallery meta box
+* Episode cover image support for better thumbnails
 * Per-image settings modal for zoom/pan overrides
 * Episode settings with episode number and defaults
 * Series management with cover images and logos
@@ -60,6 +61,7 @@ SwipeComic is a modern comic reader plugin for WordPress designed for webcomic c
 **Image Handling:**
 
 * Upload multiple images per episode
+* Optional episode cover image for archive thumbnails
 * Drag-and-drop reordering
 * Per-image zoom settings (fit, vertical fill, or custom percentage)
 * Per-image pan settings (left, center, right, or custom coordinates)
@@ -120,6 +122,10 @@ Use the Series taxonomy to create and assign series. You can also drag-and-drop 
 = What are zoom and pan settings? =
 
 Zoom controls how images are sized (fit to screen, fill vertically, or custom percentage). Pan controls horizontal positioning (left, center, right, or custom). These can be set globally, per-episode, or per-image with inheritance.
+
+= Can I set a custom cover image for episodes? =
+
+Yes! Each episode has a "Cover Image" field in the sidebar (WordPress's featured image). This is used for thumbnails in series archives. If no cover image is set, the plugin automatically uses the first episode image as a fallback.
 
 = Can I add a logo to my series? =
 

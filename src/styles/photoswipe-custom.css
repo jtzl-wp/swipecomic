@@ -260,6 +260,21 @@
 }
 
 /* ============================================================================
+   Hide Tools Setting
+   ============================================================================ */
+
+/* Hide top bar tools when setting is disabled */
+.pswp--hide-tools .pswp__top-bar {
+	display: none !important;
+}
+
+/* Keep arrow buttons visible even when tools are hidden */
+.pswp--hide-tools .pswp__button--arrow--prev,
+.pswp--hide-tools .pswp__button--arrow--next {
+	display: block !important;
+}
+
+/* ============================================================================
    Mobile Controls Visibility (from PoC)
    ============================================================================ */
 

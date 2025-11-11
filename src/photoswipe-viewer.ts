@@ -38,6 +38,7 @@ export interface ViewerConfig {
 	ajaxUrl?: string;
 	nonce?: string;
 	episodeId?: number;
+	showLightboxTools?: boolean;
 }
 
 export class PhotoSwipeViewer {
@@ -208,6 +209,11 @@ export class PhotoSwipeViewer {
 			// Set up boundary navigation after PhotoSwipe is initialized
 			if (this.boundaryHandler) {
 				this.setupBoundaryNavigation();
+			}
+
+			// Apply tools visibility setting
+			if (this.config.showLightboxTools === false) {
+				this.hideTopBarTools();
 			}
 		});
 
@@ -1357,6 +1363,19 @@ export class PhotoSwipeViewer {
 	}
 
 	/**
+	 * Hide top bar tools (close, zoom, counter)
+	 * Called when showLightboxTools setting is false
+	 */
+	private hideTopBarTools(): void {
+		if (!this.lightbox?.pswp) return;
+
+		const pswp = this.lightbox.pswp;
+
+		// Add a class to hide the top bar tools
+		pswp.element?.classList.add('pswp--hide-tools');
+	}
+
+	/**
 	 * Destroy the lightbox instance
 	 */
 	destroy(): void {
@@ -1420,6 +1439,10 @@ export function initFromDOM(): PhotoSwipeViewer | null {
 			ajaxUrl: data.ajaxUrl || undefined,
 			nonce: data.nonce || undefined,
 			episodeId: data.episodeId || undefined,
+			showLightboxTools:
+				data.showLightboxTools !== undefined
+					? Boolean(data.showLightboxTools)
+					: true,
 		};
 
 		// Create and initialize viewer

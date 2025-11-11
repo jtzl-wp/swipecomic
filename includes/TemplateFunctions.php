@@ -278,7 +278,8 @@ class TemplateFunctions {
 	/**
 	 * Get swipecomic thumbnail URL.
 	 *
-	 * Returns the custom swipecomic-thumbnail size for archive pages.
+	 * Returns the episode cover image (featured image) if set, otherwise falls back
+	 * to the first episode image. Uses the custom swipecomic-thumbnail size for archive pages.
 	 *
 	 * @since 1.0.0
 	 *
@@ -290,6 +291,16 @@ class TemplateFunctions {
 			$post_id = get_the_ID();
 		}
 
+		// First, try to get the featured image (cover image).
+		$thumbnail_id = get_post_thumbnail_id( $post_id );
+		if ( $thumbnail_id ) {
+			$thumbnail = wp_get_attachment_image_src( $thumbnail_id, 'swipecomic-thumbnail' );
+			if ( $thumbnail ) {
+				return $thumbnail[0];
+			}
+		}
+
+		// Fallback to first episode image if no cover image is set.
 		$images = get_post_meta( $post_id, '_swipecomic_images', true );
 		if ( ! is_array( $images ) || empty( $images ) ) {
 			return false;

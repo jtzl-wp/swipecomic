@@ -22,6 +22,7 @@ class MetaBoxes {
 	 */
 	public function init() {
 		add_action( 'add_meta_boxes', array( $this, 'register_meta_boxes' ) );
+		add_action( 'save_post_swipecomic', array( $this, 'save_cover_image' ), 10, 2 );
 		add_action( 'save_post_swipecomic', array( $this, 'save_episode_images' ), 10, 2 );
 		add_action( 'save_post_swipecomic', array( $this, 'save_episode_settings' ), 10, 2 );
 
@@ -40,6 +41,15 @@ class MetaBoxes {
 	 */
 	public function register_meta_boxes() {
 		add_meta_box(
+			'swipecomic_cover_image',
+			__( 'Episode Cover Image', 'swipecomic' ),
+			array( $this, 'render_cover_image_meta_box' ),
+			'swipecomic',
+			'normal',
+			'high'
+		);
+
+		add_meta_box(
 			'swipecomic_images',
 			__( 'Episode Images', 'swipecomic' ),
 			array( $this, 'render_episode_images_meta_box' ),
@@ -56,6 +66,53 @@ class MetaBoxes {
 			'normal',
 			'high'
 		);
+
+		// Remove the default featured image meta box from sidebar.
+		remove_meta_box( 'postimagediv', 'swipecomic', 'side' );
+	}
+
+	/**
+	 * Render cover image meta box.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \WP_Post $post Current post object.
+	 */
+	public function render_cover_image_meta_box( $post ) {
+		$thumbnail_id = get_post_thumbnail_id( $post->ID );
+		?>
+		<div class="swipecomic-cover-image-container">
+			<p class="description">
+				<?php esc_html_e( 'Set a cover image for this episode. This will be used as the thumbnail in series archives. If not set, the first episode image will be used automatically.', 'swipecomic' ); ?>
+			</p>
+			
+			<div class="swipecomic-cover-image-wrapper">
+				<div id="swipecomic-cover-image-preview" class="swipecomic-cover-preview">
+					<?php if ( $thumbnail_id ) : ?>
+						<?php echo wp_get_attachment_image( $thumbnail_id, 'medium', false, array( 'id' => 'swipecomic-cover-image-display' ) ); ?>
+					<?php else : ?>
+						<div class="swipecomic-cover-placeholder">
+							<span class="dashicons dashicons-format-image"></span>
+							<p><?php esc_html_e( 'No cover image set', 'swipecomic' ); ?></p>
+						</div>
+					<?php endif; ?>
+				</div>
+				
+				<div class="swipecomic-cover-actions">
+					<button type="button" class="button button-primary swipecomic-set-cover-image" id="swipecomic-set-cover-image">
+						<?php echo $thumbnail_id ? esc_html__( 'Change Cover Image', 'swipecomic' ) : esc_html__( 'Set Cover Image', 'swipecomic' ); ?>
+					</button>
+					<?php if ( $thumbnail_id ) : ?>
+						<button type="button" class="button swipecomic-remove-cover-image" id="swipecomic-remove-cover-image" title="<?php echo esc_attr( Settings::delete_on_remove() ? __( 'Delete Cover Image', 'swipecomic' ) : __( 'Remove Cover Image', 'swipecomic' ) ); ?>">
+							<?php echo Settings::delete_on_remove() ? esc_html__( 'Delete Cover Image', 'swipecomic' ) : esc_html__( 'Remove Cover Image', 'swipecomic' ); ?>
+						</button>
+					<?php endif; ?>
+				</div>
+			</div>
+			
+			<input type="hidden" id="swipecomic-cover-image-id" name="swipecomic_cover_image_id" value="<?php echo esc_attr( $thumbnail_id ); ?>" />
+		</div>
+		<?php
 	}
 
 	/**
@@ -136,6 +193,47 @@ class MetaBoxes {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Save cover image data.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public function save_cover_image( $post_id ) {
+		// Check autosave.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Check permissions.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		// Don't save for revisions.
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		// Save cover image.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified by WordPress core for post saves.
+		if ( isset( $_POST['swipecomic_cover_image_id'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified by WordPress core for post saves.
+			$thumbnail_id = absint( $_POST['swipecomic_cover_image_id'] );
+
+			if ( $thumbnail_id > 0 ) {
+				// Verify it's a valid image attachment.
+				if ( wp_attachment_is_image( $thumbnail_id ) ) {
+					set_post_thumbnail( $post_id, $thumbnail_id );
+				}
+			} else {
+				// Remove the thumbnail if ID is 0.
+				delete_post_thumbnail( $post_id );
+			}
+		}
 	}
 
 	/**

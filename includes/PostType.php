@@ -84,7 +84,7 @@ class PostType {
 			'hierarchical'       => false,
 			'menu_position'      => 5,
 			'menu_icon'          => 'dashicons-images-alt2',
-			'supports'           => array( 'title' ), // No 'editor' - images are the content.
+			'supports'           => array( 'title', 'thumbnail' ), // Support cover image for episodes.
 			'show_in_rest'       => false, // Disable block editor, use classic editor.
 		);
 

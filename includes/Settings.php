@@ -64,6 +64,14 @@ class Settings {
 	const DEFAULT_EPISODES_PER_PAGE = 12;
 
 	/**
+	 * Default visibility for lightbox tools.
+	 *
+	 * @since 2.0.0
+	 * @var bool
+	 */
+	const DEFAULT_SHOW_LIGHTBOX_TOOLS = true;
+
+	/**
 	 * Initialize settings.
 	 *
 	 * @since 1.0.0
@@ -189,6 +197,25 @@ class Settings {
 			'swipecomic_episodes_per_page',
 			__( 'Episodes Per Page', 'swipecomic' ),
 			array( $this, 'render_episodes_per_page_field' ),
+			self::PAGE_SLUG,
+			'swipecomic_default_settings'
+		);
+
+		// Show lightbox tools setting.
+		register_setting(
+			self::OPTION_GROUP,
+			'swipecomic_show_lightbox_tools',
+			array(
+				'type'              => 'boolean',
+				'default'           => self::DEFAULT_SHOW_LIGHTBOX_TOOLS,
+				'sanitize_callback' => array( $this, 'sanitize_show_lightbox_tools' ),
+			)
+		);
+
+		add_settings_field(
+			'swipecomic_show_lightbox_tools',
+			__( 'Show Lightbox Tools', 'swipecomic' ),
+			array( $this, 'render_show_lightbox_tools_field' ),
 			self::PAGE_SLUG,
 			'swipecomic_default_settings'
 		);
@@ -372,6 +399,24 @@ class Settings {
 		<span><?php esc_html_e( 'episodes', 'swipecomic' ); ?></span>
 		<p class="description">
 			<?php esc_html_e( 'Number of episodes to display per page on series archive pages (default: 12).', 'swipecomic' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render show lightbox tools field.
+	 *
+	 * @since 2.0.0
+	 */
+	public function render_show_lightbox_tools_field() {
+		$show_tools = get_option( 'swipecomic_show_lightbox_tools', self::DEFAULT_SHOW_LIGHTBOX_TOOLS );
+		?>
+		<label>
+			<input type="checkbox" name="swipecomic_show_lightbox_tools" id="swipecomic_show_lightbox_tools" value="1" <?php checked( $show_tools ); ?> />
+			<?php esc_html_e( 'Show tools in the top-right corner of the lightbox', 'swipecomic' ); ?>
+		</label>
+		<p class="description">
+			<?php esc_html_e( 'Controls visibility of the close button, zoom button, and counter in the lightbox viewer. When disabled, users can still close the viewer using the Escape key or by clicking outside the image.', 'swipecomic' ); ?>
 		</p>
 		<?php
 	}
@@ -663,6 +708,18 @@ class Settings {
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Sanitize show lightbox tools setting.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param mixed $value Input value.
+	 * @return bool Sanitized value.
+	 */
+	public function sanitize_show_lightbox_tools( $value ) {
+		return (bool) $value;
 	}
 
 	/**
@@ -975,5 +1032,16 @@ class Settings {
 	 */
 	public static function get_episodes_per_page() {
 		return (int) get_option( 'swipecomic_episodes_per_page', self::DEFAULT_EPISODES_PER_PAGE );
+	}
+
+	/**
+	 * Check if lightbox tools should be shown.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return bool True if tools should be shown.
+	 */
+	public static function show_lightbox_tools() {
+		return (bool) get_option( 'swipecomic_show_lightbox_tools', self::DEFAULT_SHOW_LIGHTBOX_TOOLS );
 	}
 }

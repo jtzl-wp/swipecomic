@@ -42,7 +42,7 @@ class Assets {
 	 */
 	public function enqueue_assets() {
 		// Enqueue frontend CSS on swipecomic posts and series archives.
-		if ( is_singular( 'swipecomic' ) || is_tax( 'swipecomic_series' ) ) {
+		if ( is_singular( 'swipecomic' ) || is_tax( 'swipecomic_series' ) || is_post_type_archive( 'swipecomic' ) ) {
 			$manifest = $this->get_manifest();
 			$css_file = $manifest['swipecomic.css'] ?? 'swipecomic.css';
 			wp_enqueue_style(
@@ -297,27 +297,28 @@ class Assets {
 
 		// Return the data array to be merged with wp_localize_script.
 		return array(
-			'episodeId'        => get_the_ID(),
-			'seriesId'         => $series_id,
-			'images'           => $images,
-			'episodeDefaults'  => array(
+			'episodeId'         => get_the_ID(),
+			'seriesId'          => $series_id,
+			'images'            => $images,
+			'episodeDefaults'   => array(
 				'zoom' => $episode_zoom,
 				'pan'  => $episode_pan,
 			),
-			'seriesLogo'       => array(
+			'seriesLogo'        => array(
 				'url'      => $series_logo_url,
 				'position' => $series_logo_position,
 			),
-			'seriesArchiveUrl' => $series_archive_url,
-			'globalDefaults'   => array(
+			'seriesArchiveUrl'  => $series_archive_url,
+			'globalDefaults'    => array(
 				'zoom' => $global_zoom,
 				'pan'  => $global_pan,
 			),
-			'autoOpen'         => true, // Auto-open viewer on page load for comic reading experience.
-			'navigation'       => array(
+			'autoOpen'          => true, // Auto-open viewer on page load for comic reading experience.
+			'navigation'        => array(
 				'nextEpisodeId' => $navigation['next'],
 				'prevEpisodeId' => $navigation['prev'],
 			),
+			'showLightboxTools' => Settings::show_lightbox_tools(),
 		);
 	}
 
