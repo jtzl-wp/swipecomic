@@ -3,7 +3,7 @@ Contributors: jtzl
 Tags: comic, webcomic, manga, reader, mobile, photoswipe
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 1.0.0-beta.2
+Stable tag: 1.0.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -174,50 +174,37 @@ Yes! Use arrow keys to navigate between images, Escape to close the viewer, and 
 
 == Changelog ==
 
-= 1.0.0-beta.1 =
+= 1.0.0 =
 
-This beta release adds the PhotoSwipe viewer integration and advanced reader features. The plugin now provides a complete comic reading experience with touch-optimized navigation.
+**Initial Release**
 
-**New Features:**
+SwipeComic 1.0.0 is a complete comic reader plugin for WordPress, providing everything you need to publish and manage webcomics with a modern, mobile-first reading experience.
 
-* PhotoSwipe 5.4.3 integration with TypeScript support
-* Touch-optimized swipe navigation (left/right)
-* Pinch-to-zoom and drag-to-pan gestures
-* Keyboard navigation (arrows, Escape, Home, End)
+**Features:**
+
+* Custom post type for comic episodes with classic editor support
+* Hierarchical series taxonomy for organizing episodes
+* Clean, SEO-friendly URL structure
+* PhotoSwipe 5.4.3 integration for immersive comic viewing
+* Touch-optimized swipe navigation with pinch-to-zoom
+* Keyboard navigation support (arrows, Escape, Home, End)
 * Automatic episode transitions at boundaries
 * AJAX-powered adjacent episode loading
-* Drag hint for wide images (shows once per slide)
+* Drag hint for wide images
 * Series logo overlay with configurable positioning
 * Episode navigation links (previous/next)
 * Series archive pages with episode listings
-* Episode and chapter number display
+* Drag-and-drop image gallery with reordering
+* Per-image zoom and pan settings with inheritance
+* Episode settings (episode number, defaults)
+* Series cover images and logos with positioning
+* Episode ordering within series via drag-and-drop
+* Plugin settings page with global defaults
+* Optimized image handling (preserves originals)
 * Mobile-optimized controls and touch targets
-* Loading indicators and progress display
-* Error handling with user-friendly messages
-* Responsive design for mobile, tablet, and desktop
+* Loading indicators and error handling
+* Responsive design for all devices
 * CSS isolation to prevent theme conflicts
 * Tested with Twenty Twenty Five and GeneratePress themes
-
-= 1.0.0-alpha.1 =
-
-**Initial Alpha Release**
-
-This is the first alpha release of SwipeComic, focusing on core content management features. The plugin is feature-complete for Phase 1 (admin functionality and basic display).
-
-**Implemented Features:**
-
-* Custom post type registration with classic editor support
-* Hierarchical series taxonomy
-* Clean URL rewriting with conflict prevention
-* Episode images meta box with drag-and-drop reordering
-* Per-image zoom and pan settings with modal interface
-* Episode settings meta box (episode number, defaults)
-* Series cover images and logos with positioning
-* Episode ordering within series
-* Plugin settings page with global defaults
-* Optimized image size handling
-* Basic frontend templates for episode display
-* Comprehensive admin JavaScript and CSS
 * Security measures (nonces, capability checks, sanitization)
-* Activation/deactivation hooks with proper cleanup
-* Data validation and error handling
+* Comprehensive data validation and error handling
