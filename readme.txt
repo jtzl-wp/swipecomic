@@ -2,7 +2,7 @@
 Contributors: jtzl
 Tags: comic, webcomic, manga, reader, mobile, photoswipe
 Requires at least: 6.8
-Tested up to: 6.8
+Tested up to: 6.9
 Stable tag: 1.0.1
 Requires PHP: 8.1
 License: GPLv2 or later
