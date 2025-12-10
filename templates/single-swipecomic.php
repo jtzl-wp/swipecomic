@@ -55,21 +55,10 @@ $jtzl_swipecomic_navigation      = TemplateFunctions::get_episode_navigation();
 	</header>
 
 	<?php if ( ! empty( $jtzl_swipecomic_images ) ) : ?>
-		<!-- PhotoSwipe gallery with thumbnail previews -->
+		<!-- PhotoSwipe gallery container (images loaded dynamically via JavaScript) -->
 		<div id="swipecomic-gallery" class="pswp-gallery swipecomic-images">
-			<?php foreach ( $jtzl_swipecomic_images as $jtzl_swipecomic_image ) : ?>
-				<a href="<?php echo esc_url( $jtzl_swipecomic_image['url'] ); ?>"
-					data-pswp-width="<?php echo esc_attr( $jtzl_swipecomic_image['width'] ); ?>"
-					data-pswp-height="<?php echo esc_attr( $jtzl_swipecomic_image['height'] ); ?>"
-					data-initial-zoom="<?php echo esc_attr( $jtzl_swipecomic_image['zoom'] ); ?>"
-					data-pan-direction="<?php echo esc_attr( $jtzl_swipecomic_image['pan'] ); ?>"
-					class="swipecomic-image-link">
-					<img src="<?php echo esc_url( $jtzl_swipecomic_image['url'] ); ?>" 
-						alt="<?php echo esc_attr( $jtzl_swipecomic_image['alt'] ); ?>"
-						class="swipecomic-image"
-						loading="lazy" />
-				</a>
-			<?php endforeach; ?>
+			<!-- Gallery will be populated by PhotoSwipe from JavaScript data -->
+			<!-- This prevents all images from loading on page load -->
 		</div>
 	<?php else : ?>
 		<p class="swipecomic-no-images"><?php esc_html_e( 'No images available for this episode.', 'swipecomic' ); ?></p>
@@ -109,23 +98,25 @@ $jtzl_swipecomic_navigation      = TemplateFunctions::get_episode_navigation();
 </article>
 
 <style>
-	/* Gallery layout */
+	/* Gallery container - minimal styling since images load dynamically */
 	.swipecomic-images {
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
 		margin: 20px 0;
+		min-height: 200px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #f5f5f5;
+		border-radius: 8px;
+		position: relative;
 	}
 	
-	.swipecomic-image-link {
-		display: block;
-		text-decoration: none;
-	}
-	
-	.swipecomic-image {
-		width: 100%;
-		height: auto;
-		display: block;
+	/* Loading state */
+	.swipecomic-images::before {
+		content: 'Click to view comic';
+		color: #666;
+		font-size: 1.2em;
+		padding: 40px;
+		text-align: center;
 	}
 	
 	/* Hide PhotoSwipe placeholder */

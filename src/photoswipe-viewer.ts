@@ -49,6 +49,8 @@ export class PhotoSwipeViewer {
 	private isTransitioning = false;
 	private uiHideTimeout: ReturnType<typeof setTimeout> | null = null;
 	private uiShowHandler: (() => void) | null = null;
+	private galleryClickHandler: (() => void) | null = null;
+	private galleryKeyHandler: ((e: KeyboardEvent) => void) | null = null;
 
 	constructor(config: ViewerConfig) {
 		this.config = config;
@@ -86,8 +88,13 @@ export class PhotoSwipeViewer {
 	 */
 	init(autoOpen = false): void {
 		this.lightbox = new PhotoSwipeLightbox({
-			gallery: this.config.gallerySelector,
-			children: 'a',
+			// Use dynamic content instead of DOM elements
+			dataSource: this.config.images.map((img) => ({
+				src: img.url,
+				width: img.width,
+				height: img.height,
+				alt: '',
+			})),
 			pswpModule: PhotoSwipe,
 
 			// Reading experience (from PoC)
@@ -119,8 +126,8 @@ export class PhotoSwipeViewer {
 			arrowKeys: true, // Left/right arrows navigate between images
 			escKey: true, // Escape key closes viewer
 
-			// Preloading (from PoC)
-			preload: [0, 1], // Only next slide preloads
+			// Preloading - preload 2 slides before and after current slide
+			preload: [2, 2], // Preload 2 before, 2 after for smoother navigation
 
 			// Loading indicators
 			preloaderDelay: 500, // Show loading spinner after 500ms delay
@@ -280,6 +287,42 @@ export class PhotoSwipeViewer {
 			});
 		});
 
+		// Add click handler to gallery container to open viewer
+		const galleryElement = document.querySelector(
+			this.config.gallerySelector
+		) as HTMLElement;
+		if (galleryElement) {
+			// Make gallery accessible for keyboard users
+			galleryElement.setAttribute('role', 'button');
+			galleryElement.setAttribute('tabindex', '0');
+			galleryElement.setAttribute(
+				'aria-label',
+				'Open comic viewer to read episode'
+			);
+
+			// Store handlers for cleanup
+			this.galleryClickHandler = () => {
+				if (this.lightbox && this.config.images.length > 0) {
+					this.lightbox.loadAndOpen(0);
+				}
+			};
+
+			this.galleryKeyHandler = (e: KeyboardEvent) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					if (this.lightbox && this.config.images.length > 0) {
+						this.lightbox.loadAndOpen(0);
+					}
+				}
+			};
+
+			galleryElement.addEventListener('click', this.galleryClickHandler);
+			galleryElement.addEventListener('keydown', this.galleryKeyHandler);
+
+			// Make it look clickable
+			galleryElement.style.cursor = 'pointer';
+		}
+
 		this.lightbox.init();
 
 		// Auto-open the viewer if requested
@@ -295,32 +338,32 @@ export class PhotoSwipeViewer {
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private getInitialZoomLevel(zoomLevelObject: any): number {
-		// Get the item data from PhotoSwipe
-		const item = zoomLevelObject.itemData;
+		// Get the current slide index
+		const slideIndex = zoomLevelObject.index;
 
-		if (!item || !item.element) {
+		if (slideIndex === undefined || !this.config.images[slideIndex]) {
 			return zoomLevelObject.fit; // Default to fit
 		}
 
-		// Read zoom setting from data attribute
-		const zoomAttr = item.element.getAttribute('data-initial-zoom');
+		// Get zoom setting from our config
+		const zoomSetting = this.config.images[slideIndex].zoom;
 
-		if (!zoomAttr) {
+		if (!zoomSetting) {
 			return zoomLevelObject.fit;
 		}
 
 		// Handle vFill - use PhotoSwipe's calculated vFill value
-		if (zoomAttr === 'vFill') {
+		if (zoomSetting === 'vFill') {
 			return zoomLevelObject.vFill;
 		}
 
 		// Handle fit
-		if (zoomAttr === 'fit') {
+		if (zoomSetting === 'fit') {
 			return zoomLevelObject.fit;
 		}
 
 		// Handle custom numeric zoom (e.g., "150" means 1.5x)
-		const customZoom = parseFloat(zoomAttr);
+		const customZoom = parseFloat(String(zoomSetting));
 		if (!isNaN(customZoom) && customZoom > 0) {
 			// Convert percentage to decimal (150 -> 1.5)
 			return customZoom / 100;
@@ -336,26 +379,28 @@ export class PhotoSwipeViewer {
 	 */
 	private applyPanToEdge(pswp: PhotoSwipe): void {
 		const slide = pswp.currSlide;
-		if (!slide || !slide.data || !slide.data.element) return;
+		if (!slide) return;
 
-		// Read pan direction from data attribute
-		const panAttr = slide.data.element.getAttribute('data-pan-direction');
+		// Get pan direction from our config
+		const slideIndex = pswp.currIndex;
+		if (slideIndex === undefined || !this.config.images[slideIndex]) return;
 
-		if (!panAttr) return;
+		const panSetting = this.config.images[slideIndex].pan;
+		if (!panSetting) return;
 
 		const bounds = slide.bounds;
 		if (!bounds || !bounds.min) return;
 
 		// Apply pan position based on direction
-		if (panAttr === 'left') {
+		if (panSetting === 'left') {
 			slide.pan.x = bounds.min.x;
-		} else if (panAttr === 'right') {
+		} else if (panSetting === 'right') {
 			slide.pan.x = bounds.max.x;
-		} else if (panAttr === 'center') {
+		} else if (panSetting === 'center') {
 			slide.pan.x = (bounds.min.x + bounds.max.x) / 2;
-		} else if (panAttr.includes(',')) {
+		} else if (panSetting.includes(',')) {
 			// Custom x,y coordinates (e.g., "100,200")
-			const [x, y] = panAttr.split(',').map((v) => parseFloat(v.trim()));
+			const [x, y] = panSetting.split(',').map((v) => parseFloat(v.trim()));
 			if (!isNaN(x) && !isNaN(y)) {
 				slide.pan.x = x;
 				slide.pan.y = y;
@@ -1318,37 +1363,20 @@ export class PhotoSwipeViewer {
 	}
 
 	/**
-	 * Update gallery DOM with new images
+	 * Update gallery data with new images
+	 * No DOM manipulation needed - PhotoSwipe uses dataSource directly
 	 * @param images - New images to display
 	 */
 	private updateGalleryDOM(images: ImageData[]): void {
-		const gallery = document.querySelector(this.config.gallerySelector);
-		if (!gallery) {
-			return;
+		// Update the lightbox dataSource with new images
+		if (this.lightbox) {
+			this.lightbox.options.dataSource = images.map((img) => ({
+				src: img.url,
+				width: img.width,
+				height: img.height,
+				alt: '',
+			}));
 		}
-
-		// Clear existing gallery items
-		gallery.innerHTML = '';
-
-		// Add new gallery items
-		images.forEach((image) => {
-			const link = document.createElement('a');
-			link.href = image.url;
-			link.setAttribute('data-pswp-width', image.width.toString());
-			link.setAttribute('data-pswp-height', image.height.toString());
-			link.setAttribute(
-				'data-initial-zoom',
-				image.zoom ? String(image.zoom) : 'fit'
-			);
-			link.setAttribute('data-pan-direction', image.pan || 'center');
-
-			const img = document.createElement('img');
-			img.src = image.url;
-			img.alt = '';
-
-			link.appendChild(img);
-			gallery.appendChild(link);
-		});
 	}
 
 	/**
@@ -1379,6 +1407,19 @@ export class PhotoSwipeViewer {
 	 * Destroy the lightbox instance
 	 */
 	destroy(): void {
+		// Clean up gallery event listeners to prevent memory leaks
+		const galleryElement = document.querySelector(
+			this.config.gallerySelector
+		) as HTMLElement;
+		if (galleryElement) {
+			if (this.galleryClickHandler) {
+				galleryElement.removeEventListener('click', this.galleryClickHandler);
+			}
+			if (this.galleryKeyHandler) {
+				galleryElement.removeEventListener('keydown', this.galleryKeyHandler);
+			}
+		}
+
 		if (this.logoController) {
 			this.logoController.remove();
 		}

@@ -3,7 +3,7 @@ Contributors: jtzl
 Tags: comic, webcomic, manga, reader, mobile, photoswipe
 Requires at least: 6.8
 Tested up to: 6.8
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -173,6 +173,10 @@ Yes! Use arrow keys to navigate between images, Escape to close the viewer, and 
 6. Clean URL structure for episodes and series
 
 == Changelog ==
+
+= 1.0.1 =
+
+Added image preloading in  the PhotoSwipe viewer for smoother transitions, while do not load all images at once.
 
 = 1.0.0 =
 
