@@ -264,11 +264,19 @@ export class PhotoSwipeViewer {
 
 			const pswp = this.lightbox.pswp;
 
+			// Add custom loading overlay for immediate feedback
+			this.addLoadingOverlay(pswp);
+
 			// Loading state feedback
 			pswp.on('contentLoad', ({ content }) => {
 				// Content started loading
 				// eslint-disable-next-line no-console
 				console.log(`Loading image ${content.index + 1}...`);
+
+				// Show loading overlay for current slide
+				if (content.index === pswp.currIndex) {
+					this.showLoadingOverlay(pswp);
+				}
 			});
 
 			pswp.on('loadComplete', ({ content, isError }) => {
@@ -276,13 +284,21 @@ export class PhotoSwipeViewer {
 					// Content failed to load
 					// eslint-disable-next-line no-console
 					console.error(`✗ Failed to load image ${content.index + 1}`);
-
-					// Show user-friendly error message
 					this.showImageLoadError(content.index + 1);
+
+					// Hide loading overlay only if the error is for the current slide
+					if (content.index === pswp.currIndex) {
+						this.hideLoadingOverlay(pswp);
+					}
 				} else {
 					// Content finished loading successfully
 					// eslint-disable-next-line no-console
 					console.log(`✓ Image ${content.index + 1} loaded`);
+
+					// Hide loading overlay for current slide
+					if (content.index === pswp.currIndex) {
+						this.hideLoadingOverlay(pswp);
+					}
 				}
 			});
 		});
@@ -1376,6 +1392,49 @@ export class PhotoSwipeViewer {
 				height: img.height,
 				alt: '',
 			}));
+		}
+	}
+
+	/**
+	 * Add custom loading overlay to PhotoSwipe container
+	 * @param pswp - PhotoSwipe instance
+	 */
+	private addLoadingOverlay(pswp: PhotoSwipe): void {
+		if (!pswp.element) return;
+
+		const overlay = document.createElement('div');
+		overlay.className = 'pswp__loading-overlay';
+
+		const spinner = document.createElement('div');
+		spinner.className = 'pswp__loading-spinner';
+		overlay.appendChild(spinner);
+
+		pswp.element.appendChild(overlay);
+	}
+
+	/**
+	 * Show loading overlay
+	 * @param pswp - PhotoSwipe instance
+	 */
+	private showLoadingOverlay(pswp: PhotoSwipe): void {
+		const overlay = pswp.element?.querySelector(
+			'.pswp__loading-overlay'
+		) as HTMLElement;
+		if (overlay) {
+			overlay.classList.remove('pswp__loading-overlay--hidden');
+		}
+	}
+
+	/**
+	 * Hide loading overlay
+	 * @param pswp - PhotoSwipe instance
+	 */
+	private hideLoadingOverlay(pswp: PhotoSwipe): void {
+		const overlay = pswp.element?.querySelector(
+			'.pswp__loading-overlay'
+		) as HTMLElement;
+		if (overlay) {
+			overlay.classList.add('pswp__loading-overlay--hidden');
 		}
 	}
 

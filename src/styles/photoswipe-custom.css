@@ -615,8 +615,8 @@
    Loading States
    ============================================================================ */
 
-/* Loading spinner container */
-.swipecomic-episode .pswp__preloader {
+/* Loading spinner container - apply to PhotoSwipe directly */
+.pswp__preloader {
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -629,15 +629,16 @@
 	opacity: 0;
 	transition: opacity 0.3s ease;
 	pointer-events: none;
+	z-index: 1000;
 }
 
 /* Show preloader when loading */
-.swipecomic-episode .pswp__preloader--active {
+.pswp__preloader--active {
 	opacity: 1;
 }
 
 /* Loading spinner animation */
-.swipecomic-episode .pswp__preloader__icn {
+.pswp__preloader__icn {
 	width: 40px;
 	height: 40px;
 	border: 3px solid rgba(255, 255, 255, 0.2);
@@ -656,16 +657,55 @@
 }
 
 /* Subtle preloading indicator for next image */
-.swipecomic-episode .pswp__preloader--preloading {
+.pswp__preloader--preloading {
 	opacity: 0.5;
 	width: 30px;
 	height: 30px;
 }
 
-.swipecomic-episode .pswp__preloader--preloading .pswp__preloader__icn {
+.pswp__preloader--preloading .pswp__preloader__icn {
 	width: 20px;
 	height: 20px;
 	border-width: 2px;
+}
+
+/* Custom loading overlay for immediate feedback */
+.pswp__loading-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.8);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 999;
+	opacity: 1;
+	transition: opacity 0.3s ease;
+}
+
+.pswp__loading-overlay--hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.pswp__loading-spinner {
+	width: 50px;
+	height: 50px;
+	border: 4px solid rgba(255, 255, 255, 0.2);
+	border-top-color: rgba(255, 255, 255, 0.9);
+	border-radius: 50%;
+	animation: pswp-loading-spin 1s linear infinite;
+}
+
+@keyframes pswp-loading-spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
 }
 
 /* ============================================================================
