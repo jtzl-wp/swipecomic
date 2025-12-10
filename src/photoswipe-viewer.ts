@@ -126,11 +126,11 @@ export class PhotoSwipeViewer {
 			arrowKeys: true, // Left/right arrows navigate between images
 			escKey: true, // Escape key closes viewer
 
-			// Preloading - preload 2 slides before and after current slide
-			preload: [2, 2], // Preload 2 before, 2 after for smoother navigation
+			// Preloading - load current image + 1 ahead for optimal performance
+			preload: [0, 1], // Load current image and preload 1 ahead (as per lazy loading spec)
 
 			// Loading indicators
-			preloaderDelay: 500, // Show loading spinner after 500ms delay
+			preloaderDelay: 100, // Show loading spinner after 100ms delay for immediate feedback
 
 			// Trap focus for accessibility
 			trapFocus: true,
