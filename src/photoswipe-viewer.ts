@@ -15,7 +15,6 @@ import {
 	EpisodeData,
 } from './episode-boundary-handler';
 import { LogoOverlayController, LogoConfig } from './logo-overlay-controller';
-import { showErrorNotification } from './notification-utils';
 import {
 	ImageData,
 	DefaultSettings,
@@ -211,7 +210,7 @@ export class PhotoSwipeViewer {
 			this.hidePageContent();
 			this.setupCustomKeyboardHandlers();
 			this.setupUIAutoHide();
-			this.setupPopStateHandler();
+			// Removed setupPopStateHandler() to prevent infinite reload issues
 
 			// Set up boundary navigation after PhotoSwipe is initialized
 			if (this.boundaryHandler) {
@@ -248,7 +247,7 @@ export class PhotoSwipeViewer {
 		this.lightbox.on('destroy', () => {
 			this.showPageContent();
 			this.removeCustomKeyboardHandlers();
-			this.removePopStateHandler();
+			// Removed removePopStateHandler() since we no longer set it up
 		});
 
 		// Handle episode boundary transitions
@@ -258,50 +257,7 @@ export class PhotoSwipeViewer {
 			});
 		}
 
-		// Set up loading state feedback after PhotoSwipe initializes
-		this.lightbox.on('afterInit', () => {
-			if (!this.lightbox?.pswp) return;
-
-			const pswp = this.lightbox.pswp;
-
-			// Add custom loading overlay for immediate feedback
-			this.addLoadingOverlay(pswp);
-
-			// Loading state feedback
-			pswp.on('contentLoad', ({ content }) => {
-				// Content started loading
-				// eslint-disable-next-line no-console
-				console.log(`Loading image ${content.index + 1}...`);
-
-				// Show loading overlay for current slide
-				if (content.index === pswp.currIndex) {
-					this.showLoadingOverlay(pswp);
-				}
-			});
-
-			pswp.on('loadComplete', ({ content, isError }) => {
-				if (isError) {
-					// Content failed to load
-					// eslint-disable-next-line no-console
-					console.error(`✗ Failed to load image ${content.index + 1}`);
-					this.showImageLoadError(content.index + 1);
-
-					// Hide loading overlay only if the error is for the current slide
-					if (content.index === pswp.currIndex) {
-						this.hideLoadingOverlay(pswp);
-					}
-				} else {
-					// Content finished loading successfully
-					// eslint-disable-next-line no-console
-					console.log(`✓ Image ${content.index + 1} loaded`);
-
-					// Hide loading overlay for current slide
-					if (content.index === pswp.currIndex) {
-						this.hideLoadingOverlay(pswp);
-					}
-				}
-			});
-		});
+		// PhotoSwipe has built-in preloader - no custom loading overlay needed
 
 		// Add click handler to gallery container to open viewer
 		const galleryElement = document.querySelector(
@@ -742,31 +698,9 @@ export class PhotoSwipeViewer {
 		});
 	}
 
-	/**
-	 * Handle browser back/forward navigation
-	 * When user clicks back/forward after episode transitions, reload the page
-	 */
-	private popStateHandler = (): void => {
-		// If PhotoSwipe is open and user navigates back/forward, reload the page
-		// This ensures the page content matches the URL
-		if (this.lightbox?.pswp) {
-			window.location.reload();
-		}
-	};
-
-	/**
-	 * Set up popstate handler for browser back/forward buttons
-	 */
-	private setupPopStateHandler(): void {
-		window.addEventListener('popstate', this.popStateHandler);
-	}
-
-	/**
-	 * Remove popstate handler
-	 */
-	private removePopStateHandler(): void {
-		window.removeEventListener('popstate', this.popStateHandler);
-	}
+	// Removed popstate handler methods to prevent infinite reload issues
+	// The popstate handler was causing reloads during episode transitions
+	// Modern web apps typically don't reload on back/forward in lightboxes
 
 	/**
 	 * Custom keyboard handler for Home/End keys and episode navigation
@@ -1395,59 +1329,7 @@ export class PhotoSwipeViewer {
 		}
 	}
 
-	/**
-	 * Add custom loading overlay to PhotoSwipe container
-	 * @param pswp - PhotoSwipe instance
-	 */
-	private addLoadingOverlay(pswp: PhotoSwipe): void {
-		if (!pswp.element) return;
-
-		const overlay = document.createElement('div');
-		overlay.className = 'pswp__loading-overlay';
-
-		const spinner = document.createElement('div');
-		spinner.className = 'pswp__loading-spinner';
-		overlay.appendChild(spinner);
-
-		pswp.element.appendChild(overlay);
-	}
-
-	/**
-	 * Show loading overlay
-	 * @param pswp - PhotoSwipe instance
-	 */
-	private showLoadingOverlay(pswp: PhotoSwipe): void {
-		const overlay = pswp.element?.querySelector(
-			'.pswp__loading-overlay'
-		) as HTMLElement;
-		if (overlay) {
-			overlay.classList.remove('pswp__loading-overlay--hidden');
-		}
-	}
-
-	/**
-	 * Hide loading overlay
-	 * @param pswp - PhotoSwipe instance
-	 */
-	private hideLoadingOverlay(pswp: PhotoSwipe): void {
-		const overlay = pswp.element?.querySelector(
-			'.pswp__loading-overlay'
-		) as HTMLElement;
-		if (overlay) {
-			overlay.classList.add('pswp__loading-overlay--hidden');
-		}
-	}
-
-	/**
-	 * Show error message for failed image load
-	 * @param imageNumber - The image number that failed to load
-	 */
-	private showImageLoadError(imageNumber: number): void {
-		showErrorNotification(
-			`Failed to load image ${imageNumber}. Please check your connection and try again.`,
-			5000
-		);
-	}
+	// Removed custom loading overlay methods - using PhotoSwipe's built-in preloader instead
 
 	/**
 	 * Hide top bar tools (close, zoom, counter)
