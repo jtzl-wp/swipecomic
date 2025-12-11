@@ -129,8 +129,8 @@ export class PhotoSwipeViewer {
 			// Preloading - load current image + 1 ahead for optimal performance
 			preload: [0, 1], // Load current image and preload 1 ahead (as per lazy loading spec)
 
-			// Loading indicators
-			preloaderDelay: 100, // Show loading spinner after 100ms delay for immediate feedback
+			// Loading indicators - show immediately for slow networks
+			preloaderDelay: 0, // Show loading spinner immediately for better UX on slow networks
 
 			// Trap focus for accessibility
 			trapFocus: true,
@@ -391,6 +391,105 @@ export class PhotoSwipeViewer {
 		if (!this.lightbox?.pswp) return;
 
 		const pswp = this.lightbox.pswp;
+
+		// Register preloader element to ensure it's visible
+		pswp.ui?.registerElement({
+			name: 'preloader',
+			order: 7,
+			isButton: false,
+			appendTo: 'root',
+			html: {
+				isCustomSVG: true,
+				inner:
+					'<div class="pswp__preloader__icn">' +
+					'<div class="pswp__preloader__cut">' +
+					'<div class="pswp__preloader__donut"></div>' +
+					'</div>' +
+					'</div>',
+				outlineID: 'pswp__icn-preloader',
+			},
+			onInit: (el: HTMLElement, pswpInstance: PhotoSwipe) => {
+				let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+				const showPreloader = () => {
+					if (hideTimeout) {
+						clearTimeout(hideTimeout);
+						hideTimeout = null;
+					}
+					el.classList.add('pswp__preloader--active');
+				};
+
+				const hidePreloader = () => {
+					// Add small delay to prevent flicker on fast loads
+					if (hideTimeout) {
+						clearTimeout(hideTimeout);
+					}
+					hideTimeout = setTimeout(() => {
+						el.classList.remove('pswp__preloader--active');
+					}, 50);
+				};
+
+				// Listen to content activation and loading state
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const onContentActivate = ({ content }: any) => {
+					// Show preloader if content is still loading
+					if (content?.isLoading && content.isLoading()) {
+						showPreloader();
+
+						// Listen for when this specific content finishes loading
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const onLoadComplete = (e: any) => {
+							if (e.content === content) {
+								hidePreloader();
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								pswpInstance.off('loadComplete' as any, onLoadComplete);
+							}
+						};
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						pswpInstance.on('loadComplete' as any, onLoadComplete);
+					} else {
+						// Content already loaded
+						hidePreloader();
+					}
+				};
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				pswpInstance.on('contentActivate' as any, onContentActivate);
+
+				// Check initial content loading state after PhotoSwipe initializes
+				const onAfterInit = () => {
+					// Check if the initial slide's content is still loading
+					const initialContent = pswpInstance.currSlide?.content;
+					if (initialContent?.isLoading && initialContent.isLoading()) {
+						showPreloader();
+						// Listen for when it finishes loading
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const onLoadComplete = (e: any) => {
+							if (e.content === initialContent) {
+								hidePreloader();
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								pswpInstance.off('loadComplete' as any, onLoadComplete);
+							}
+						};
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						pswpInstance.on('loadComplete' as any, onLoadComplete);
+					} else {
+						// Initial content already loaded
+						hidePreloader();
+					}
+				};
+				pswpInstance.on('afterInit', onAfterInit);
+
+				// Clean up timeout and event listeners on destroy
+				pswpInstance.on('destroy', () => {
+					if (hideTimeout) {
+						clearTimeout(hideTimeout);
+					}
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					pswpInstance.off('contentActivate' as any, onContentActivate);
+					pswpInstance.off('afterInit', onAfterInit);
+				});
+			},
+		});
 
 		// Add custom counter in top bar (before zoom button)
 		pswp.ui?.registerElement({
