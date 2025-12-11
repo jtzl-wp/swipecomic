@@ -106,10 +106,11 @@ export class PhotoSwipeViewer {
 			padding: { top: 20, bottom: 20, left: 0, right: 0 },
 			bgOpacity: 0.9,
 
-			// Disable accidental zooms (from PoC)
+			// Disable accidental zooms and closing (from PoC)
 			imageClickAction: false,
 			doubleTapAction: false,
 			tapAction: this.config.isMobile ? false : 'toggle-controls',
+			bgClickAction: false, // Prevent closing when clicking background overlay
 
 			// Touch gestures (built-in PhotoSwipe features)
 			// - Swipe left/right: Navigate between images (enabled by default)
@@ -820,6 +821,9 @@ export class PhotoSwipeViewer {
 		const article = document.querySelector('.swipecomic-episode');
 		if (article) {
 			article.classList.add('swipecomic-viewer-open');
+			// Also add class to body and html to ensure black background during transitions
+			document.body.classList.add('swipecomic-viewer-open');
+			document.documentElement.classList.add('swipecomic-viewer-open');
 			// eslint-disable-next-line no-console
 			console.log('SwipeComic: Page content hidden');
 		} else {
@@ -832,9 +836,19 @@ export class PhotoSwipeViewer {
 	 * Show page content when viewer closes
 	 */
 	private showPageContent(): void {
+		// Don't remove classes during episode transitions to prevent background flash
+		if (this.isTransitioning) {
+			// eslint-disable-next-line no-console
+			console.log('SwipeComic: Skipping page content show (transitioning)');
+			return;
+		}
+
 		const article = document.querySelector('.swipecomic-episode');
 		if (article) {
 			article.classList.remove('swipecomic-viewer-open');
+			// Also remove class from body and html
+			document.body.classList.remove('swipecomic-viewer-open');
+			document.documentElement.classList.remove('swipecomic-viewer-open');
 			// eslint-disable-next-line no-console
 			console.log('SwipeComic: Page content shown');
 		} else {
@@ -1291,6 +1305,17 @@ export class PhotoSwipeViewer {
 		const reload = () => {
 			// Update DOM with new images
 			this.updateGalleryDOM(images);
+
+			// Ensure body, html, and article classes remain during transition
+			// This prevents the background flash on mobile
+			// The isTransitioning flag prevents showPageContent from removing these,
+			// but we re-add them here as a safety measure for the reload
+			const article = document.querySelector('.swipecomic-episode');
+			if (article) {
+				article.classList.add('swipecomic-viewer-open');
+			}
+			document.body.classList.add('swipecomic-viewer-open');
+			document.documentElement.classList.add('swipecomic-viewer-open');
 
 			// Small delay to ensure PhotoSwipe is fully cleaned up
 			// This is necessary because PhotoSwipe needs time to remove event listeners
