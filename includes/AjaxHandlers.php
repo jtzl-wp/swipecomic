@@ -8,6 +8,10 @@
 
 namespace JTZL\SwipeComic;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Handles AJAX requests for frontend viewer.
  *

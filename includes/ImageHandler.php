@@ -8,6 +8,10 @@
 
 namespace JTZL\SwipeComic;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Handles custom image size registration and generation.
  *

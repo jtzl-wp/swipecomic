@@ -8,6 +8,10 @@
 
 namespace JTZL\SwipeComic;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Handles meta boxes for swipecomic post type.
  *

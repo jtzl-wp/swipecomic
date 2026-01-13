@@ -8,6 +8,10 @@
 
 namespace JTZL\SwipeComic;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Handles loading custom templates for SwipeComic post types and taxonomies.
  *

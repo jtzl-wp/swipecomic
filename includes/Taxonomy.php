@@ -8,6 +8,10 @@
 
 namespace JTZL\SwipeComic;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Handles swipecomic_series taxonomy registration and configuration.
  *
