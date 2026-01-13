@@ -180,7 +180,7 @@ class Rewrite {
 	 * WordPress's default pagination check happens before our custom posts_per_page
 	 * setting is applied, causing 404s on valid page numbers.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param \WP_Query $query The WP_Query instance.
 	 */
@@ -340,7 +340,7 @@ class Rewrite {
 	 * This runs early in the request process to prevent swipecomic URLs
 	 * from overriding WordPress posts and pages.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param array $query_vars Query variables.
 	 * @return array Modified query variables.

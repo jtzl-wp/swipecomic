@@ -58,7 +58,7 @@ class Settings {
 	/**
 	 * Default episodes per page for series archives.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 * @var int
 	 */
 	const DEFAULT_EPISODES_PER_PAGE = 12;
@@ -66,7 +66,7 @@ class Settings {
 	/**
 	 * Default visibility for lightbox tools.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 * @var bool
 	 */
 	const DEFAULT_SHOW_LIGHTBOX_TOOLS = true;
@@ -80,6 +80,7 @@ class Settings {
 		add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_init', array( $this, 'check_flush_rewrite_rules' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
 		// Hook into option updates to flush rewrite rules when URL structure changes.
 		add_action( 'update_option_swipecomic_use_url_prefix', array( $this, 'schedule_rewrite_flush' ), 10, 2 );
@@ -381,7 +382,7 @@ class Settings {
 	/**
 	 * Render episodes per page field.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 */
 	public function render_episodes_per_page_field() {
 		$per_page = get_option( 'swipecomic_episodes_per_page', self::DEFAULT_EPISODES_PER_PAGE );
@@ -406,7 +407,7 @@ class Settings {
 	/**
 	 * Render show lightbox tools field.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 */
 	public function render_show_lightbox_tools_field() {
 		$show_tools = get_option( 'swipecomic_show_lightbox_tools', self::DEFAULT_SHOW_LIGHTBOX_TOOLS );
@@ -679,7 +680,7 @@ class Settings {
 	/**
 	 * Sanitize episodes per page setting.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param mixed $value Input value.
 	 * @return int Sanitized value.
@@ -713,7 +714,7 @@ class Settings {
 	/**
 	 * Sanitize show lightbox tools setting.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param mixed $value Input value.
 	 * @return bool Sanitized value.
@@ -854,6 +855,7 @@ class Settings {
 		}
 
 		// Handle settings saved message.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only checking if settings were updated, no data processing.
 		if ( isset( $_GET['settings-updated'] ) ) {
 			add_settings_error(
 				'swipecomic_messages',
@@ -875,75 +877,37 @@ class Settings {
 				?>
 			</form>
 		</div>
-		<script>
-		(function() {
-			const usePrefixCheckbox = document.getElementById('swipecomic_use_url_prefix');
-			const prefixInput = document.getElementById('swipecomic_url_prefix');
-			const urlPreview = document.querySelector('.swipecomic-url-preview');
-
-			if (!usePrefixCheckbox || !prefixInput) return;
-
-			// Find the table row containing the prefix field
-			const prefixFieldRow = prefixInput.closest('tr');
-
-			if (!prefixFieldRow) return;
-
-			// Toggle prefix field row visibility
-			function togglePrefixField() {
-				if (usePrefixCheckbox.checked) {
-					prefixFieldRow.style.display = '';
-				} else {
-					prefixFieldRow.style.display = 'none';
-				}
-				updatePreview();
-			}
-
-			// Update URL preview
-			function updatePreview() {
-				if (!urlPreview) return;
-
-				const usePrefix = usePrefixCheckbox.checked;
-				const prefix = prefixInput.value || 'comic';
-				const homeUrl = '<?php echo esc_js( trailingslashit( home_url() ) ); ?>';
-
-				let seriesUrl, episodeUrl, orphanUrl;
-
-				if (usePrefix) {
-					seriesUrl = homeUrl + prefix + '/my-series/';
-					episodeUrl = homeUrl + prefix + '/my-series/episode-1/';
-					orphanUrl = homeUrl + prefix + '/episode-without-series/';
-				} else {
-					seriesUrl = homeUrl + 'my-series/';
-					episodeUrl = homeUrl + 'my-series/episode-1/';
-					orphanUrl = homeUrl + prefix + '/episode-without-series/';
-				}
-
-				const seriesLi = urlPreview.querySelector('li:nth-child(1) code');
-				const episodeLi = urlPreview.querySelector('li:nth-child(2) code');
-				const orphanLi = urlPreview.querySelector('li:nth-child(3) code');
-
-				if (seriesLi) seriesLi.textContent = seriesUrl;
-				if (episodeLi) episodeLi.textContent = episodeUrl;
-				if (orphanLi) orphanLi.textContent = orphanUrl;
-
-				// Update warning visibility
-				const warning = urlPreview.querySelector('p[style*="color"]');
-				if (warning) {
-					warning.style.display = usePrefix ? 'none' : '';
-				}
-			}
-
-			// Attach event listeners
-			usePrefixCheckbox.addEventListener('change', togglePrefixField);
-			if (prefixInput) {
-				prefixInput.addEventListener('input', updatePreview);
-			}
-
-			// Initial state
-			togglePrefixField();
-		})();
-		</script>
 		<?php
+	}
+
+	/**
+	 * Enqueue admin scripts for settings page.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
+	 */
+	public function enqueue_admin_scripts( $hook_suffix ) {
+		// Only enqueue on the SwipeComic settings page.
+		if ( 'swipecomic_page_' . self::PAGE_SLUG !== $hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'swipecomic-settings',
+			JTZL_SWIPECOMIC_URL . 'admin/js/swipecomic-settings.js',
+			array(),
+			JTZL_SWIPECOMIC_VER,
+			true
+		);
+
+		wp_localize_script(
+			'swipecomic-settings',
+			'swipecomicSettingsData',
+			array(
+				'homeUrl' => trailingslashit( home_url() ),
+			)
+		);
 	}
 
 	/**
@@ -1026,7 +990,7 @@ class Settings {
 	/**
 	 * Get episodes per page setting.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @return int Episodes per page.
 	 */
@@ -1037,7 +1001,7 @@ class Settings {
 	/**
 	 * Check if lightbox tools should be shown.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @return bool True if tools should be shown.
 	 */

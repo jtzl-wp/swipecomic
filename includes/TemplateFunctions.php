@@ -58,7 +58,7 @@ class TemplateFunctions {
 	 *
 	 * Checks for theme override first, then falls back to plugin template.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param string $template Path to the template file.
 	 * @return string Modified template path.
@@ -85,7 +85,7 @@ class TemplateFunctions {
 	 *
 	 * Returns previous and next episode IDs based on episode order.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param int|null $post_id Post ID. Defaults to current post.
 	 * @return array Array with 'prev' and 'next' episode IDs (or null if not found).
@@ -107,7 +107,7 @@ class TemplateFunctions {
 	/**
 	 * Find adjacent episode in series.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param int    $episode_id Current episode ID.
 	 * @param string $direction  Direction to search ('next' or 'prev').
@@ -160,7 +160,7 @@ class TemplateFunctions {
 	 *
 	 * Returns series metadata including title, description, and cover image.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param int|null $term_id Series term ID. Defaults to current post's first series.
 	 * @return array|false Series data array or false if not found.
@@ -523,7 +523,7 @@ class TemplateFunctions {
 	/**
 	 * Get episode number.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param int|null $post_id Post ID. Defaults to current post.
 	 * @return string|false Episode number or false if not set.
@@ -540,7 +540,7 @@ class TemplateFunctions {
 	/**
 	 * Get chapter number.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param int|null $post_id Post ID. Defaults to current post.
 	 * @return string|false Chapter number or false if not set.
@@ -557,7 +557,7 @@ class TemplateFunctions {
 	/**
 	 * Format episode and chapter numbers for display.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param int|null $post_id Post ID. Defaults to current post.
 	 * @return string Formatted episode/chapter string or empty string if neither is set.

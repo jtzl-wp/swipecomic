@@ -5,7 +5,7 @@
  * This script processes assets that are not bundled through esbuild.
  *
  * @package
- * @since   2.0.0
+ * @since   1.0.4
  */
 
 /* eslint-disable no-console */

@@ -6,7 +6,7 @@
  * Shows series with their cover images in a grid layout.
  *
  * @package   JTZL_SwipeComic
- * @since     2.0.0
+ * @since     1.0.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

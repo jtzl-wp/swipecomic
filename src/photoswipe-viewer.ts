@@ -897,7 +897,9 @@ export class PhotoSwipeViewer {
 
 		// Add wheel handler for desktop zoom (Ctrl + wheel)
 		if (!this.config.isMobile) {
-			document.addEventListener('wheel', this.wheelHandler, { passive: false });
+			document.addEventListener('wheel', this.wheelHandler, {
+				passive: false,
+			});
 		}
 	}
 
@@ -1527,8 +1529,14 @@ export function initFromDOM(): PhotoSwipeViewer | null {
 		// Build viewer config
 		const config: ViewerConfig = {
 			gallerySelector: '#swipecomic-gallery',
-			globalDefaults: data.globalDefaults || { zoom: 'fit', pan: 'center' },
-			episodeDefaults: data.episodeDefaults || { zoom: 'fit', pan: 'center' },
+			globalDefaults: data.globalDefaults || {
+				zoom: 'fit',
+				pan: 'center',
+			},
+			episodeDefaults: data.episodeDefaults || {
+				zoom: 'fit',
+				pan: 'center',
+			},
 			images: data.images,
 			isMobile,
 			seriesArchiveUrl: data.seriesArchiveUrl || undefined,

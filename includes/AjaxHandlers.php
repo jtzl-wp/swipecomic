@@ -3,7 +3,7 @@
  * AJAX Handlers class for SwipeComic plugin.
  *
  * @package   JTZL_SwipeComic
- * @since     2.0.0
+ * @since     1.0.4
  */
 
 namespace JTZL\SwipeComic;
@@ -11,14 +11,14 @@ namespace JTZL\SwipeComic;
 /**
  * Handles AJAX requests for frontend viewer.
  *
- * @since 2.0.0
+ * @since 1.0.4
  */
 class AjaxHandlers {
 
 	/**
 	 * Initialize AJAX handlers.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 */
 	public function init() {
 		add_action( 'wp_ajax_swipecomic_get_adjacent_episode', array( $this, 'get_adjacent_episode' ) );
@@ -30,7 +30,7 @@ class AjaxHandlers {
 	 *
 	 * Returns episode data for the next or previous episode in a series.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 */
 	public function get_adjacent_episode() {
 		// Verify nonce.
@@ -98,7 +98,7 @@ class AjaxHandlers {
 	/**
 	 * Find adjacent episode in series.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param int    $episode_id Current episode ID.
 	 * @param string $direction  Direction to search ('next' or 'prev').

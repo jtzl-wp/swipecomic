@@ -3,7 +3,7 @@
  * Template Loader class for SwipeComic plugin.
  *
  * @package   JTZL_SwipeComic
- * @since     2.0.0
+ * @since     1.0.4
  */
 
 namespace JTZL\SwipeComic;
@@ -11,14 +11,14 @@ namespace JTZL\SwipeComic;
 /**
  * Handles loading custom templates for SwipeComic post types and taxonomies.
  *
- * @since 2.0.0
+ * @since 1.0.4
  */
 class TemplateLoader {
 
 	/**
 	 * Initialize template loader.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 */
 	public function init() {
 		add_filter( 'template_include', array( $this, 'load_template' ) );
@@ -29,7 +29,7 @@ class TemplateLoader {
 	/**
 	 * Load custom template for SwipeComic archives and singles.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param string $template The path of the template to include.
 	 * @return string Template path.
@@ -67,7 +67,7 @@ class TemplateLoader {
 	 *
 	 * Looks in theme first, then plugin templates directory.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param string $template_name Template file name.
 	 * @return string|false Template path or false if not found.
@@ -91,7 +91,7 @@ class TemplateLoader {
 	/**
 	 * Force full-width layout for SwipeComic archives.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param string $layout Current layout.
 	 * @return string Modified layout.
@@ -106,7 +106,7 @@ class TemplateLoader {
 	/**
 	 * Add full-width body class for SwipeComic archives.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param array $classes Body classes.
 	 * @return array Modified classes.

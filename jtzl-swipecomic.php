@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SwipeComic
  * Description: A mobile-first comic reader for WordPress with swipe navigation and responsive design.
- * Version:     1.0.3
+ * Version:     1.0.4
  * Author:      JT G.
  * Text Domain: swipecomic
  * License:     GPLv2 or later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin version and paths.
-define( 'JTZL_SWIPECOMIC_VER', '1.0.3' );
+define( 'JTZL_SWIPECOMIC_VER', '1.0.4' );
 define( 'JTZL_SWIPECOMIC_URL', plugin_dir_url( __FILE__ ) );
 define( 'JTZL_SWIPECOMIC_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -108,7 +108,7 @@ class JTZL_SwipeComic {
 	/**
 	 * TemplateLoader instance.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @var TemplateLoader
 	 */
@@ -117,7 +117,7 @@ class JTZL_SwipeComic {
 	/**
 	 * AjaxHandlers instance.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @var AjaxHandlers
 	 */

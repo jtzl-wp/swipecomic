@@ -55,9 +55,9 @@ class Assets {
 
 		// Only enqueue PhotoSwipe assets on swipecomic posts.
 		if ( is_singular( 'swipecomic' ) ) {
-			// Enqueue PhotoSwipe CSS.
+			// Enqueue PhotoSwipe CSS (prefixed to avoid conflicts).
 			wp_enqueue_style(
-				'photoswipe',
+				'swipecomic-photoswipe',
 				JTZL_SWIPECOMIC_URL . 'build/photoswipe.css',
 				array( 'swipecomic-frontend' ),
 				'5.4.3'
@@ -259,7 +259,7 @@ class Assets {
 	/**
 	 * Inject viewer data securely using wp_add_inline_script.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 */
 	private function inject_viewer_data() {
 		if ( ! is_singular( 'swipecomic' ) ) {
@@ -325,7 +325,7 @@ class Assets {
 	/**
 	 * Add type="module" attribute to ES module scripts.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.4
 	 *
 	 * @param string $tag    The script tag.
 	 * @param string $handle The script handle.

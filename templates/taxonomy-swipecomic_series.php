@@ -6,7 +6,7 @@
  * Shows series metadata (title, description, cover) and episode list.
  *
  * @package   JTZL_SwipeComic
- * @since     2.0.0
+ * @since     1.0.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

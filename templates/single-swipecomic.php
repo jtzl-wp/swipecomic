@@ -6,7 +6,7 @@
  * Phase 2: Full-screen PhotoSwipe viewer with gesture navigation.
  *
  * @package   JTZL_SwipeComic
- * @since     2.0.0
+ * @since     1.0.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -93,37 +93,39 @@ $jtzl_swipecomic_navigation      = TemplateFunctions::get_episode_navigation();
 	<?php
 	// Prepare data for JavaScript - passed securely via wp_add_inline_script in Assets.php.
 	// This data will be available as window.swipecomicData.
+
+	// Add inline styles using wp_add_inline_style for proper enqueueing.
+	$jtzl_swipecomic_inline_styles = '
+		/* Gallery container - minimal styling since images load dynamically */
+		.swipecomic-images {
+			margin: 20px 0;
+			min-height: 200px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #f5f5f5;
+			border-radius: 8px;
+			position: relative;
+		}
+		
+		/* Loading state */
+		.swipecomic-images::before {
+			content: "' . esc_html__( 'Click to view comic', 'swipecomic' ) . '";
+			color: #666;
+			font-size: 1.2em;
+			padding: 40px;
+			text-align: center;
+		}
+		
+		/* Hide PhotoSwipe placeholder */
+		.pswp__img--placeholder {
+			display: none !important;
+		}
+	';
+	wp_add_inline_style( 'swipecomic-frontend', $jtzl_swipecomic_inline_styles );
 	?>
 
 </article>
-
-<style>
-	/* Gallery container - minimal styling since images load dynamically */
-	.swipecomic-images {
-		margin: 20px 0;
-		min-height: 200px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #f5f5f5;
-		border-radius: 8px;
-		position: relative;
-	}
-	
-	/* Loading state */
-	.swipecomic-images::before {
-		content: 'Click to view comic';
-		color: #666;
-		font-size: 1.2em;
-		padding: 40px;
-		text-align: center;
-	}
-	
-	/* Hide PhotoSwipe placeholder */
-	.pswp__img--placeholder {
-		display: none !important;
-	}
-</style>
 
 <?php
 

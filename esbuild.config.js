@@ -4,7 +4,7 @@
  * @package
  * @copyright Copyright (c) 2025, JT. G.
  * @license   GPL-3.0+
- * @since     2.0.0
+ * @since     1.0.4
  */
 
 /* eslint-disable no-console */
