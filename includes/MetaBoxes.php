@@ -248,9 +248,8 @@ class MetaBoxes {
 	 * @param int $post_id Post ID.
 	 */
 	public function save_episode_images( $post_id ) {
-		// Verify nonce.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification doesn't require sanitization.
-		if ( ! isset( $_POST['swipecomic_images_nonce'] ) || ! wp_verify_nonce( $_POST['swipecomic_images_nonce'], 'swipecomic_save_images' ) ) {
+		// Verify nonce - must use wp_unslash() and sanitize_text_field() since wp_verify_nonce() is pluggable.
+		if ( ! isset( $_POST['swipecomic_images_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['swipecomic_images_nonce'] ) ), 'swipecomic_save_images' ) ) {
 			return;
 		}
 
@@ -269,16 +268,29 @@ class MetaBoxes {
 			return;
 		}
 
-		// Get and sanitize images data.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON data is sanitized after decoding.
-		$images_json = isset( $_POST['swipecomic_images_data'] ) ? wp_unslash( $_POST['swipecomic_images_data'] ) : '';
-		$images_data = json_decode( $images_json, true );
+		// Get images data - unslash the JSON string, decode it, then sanitize all values.
+		// JSON cannot be sanitized before decoding without breaking the JSON structure.
+		// All values are sanitized immediately after decode using map_deep() with sanitize_text_field(),
+		// then further validated in sanitize_and_validate_images() using absint() for IDs.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization happens after json_decode via map_deep() and sanitize_and_validate_images().
+		$images_json_raw = isset( $_POST['swipecomic_images_data'] ) ? wp_unslash( $_POST['swipecomic_images_data'] ) : '';
+
+		// Validate JSON string format before decoding.
+		if ( ! is_string( $images_json_raw ) ) {
+			$images_json_raw = '';
+		}
+
+		$images_data = json_decode( $images_json_raw, true );
 
 		if ( ! is_array( $images_data ) ) {
 			$images_data = array();
 		}
 
-		// Sanitize and validate images using shared helper method.
+		// Sanitize all string values in the decoded array using map_deep.
+		$images_data = map_deep( $images_data, 'sanitize_text_field' );
+
+		// Further sanitize and validate images using shared helper method.
+		// This method uses absint() for IDs and validates all values against allowed options.
 		$sanitized_images = $this->sanitize_and_validate_images( $images_data );
 
 		// Save to post meta.
@@ -376,9 +388,8 @@ class MetaBoxes {
 	 * @param int $post_id Post ID.
 	 */
 	public function save_episode_settings( $post_id ) {
-		// Verify nonce.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification doesn't require sanitization.
-		if ( ! isset( $_POST['swipecomic_settings_nonce'] ) || ! wp_verify_nonce( $_POST['swipecomic_settings_nonce'], 'swipecomic_save_settings' ) ) {
+		// Verify nonce - must use wp_unslash() and sanitize_text_field() since wp_verify_nonce() is pluggable.
+		if ( ! isset( $_POST['swipecomic_settings_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['swipecomic_settings_nonce'] ) ), 'swipecomic_save_settings' ) ) {
 			return;
 		}
 
@@ -575,16 +586,29 @@ class MetaBoxes {
 			);
 		}
 
-		// Get and sanitize images data.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON data is sanitized after decoding.
-		$images_json = isset( $_POST['images_data'] ) ? wp_unslash( $_POST['images_data'] ) : '';
-		$images_data = json_decode( $images_json, true );
+		// Get images data - unslash the JSON string, decode it, then sanitize all values.
+		// JSON cannot be sanitized before decoding without breaking the JSON structure.
+		// All values are sanitized immediately after decode using map_deep() with sanitize_text_field(),
+		// then further validated in sanitize_and_validate_images() using absint() for IDs.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization happens after json_decode via map_deep() and sanitize_and_validate_images().
+		$images_json_raw = isset( $_POST['images_data'] ) ? wp_unslash( $_POST['images_data'] ) : '';
+
+		// Validate JSON string format before decoding.
+		if ( ! is_string( $images_json_raw ) ) {
+			$images_json_raw = '';
+		}
+
+		$images_data = json_decode( $images_json_raw, true );
 
 		if ( ! is_array( $images_data ) ) {
 			$images_data = array();
 		}
 
-		// Sanitize and validate images using shared helper method.
+		// Sanitize all string values in the decoded array using map_deep.
+		$images_data = map_deep( $images_data, 'sanitize_text_field' );
+
+		// Further sanitize and validate images using shared helper method.
+		// This method uses absint() for IDs and validates all values against allowed options.
 		$sanitized_images = $this->sanitize_and_validate_images( $images_data );
 
 		// Save to post meta.

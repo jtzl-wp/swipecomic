@@ -173,18 +173,17 @@ class ImageHandler {
 	 */
 	public function validate_image_mime_type( $file ) {
 		// Only validate if this is a SwipeComic context with a valid nonce.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification.
 		if ( ! isset( $_REQUEST['swipecomic_context_post_id'], $_REQUEST['swipecomic_upload_nonce'] ) ) {
 			return $file;
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification.
-		if ( ! wp_verify_nonce( $_REQUEST['swipecomic_upload_nonce'], 'swipecomic_admin_nonce' ) ) {
+		// Verify nonce - must use wp_unslash() and sanitize_text_field() since wp_verify_nonce() is pluggable.
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['swipecomic_upload_nonce'] ) ), 'swipecomic_admin_nonce' ) ) {
 			return $file;
 		}
 
-		// Verify the context post ID is valid.
-		$post_id = absint( $_REQUEST['swipecomic_context_post_id'] );
+		// Verify the context post ID is valid - sanitize before using absint().
+		$post_id = absint( sanitize_text_field( wp_unslash( $_REQUEST['swipecomic_context_post_id'] ) ) );
 		if ( ! $post_id || 'swipecomic' !== get_post_type( $post_id ) ) {
 			return $file;
 		}

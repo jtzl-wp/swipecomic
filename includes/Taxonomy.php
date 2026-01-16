@@ -692,9 +692,8 @@ class Taxonomy {
 	 * @param \WP_Post $post    Post object.
 	 */
 	public function save_series_selection( $post_id, $post ) {
-		// Verify nonce.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification doesn't require sanitization.
-		if ( ! isset( $_POST['swipecomic_series_nonce'] ) || ! wp_verify_nonce( $_POST['swipecomic_series_nonce'], 'swipecomic_save_series' ) ) {
+		// Verify nonce - must use wp_unslash() and sanitize_text_field() since wp_verify_nonce() is pluggable.
+		if ( ! isset( $_POST['swipecomic_series_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['swipecomic_series_nonce'] ) ), 'swipecomic_save_series' ) ) {
 			return;
 		}
 
