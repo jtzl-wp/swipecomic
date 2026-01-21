@@ -1,6 +1,6 @@
 === SwipeComic ===
-Contributors: jtzl
-Tags: comic, webcomic, manga, reader, mobile, photoswipe
+Contributors: jtzl, yoren
+Tags: comic, webcomic, manga, mobile, photoswipe
 Requires at least: 6.8
 Tested up to: 6.9
 Stable tag: 1.0.4
