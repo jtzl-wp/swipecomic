@@ -173,16 +173,16 @@ if [[ -n "$LAST_SYNCED" ]]; then
     echo "  rm '$STATE_FILE'" >&2
     exit 1
   fi
-  COMMITS="$(git rev-list --reverse "$LAST_SYNCED..$BRANCH_NAME")"
+  COMMITS="$(git rev-list --no-merges --reverse "$LAST_SYNCED..$BRANCH_NAME")"
 else
   if [[ "$BRANCH_NAME" == "$BASE_BRANCH" ]]; then
-    COMMITS="$(git rev-list --reverse "$BRANCH_NAME")"
+    COMMITS="$(git rev-list --no-merges --reverse "$BRANCH_NAME")"
   else
     MERGE_BASE="$(git merge-base "$BASE_BRANCH" "$BRANCH_NAME" 2>/dev/null || true)"
     if [[ -n "$MERGE_BASE" ]]; then
-      COMMITS="$(git rev-list --reverse "$MERGE_BASE..$BRANCH_NAME")"
+      COMMITS="$(git rev-list --no-merges --reverse "$MERGE_BASE..$BRANCH_NAME")"
     else
-      COMMITS="$(git rev-list --reverse "$BRANCH_NAME")"
+      COMMITS="$(git rev-list --no-merges --reverse "$BRANCH_NAME")"
     fi
   fi
 fi
@@ -301,13 +301,13 @@ if [[ -z "$COMMITS" ]]; then
     # Recompute commits from merge base
     LAST_SYNCED=""
     if [[ "$BRANCH_NAME" == "$BASE_BRANCH" ]]; then
-      COMMITS="$(git rev-list --reverse "$BRANCH_NAME")"
+      COMMITS="$(git rev-list --no-merges --reverse "$BRANCH_NAME")"
     else
       MERGE_BASE="$(git merge-base "$BASE_BRANCH" "$BRANCH_NAME" 2>/dev/null || true)"
       if [[ -n "$MERGE_BASE" ]]; then
-        COMMITS="$(git rev-list --reverse "$MERGE_BASE..$BRANCH_NAME")"
+        COMMITS="$(git rev-list --no-merges --reverse "$MERGE_BASE..$BRANCH_NAME")"
       else
-        COMMITS="$(git rev-list --reverse "$BRANCH_NAME")"
+        COMMITS="$(git rev-list --no-merges --reverse "$BRANCH_NAME")"
       fi
     fi
 
