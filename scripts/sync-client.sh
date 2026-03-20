@@ -63,6 +63,68 @@ STATE_DIR="$(git rev-parse --git-dir)/client-sync"
 mkdir -p "$STATE_DIR"
 STATE_FILE="$STATE_DIR/${BRANCH_NAME//\//_}.last"
 
+# Build production assets and update expected commit count.
+# Called before every successful exit so the client repo stays deployable.
+finalize() {
+  echo "Building production assets..."
+
+  # Build in the source repo
+  (cd "$SOURCE_REPO" && npm ci && npm run build) >/dev/null 2>&1
+
+  # Copy asset manifest
+  mkdir -p "$CLIENT_REPO/build"
+  cp "$SOURCE_REPO/build/asset-manifest.json" "$CLIENT_REPO/build/"
+
+  # Copy hashed JS/CSS and photoswipe.css
+  find "$SOURCE_REPO/build" -maxdepth 1 -type f \( \
+    -name "*.[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9].js" -o \
+    -name "*.[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9].css" -o \
+    -name "chunk-*.js" -o \
+    -name "photoswipe.css" \
+  \) -exec cp {} "$CLIENT_REPO/build/" \;
+
+  # Copy hashed admin assets
+  if [ -d "$SOURCE_REPO/admin" ]; then
+    mkdir -p "$CLIENT_REPO/admin/js" "$CLIENT_REPO/admin/css"
+    for f in "$SOURCE_REPO"/admin/js/swipecomic-admin.[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9].js; do
+      [ -f "$f" ] && cp "$f" "$CLIENT_REPO/admin/js/"
+    done
+    for f in "$SOURCE_REPO"/admin/css/swipecomic-admin.[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9].css; do
+      [ -f "$f" ] && cp "$f" "$CLIENT_REPO/admin/css/"
+    done
+    for f in "$SOURCE_REPO"/admin/js/swipecomic-settings.[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9].js; do
+      [ -f "$f" ] && cp "$f" "$CLIENT_REPO/admin/js/"
+    done
+  fi
+
+  # Remove timestamp from asset manifest to avoid infinite commit loops
+  if [ -f "$CLIENT_REPO/build/asset-manifest.json" ]; then
+    node -e "
+      const fs = require('fs');
+      const f = '$CLIENT_REPO/build/asset-manifest.json';
+      const m = JSON.parse(fs.readFileSync(f, 'utf8'));
+      delete m.generated;
+      fs.writeFileSync(f, JSON.stringify(m, null, 2) + '\n');
+    "
+  fi
+
+  # Stage build artifacts
+  git -C "$CLIENT_REPO" add build/ admin/
+
+  if ! git -C "$CLIENT_REPO" diff --cached --quiet; then
+    git -C "$CLIENT_REPO" commit --no-gpg-sign -m "chore: build production assets"
+    echo "Production assets committed."
+  else
+    echo "Build artifacts unchanged."
+  fi
+
+  # Update the expected commit count
+  local count
+  count="$(git -C "$CLIENT_REPO" rev-list --count "$BRANCH_NAME" 2>/dev/null || echo 0)"
+  local count_file="$STATE_DIR/${BRANCH_NAME//\//_}.count"
+  echo "$count" > "$count_file"
+}
+
 # Define excluded paths — everything NOT deployed to WordPress.org
 # The WordPress.org distribution includes only:
 #   jtzl-swipecomic.php, readme.txt, uninstall.php, includes/, templates/,
@@ -230,7 +292,7 @@ if [[ "$CLIENT_IS_EMPTY" == "false" ]] && [[ -n "$LAST_SYNCED" ]] && git -C "$CL
 
         if [[ -z "$COMMITS" ]]; then
           echo "No new commits to sync from source. Sync state updated."
-          exit 0
+          finalize; exit 0
         fi
       elif compare_filtered_trees "HEAD" "$BRANCH_NAME"; then
         echo "Client repo has $EXTRA_COMMIT_COUNT extra commit(s), but filtered content matches source." >&2
@@ -238,7 +300,7 @@ if [[ "$CLIENT_IS_EMPTY" == "false" ]] && [[ -n "$LAST_SYNCED" ]] && git -C "$CL
         git rev-parse HEAD > "$STATE_FILE"
         echo "$CLIENT_COMMIT_COUNT" > "$EXPECTED_COUNT_FILE"
         echo "No new commits to sync for $BRANCH_NAME."
-        exit 0
+        finalize; exit 0
       elif [[ "$FORCE" == "false" ]]; then
         echo "Warning: Client repo has $EXTRA_COMMIT_COUNT commit(s) that weren't synced from source." >&2
         echo "" >&2
@@ -270,7 +332,7 @@ if [[ "$CLIENT_IS_EMPTY" == "false" ]] && [[ -z "$LAST_SYNCED" ]] && git -C "$CL
     echo "$CLIENT_COMMIT_COUNT" > "$EXPECTED_COUNT_FILE"
 
     echo "Sync state initialized for $BRANCH_NAME."
-    exit 0
+    finalize; exit 0
   else
     echo "Repos have different content. Will need to sync."
     echo ""
@@ -313,11 +375,11 @@ if [[ -z "$COMMITS" ]]; then
 
     if [[ -z "$COMMITS" ]]; then
       echo "No commits to sync (branch has no changes vs $BASE_BRANCH)."
-      exit 0
+      finalize; exit 0
     fi
   else
     echo "No new commits to sync for $BRANCH_NAME."
-    exit 0
+    finalize; exit 0
   fi
 fi
 
@@ -403,9 +465,5 @@ for commit in $COMMITS; do
   COMMIT_COUNT=$((COMMIT_COUNT + 1))
 done
 
-# Update the expected commit count for future runs
-CLIENT_COMMIT_COUNT="$(git -C "$CLIENT_REPO" rev-list --count "$BRANCH_NAME" 2>/dev/null || echo 0)"
-EXPECTED_COUNT_FILE="$STATE_DIR/${BRANCH_NAME//\//_}.count"
-echo "$CLIENT_COMMIT_COUNT" > "$EXPECTED_COUNT_FILE"
-
+finalize
 echo "Sync complete for $BRANCH_NAME. Applied $COMMIT_COUNT commit(s), skipped $SKIP_COUNT."
