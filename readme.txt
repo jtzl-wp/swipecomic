@@ -1,4 +1,4 @@
-=== SwipeComic ===
+=== JTZL's SwipeComic ===
 Contributors: jtzl, yoren
 Tags: comic, webcomic, manga, mobile, photoswipe
 Requires at least: 6.8

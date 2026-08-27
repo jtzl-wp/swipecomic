@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: SwipeComic
+ * Plugin Name: JTZL's SwipeComic
  * Description: A mobile-first comic reader for WordPress with swipe navigation and responsive design.
  * Version:     1.0.4
  * Author:      JT G.
