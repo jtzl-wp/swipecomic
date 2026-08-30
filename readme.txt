@@ -2,7 +2,7 @@
 Contributors: jtzl, yoren
 Tags: comic, webcomic, manga, mobile, photoswipe
 Requires at least: 6.8
-Tested up to: 6.9
+Tested up to: 7.1
 Stable tag: 1.0.4
 Requires PHP: 8.1
 License: GPLv2 or later
