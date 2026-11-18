@@ -178,6 +178,7 @@ Yes! Use arrow keys to navigate between images, Escape to close the viewer, and 
 
 * Fix: the episode image picker no longer opens empty. A new episode opens on your whole image library, and an episode with its own uploads opens on those.
 * New: a filter in the episode image picker to switch between all images, images uploaded to this episode, and unattached images.
+* Fix: icons in the Episode Images and series cover/logo buttons are centred again on WordPress 7.x.
 
 = 1.0.4 =
 

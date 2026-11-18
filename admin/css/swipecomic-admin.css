@@ -104,19 +104,40 @@
 	margin-bottom: 20px;
 }
 
-.swipecomic-upload-images {
+/*
+ * Icon buttons.
+ *
+ * WordPress 7.0+ buttons.css gives every dashicon inside a .button a
+ * line-height sized for a 20px icon in a 40px button (1.9) plus
+ * vertical-align: top. Our icons are smaller, so that line-height pushes the
+ * glyph off-centre. Size each icon to its own box (line-height: 1) and centre
+ * it with flexbox, which also works with the 30px buttons in WordPress 6.x.
+ * The .wp-core-ui prefix is needed to outrank core's .wp-core-ui .button rules.
+ */
+.wp-core-ui .button.swipecomic-upload-images {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 	vertical-align: middle;
 }
 
-.swipecomic-upload-images .dashicons {
+.wp-core-ui .button.swipecomic-upload-images .dashicons {
 	font-size: 18px;
 	width: 18px;
 	height: 18px;
-	vertical-align: middle;
-	margin-top: -3px;
+	line-height: 1;
+	margin: 0;
+}
+
+.wp-core-ui .button.swipecomic-upload-series-cover,
+.wp-core-ui .button.swipecomic-upload-series-logo {
+	display: inline-flex;
+	align-items: center;
+}
+
+.wp-core-ui .button.swipecomic-upload-series-cover .dashicons,
+.wp-core-ui .button.swipecomic-upload-series-logo .dashicons {
+	line-height: 1;
 }
 
 .swipecomic-images-toolbar .description {
@@ -214,10 +235,11 @@
 	min-height: 32px;
 }
 
-.swipecomic-image-actions .dashicons {
+.wp-core-ui .swipecomic-image-actions .button .dashicons {
 	font-size: 16px;
 	width: 16px;
 	height: 16px;
+	line-height: 1;
 }
 
 .swipecomic-image-settings:hover {
