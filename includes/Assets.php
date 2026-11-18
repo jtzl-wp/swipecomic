@@ -235,6 +235,7 @@ class Assets {
 				'uploadButtonText'   => __( 'Select Images', 'swipecomic' ),
 				'uploadButtonTitle'  => __( 'Select Episode Images', 'swipecomic' ),
 				'deleteOnRemove'     => $delete_on_remove,
+				'hasAttachedPages'   => $is_swipecomic_post && self::episode_has_attached_pages( get_the_ID() ),
 				'removeConfirm'      => $delete_on_remove
 					? __( 'Are you sure you want to delete this image? This will permanently remove it from your Media Library and cannot be undone.', 'swipecomic' )
 					: __( 'Remove this image from the episode? It will remain in your Media Library.', 'swipecomic' ),
@@ -366,5 +367,55 @@ class Assets {
 		$file     = $manifest[ $asset ] ?? $asset;
 
 		return JTZL_SWIPECOMIC_URL . 'build/' . $file;
+	}
+
+	/**
+	 * Check whether any of an episode's pages were uploaded to it.
+	 *
+	 * Decides which view the episode image picker opens on: this episode's
+	 * uploads when its pages came from there, otherwise the whole image
+	 * library. Only images in the episode's page list count, so a cover
+	 * uploaded from the episode screen (also attached to the episode) does
+	 * not switch the picker to a view that holds nothing but the cover.
+	 *
+	 * @since 1.0.5
+	 *
+	 * @param int|false $post_id Episode post ID.
+	 * @return bool True if at least one of the episode's pages has the episode as its parent.
+	 */
+	public static function episode_has_attached_pages( $post_id ) {
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		$images = get_post_meta( (int) $post_id, '_swipecomic_images', true );
+		if ( ! is_array( $images ) ) {
+			return false;
+		}
+
+		$page_ids = array();
+		foreach ( $images as $image ) {
+			if ( is_array( $image ) && ! empty( $image['id'] ) ) {
+				$page_ids[] = absint( $image['id'] );
+			}
+		}
+
+		if ( ! $page_ids ) {
+			return false;
+		}
+
+		$attached = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'post_parent'    => (int) $post_id,
+				'post__in'       => $page_ids,
+				'post_mime_type' => 'image',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+			)
+		);
+
+		return ! empty( $attached );
 	}
 }

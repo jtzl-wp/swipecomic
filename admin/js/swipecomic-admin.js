@@ -141,17 +141,36 @@
 		openMediaUploader() {
 			// Create media frame if it doesn't exist
 			if (!this.frame) {
+				const postId =
+					wp.media.view.settings.post && wp.media.view.settings.post.id;
+				const library = { type: 'image' };
+
+				// Open on this episode's own uploads once its pages came from
+				// there. A new episode, or one built from images uploaded
+				// through Media, opens on the whole library instead, so it is
+				// never empty.
+				// The props match core's "uploaded" filter so the dropdown
+				// below shows the right option.
+				if (postId && swipecomicAdmin.hasAttachedPages) {
+					library.uploadedTo = postId;
+					library.orderby = 'menuOrder';
+					library.order = 'ASC';
+				}
+
 				this.frame = wp.media({
 					title: swipecomicAdmin.uploadButtonTitle,
 					button: {
 						text: swipecomicAdmin.uploadButtonText,
 					},
 					multiple: true,
-					library: {
-						type: 'image',
-						uploadedTo: wp.media.view.settings.post.id, // Pass post ID
-					},
+					library,
 				});
+
+				// The stock select frame hides core's filter dropdown. Turn it
+				// on so users can switch between all images, this episode's
+				// uploads and unattached images. The state renders on first
+				// open, so setting it here takes effect.
+				this.frame.state('library').set('filterable', 'uploaded');
 
 				// Handle image selection
 				this.frame.on('select', () => {

@@ -69,7 +69,7 @@ class PostType {
 			'use_featured_image'    => _x( 'Use as cover image', 'Overrides the "Use as featured image" phrase', 'swipecomic' ),
 			'archives'              => _x( 'SwipeComic archives', 'The post type archive label', 'swipecomic' ),
 			'insert_into_item'      => _x( 'Insert into swipecomic', 'Overrides the "Insert into post" phrase', 'swipecomic' ),
-			'uploaded_to_this_item' => _x( 'Uploaded to this swipecomic', 'Overrides the "Uploaded to this post" phrase', 'swipecomic' ),
+			'uploaded_to_this_item' => _x( 'Uploaded to this episode', 'Overrides the "Uploaded to this post" phrase', 'swipecomic' ),
 			'filter_items_list'     => _x( 'Filter swipecomics list', 'Screen reader text for the filter links', 'swipecomic' ),
 			'items_list_navigation' => _x( 'SwipeComics list navigation', 'Screen reader text for the pagination', 'swipecomic' ),
 			'items_list'            => _x( 'SwipeComics list', 'Screen reader text for the items list', 'swipecomic' ),
