@@ -378,7 +378,7 @@ class Assets {
 	 * uploaded from the episode screen (also attached to the episode) does
 	 * not switch the picker to a view that holds nothing but the cover.
 	 *
-	 * @since 1.0.5
+	 * @since 1.1.0
 	 *
 	 * @param int|false $post_id Episode post ID.
 	 * @return bool True if at least one of the episode's pages has the episode as its parent.
